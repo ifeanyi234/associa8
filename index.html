@@ -3,329 +3,415 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Associa8 - Landing Page</title>
+    <title>Associa8 — Manage, Connect, and Grow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- HERO SECTION (banner.jpg) -->
+    <!-- ============================= -->
+    <!-- SECTION 1: HERO -->
+    <!-- ============================= -->
     <header class="hero">
-      <nav class="navbar">
-        <div class="logo">
-          <div class="logo-icon"></div>
-          <span>Associa8</span>
-        </div>
+      <nav class="navbar container">
+        <a href="#" class="logo">
+          <img src="images/brand-logo.png" alt="Brand Logo" />
+          <!-- <span class="logo-icon" aria-hidden="true"></span>
+          <span class="logo-text">Associa8</span> -->
+        </a>
+
         <ul class="nav-links">
           <li><a href="#">Home</a></li>
           <li><a href="#">About</a></li>
-          <li><a href="#">Pricing</a></li>
+          <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Contact</a></li>
         </ul>
-        <div class="nav-auth">
-          <button class="btn btn-outline">Login</button>
-          <button class="btn btn-primary">Sign Up</button>
+
+        <div class="nav-actions">
+          <a href="#" class="btn btn-outline-light">Login</a>
+          <a href="#" class="btn btn-accent">Sign Up</a>
         </div>
       </nav>
 
-      <div class="hero-content">
+      <div class="hero-content container">
         <div class="hero-text">
-          <span class="eyebrow">— Empowering</span>
+          <p class="eyebrow eyebrow-accent">— Empowering</p>
           <h1>Associations to Manage, Connect, and Grow</h1>
-          <p>
+          <p class="hero-description">
             Digitize your association's operations with an all in one platform
             that streamlines administration and keeps every member connected.
           </p>
-          <div class="hero-actions">
-            <button class="btn btn-white">Start a Free Trail</button>
-            <button class="btn btn-outline-white">Book a Demo</button>
+          <div class="hero-cta">
+            <a href="#" class="btn btn-white">Start a Free Trail</a>
+            <a href="#" class="btn btn-outline-light">Book a Demo</a>
           </div>
         </div>
-        <div class="hero-image-wrapper">
-          <div class="image-placeholder hero-img"></div>
+
+        <div class="hero-image">
+          <div
+            class="placeholder-arch"
+            role="img"
+            aria-label="Product preview placeholder"
+          ></div>
         </div>
       </div>
     </header>
 
-    <!-- FEATURES SECTION (Screenshot 270) -->
+    <!-- ============================= -->
+    <!-- SECTION 2: FEATURES -->
+    <!-- ============================= -->
     <section class="features">
-      <div class="features-grid">
-        <div class="feature-cards">
-          <div class="card">
-            <div class="icon-placeholder"></div>
+      <div class="container features-grid">
+        <div class="features-cards">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true"></div>
             <h3>Membership Management</h3>
             <p>
               Effortlessly manage member profiles, roles, zones, and lifecycle
               from registration to alumni status.
             </p>
-          </div>
-          <div class="card">
-            <div class="icon-placeholder"></div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true"></div>
             <h3>Admissions Workflow</h3>
             <p>
               Simplify member onboarding with online applications, approval
               workflows, and CBT-based admissions.
             </p>
-          </div>
-          <div class="card">
-            <div class="icon-placeholder"></div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true"></div>
             <h3>Financial Tracking</h3>
             <p>
               Track dues, payments, levies, and financial reports with complete
               transparency and control.
             </p>
-          </div>
-          <div class="card">
-            <div class="icon-placeholder"></div>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true"></div>
             <h3>Attendance Monitoring</h3>
             <p>
               Monitor meeting attendance, event participation, and member
               compliance with real-time tracking.
             </p>
-          </div>
+          </article>
         </div>
-        <div class="features-text">
-          <span class="eyebrow">— Our Feature</span>
+
+        <div class="features-intro">
+          <p class="eyebrow">— Our Feature</p>
           <h2>Powerful Features Built for Modern Organizations</h2>
-          <p>
+          <p class="section-description">
             Associa8 provides everything your organization needs in one secure,
             intuitive, and scalable platform. Focus on building stronger
             communities while we simplify the administration.
           </p>
-          <button class="btn btn-primary">Explore more</button>
+          <a href="#" class="btn btn-accent">Explore more</a>
         </div>
       </div>
     </section>
 
-    <!-- PROCESS SECTION (Screenshot 271) -->
+    <!-- ============================= -->
+    <!-- SECTION 3: PROCESS -->
+    <!-- ============================= -->
     <section class="process">
-      <span class="eyebrow">— Our Process</span>
-      <h2>How Associa8 Works</h2>
-      <p class="process-sub">
-        Get started in just a few simple steps and transform the way your
-        organization manages members, operations, and communication.
-      </p>
+      <div class="container">
+        <div class="section-header">
+          <p class="eyebrow">— Our Process</p>
+          <h2>How Associa8 Works</h2>
+          <p class="section-description">
+            Get started in just a few simple steps and transform the way your
+            organization manages members, operations, and communication.
+          </p>
+        </div>
 
-      <div class="timeline">
-        <!-- Wavy line placeholder could be an SVG background, using flex steps here -->
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Create Your Organization</h3>
-          <p>
-            Creating an account and configuring your profile and administrative
-            settings.
-          </p>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>Manage Members</h3>
-          <p>
-            Add members, assign roles and organize them into zones, and keep
-            member information up to date.
-          </p>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Streamline Operations</h3>
-          <p>
-            Manage admissions, track attendance, over finances, share documents,
-            and communicate with members.
-          </p>
+        <div class="process-grid">
+          <article class="process-card">
+            <span class="process-number" aria-hidden="true">1</span>
+            <h3>Create Your Organization</h3>
+            <p>
+              Creating an account and configuring your profile and
+              administrative settings.
+            </p>
+          </article>
+
+          <article class="process-card">
+            <span class="process-number" aria-hidden="true">2</span>
+            <h3>Manage Members</h3>
+            <p>
+              Add members, assign roles and organize them into zones, and keep
+              member information up to date.
+            </p>
+          </article>
+
+          <article class="process-card">
+            <span class="process-number" aria-hidden="true">3</span>
+            <h3>Streamline Operations</h3>
+            <p>
+              Manage admissions, track attendance, over finances, share
+              documents, and communicate with members.
+            </p>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- PRICING SECTION (Screenshot 272 & 273) -->
-    <section class="pricing">
-      <div class="text-center">
-        <span class="eyebrow">— Pricing Plans —</span>
-        <h2>Flexible Pricing for Every Organization</h2>
-      </div>
+    <!-- ============================= -->
+    <!-- SECTION 4: PRICING -->
+    <!-- ============================= -->
+    <section class="pricing" id="pricing">
+      <div class="container">
+        <div class="section-header">
+          <p class="eyebrow">— Pricing Plans —</p>
+          <h2>Flexible Pricing for Every Organization</h2>
+        </div>
 
-      <div class="pricing-cards">
-        <div class="price-card">
-          <h3>Basic</h3>
-          <p>
-            For small associations that need to manage members and track
-            attendance without the extras.
-          </p>
-          <div class="price"><span>$49</span>/month</div>
-          <button class="btn btn-primary full-width">Start a Free Trail</button>
-          <ul class="feature-list">
-            <li>Up to 100 members</li>
-            <li>Member directory</li>
-            <li>Attendance tracking</li>
-            <li>Basic reporting</li>
-            <li>Email support</li>
-          </ul>
-        </div>
-        <div class="price-card popular">
-          <span class="badge">Most Popular</span>
-          <h3>Professional</h3>
-          <p>
-            For growing associations that need membership, finance, and
-            admissions working together.
-          </p>
-          <div class="price"><span>$99</span>/month</div>
-          <button class="btn btn-primary full-width">Start a Free Trail</button>
-          <ul class="feature-list">
-            <li>Everything in Basic</li>
-            <li>Up to 500 members</li>
-            <li>Financial tracking</li>
-            <li>Administration management</li>
-            <li>Priority email support</li>
-          </ul>
-        </div>
-        <div class="price-card">
-          <h3>Elite</h3>
-          <p>
-            For full-scale associations that run every operation through
-            Organizations.
-          </p>
-          <div class="price"><span>$199</span>/month</div>
-          <button class="btn btn-primary full-width">Start a Free Trail</button>
-          <ul class="feature-list">
-            <li>Everything in professional</li>
-            <li>Unlimited members</li>
-            <li>Custom report</li>
-            <li>API access</li>
-            <li>Phone & email support</li>
-          </ul>
+        <div class="pricing-grid">
+          <article class="pricing-card">
+            <h3>Basic</h3>
+            <p class="price">
+              <span class="price-amount">$49</span
+              ><span class="price-period">/month</span>
+            </p>
+            <p class="pricing-description">
+              For small associations that need to manage members and track
+              attendance without the extras.
+            </p>
+            <a href="#" class="btn btn-outline-accent">Start a Free Trail</a>
+            <ul class="pricing-features">
+              <li>Up to 100 members</li>
+              <li>Member directory</li>
+              <li>Attendance tracking</li>
+              <li>Basic reporting</li>
+              <li>Email support</li>
+            </ul>
+          </article>
+
+          <article class="pricing-card pricing-card-highlight">
+            <span class="badge">Most Popular</span>
+            <h3>Professional</h3>
+            <p class="price">
+              <span class="price-amount">$99</span
+              ><span class="price-period">/month</span>
+            </p>
+            <p class="pricing-description">
+              For growing associations that need deeper financial and
+              administrative control.
+            </p>
+            <a href="#" class="btn btn-accent">Start a Free Trail</a>
+            <ul class="pricing-features">
+              <li>Everything in Basic</li>
+              <li>Up to 500 members</li>
+              <li>Financial tracking</li>
+              <li>Administration management</li>
+              <li>Priority email support</li>
+            </ul>
+          </article>
+
+          <article class="pricing-card">
+            <h3>Elite</h3>
+            <p class="price">
+              <span class="price-amount">$199</span
+              ><span class="price-period">/month</span>
+            </p>
+            <p class="pricing-description">
+              For full-scale associations that run every operation through
+              Organizations.
+            </p>
+            <a href="#" class="btn btn-outline-accent">Start a Free Trail</a>
+            <ul class="pricing-features">
+              <li>Everything in Professional</li>
+              <li>Unlimited members</li>
+              <li>Custom report</li>
+              <li>API access</li>
+              <li>Phone &amp; email support</li>
+            </ul>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- TESTIMONIALS SECTION (Screenshot 274) -->
+    <!-- ============================= -->
+    <!-- SECTION 5: TESTIMONIALS -->
+    <!-- ============================= -->
     <section class="testimonials">
-      <span class="eyebrow">— Client Review</span>
-      <div class="testimonials-header">
-        <h2>Real feedback from groups<br />using Organizations</h2>
-        <p>
-          Hear from association leaders who track members, dues, and attendance
-          without the extra work.
-        </p>
-      </div>
+      <div class="container">
+        <div class="testimonials-header">
+          <div>
+            <p class="eyebrow">— Client Review</p>
+            <h2>Real feedback from groups using Organizations</h2>
+          </div>
+          <p class="section-description">
+            Hear from association leaders who track members, dues, and
+            attendance without the extra work.
+          </p>
+        </div>
 
-      <div class="testimonial-carousel">
-        <!-- Review 1 -->
-        <div class="review-card">
-          <div class="quote-icon">""</div>
-          <p>
-            "Associa8 has completely transformed the way we manage our
-            association. From member registration and attendance tracking to
-            financial management..."
-          </p>
-          <div class="reviewer">
-            <div class="avatar image-placeholder"></div>
-            <div class="reviewer-info">
-              <strong>Mark W.</strong>
-              <span>Chairman, Charlton Group</span>
+        <div class="testimonials-grid">
+          <article class="testimonial-card">
+            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+            <p class="testimonial-text">
+              Associa8 has completely transformed the way we manage our
+              association. From member registration and attendance tracking to
+              financial management, everything is finally in one place.
+            </p>
+            <div class="testimonial-footer">
+              <span class="avatar" aria-hidden="true"></span>
+              <div>
+                <p class="testimonial-name">Mark W.</p>
+                <p class="testimonial-title">Chairman, Charlton Group</p>
+              </div>
             </div>
-          </div>
-        </div>
-        <!-- Review 2 -->
-        <div class="review-card">
-          <div class="quote-icon">""</div>
-          <p>
-            "We were drowning in spreadsheets for membership renewals. Associa8
-            let us track payments and send reminders in one place. Saves us
-            hours each month."
-          </p>
-          <div class="reviewer">
-            <div class="avatar image-placeholder"></div>
-            <div class="reviewer-info">
-              <strong>Nneka O.</strong>
-              <span>Secretary, Community Association</span>
+          </article>
+
+          <article class="testimonial-card">
+            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+            <p class="testimonial-text">
+              We were drowning in spreadsheets for membership renewals. Associa8
+              let us track payments and send reminders in one place. Saves us
+              hours each month.
+            </p>
+            <div class="testimonial-footer">
+              <span class="avatar" aria-hidden="true"></span>
+              <div>
+                <p class="testimonial-name">Nneka O.</p>
+                <p class="testimonial-title">
+                  Secretary, Community Association
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-        <!-- Review 3 -->
-        <div class="review-card">
-          <div class="quote-icon">""</div>
-          <p>
-            "Attendance tracking used to mean passing a sheet around meetings.
-            Now members check in on their phones. Simple and no more data
-            entry."
-          </p>
-          <div class="reviewer">
-            <div class="avatar image-placeholder"></div>
-            <div class="reviewer-info">
-              <strong>Joseph R.</strong>
-              <span>Treasurer, Professional Group</span>
+          </article>
+
+          <article class="testimonial-card">
+            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+            <p class="testimonial-text">
+              Attendance tracking used to mean passing a sheet around meetings.
+              Now members check in on their phones. Simple and no more data
+              entry.
+            </p>
+            <div class="testimonial-footer">
+              <span class="avatar" aria-hidden="true"></span>
+              <div>
+                <p class="testimonial-name">Joseph R.</p>
+                <p class="testimonial-title">Treasurer, Professional Group</p>
+              </div>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-      <div class="carousel-controls">
-        <button class="btn-icon">&lt;</button>
-        <button class="btn-icon">&gt;</button>
+
+        <div class="testimonial-controls">
+          <button class="control-btn" aria-label="Previous testimonial">
+            &#8592;
+          </button>
+          <button class="control-btn" aria-label="Next testimonial">
+            &#8594;
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- CTA SECTION (Screenshot 275) -->
+    <!-- ============================= -->
+    <!-- SECTION 6: CTA BLOCK -->
+    <!-- ============================= -->
     <section class="cta-section">
-      <div class="cta-box">
-        <div class="cta-text">
-          <h2>Join million people<br />who already trust us</h2>
-          <p>
-            Trusted by organizations committed to growth, Associa8 empowers
-            leaders with the tools they need to manage members, automate
-            processes, and build thriving communities.
-          </p>
-          <button class="btn btn-primary">Start a Free Trail</button>
-        </div>
-        <div class="cta-image image-placeholder">
-          <div class="play-btn">▶</div>
+      <div class="container">
+        <div class="cta-banner">
+          <div class="cta-text">
+            <h2>Join million people who already trust us</h2>
+            <p>
+              Automate registrations, dues, and reporting so your team spends
+              less time on admin and more time growing the community that
+              matters to them.
+            </p>
+            <a href="#" class="btn btn-accent">Start a Free Trail</a>
+          </div>
+
+          <div class="cta-media">
+            <div
+              class="placeholder-video"
+              role="img"
+              aria-label="Video preview placeholder"
+            >
+              <button class="play-btn" aria-label="Play video">
+                <span class="play-triangle" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- FOOTER (Screenshot 276) -->
+    <!-- ============================= -->
+    <!-- SECTION 7: SITE FOOTER -->
+    <!-- ============================= -->
     <footer class="site-footer">
-      <div class="footer-top">
+      <div class="container footer-top">
         <div class="footer-brand">
-          <div class="logo">
-            <div class="logo-icon"></div>
-            <span>Associa8</span>
-          </div>
+          <a href="#" class="logo">
+            <img src="images/brand-logo.png" alt="Brand Logo" />
+            <!-- <span class="logo-icon" aria-hidden="true"></span>
+            <span class="logo-text">Associa8</span> -->
+          </a>
           <p>
-            Empowering associations, churches, clubs, NGOs, and organizations
-            with an all-in-one platform to manage memberships, finances, events,
-            attendance, and communication.
+            An all-in-one platform that helps associations manage members,
+            finances, attendance, and communication from a single secure
+            dashboard.
           </p>
         </div>
+
         <div class="footer-links">
-          <ul>
-            <li><strong>Features</strong></li>
-            <li><a href="#">Membership</a></li>
-            <li><a href="#">Finance</a></li>
-            <li><a href="#">Attendance</a></li>
-            <li><a href="#">Events</a></li>
-            <li><a href="#">Communication</a></li>
-          </ul>
-          <ul>
-            <li><strong>Resources</strong></li>
-            <li><a href="#">Blog</a></li>
-            <li><a href="#">FAQ</a></li>
-            <li><a href="#">Help</a></li>
-            <li><a href="#">Privacy policy</a></li>
-            <li><a href="#">Terms of service</a></li>
-          </ul>
+          <div class="footer-links-group">
+            <h4>Features</h4>
+            <ul>
+              <li><a href="#">Membership</a></li>
+              <li><a href="#">Finance</a></li>
+              <li><a href="#">Attendance</a></li>
+              <li><a href="#">Events</a></li>
+              <li><a href="#">Communication</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-links-group">
+            <h4>Resources</h4>
+            <ul>
+              <li><a href="#">Blog</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Help</a></li>
+              <li><a href="#">Privacy policy</a></li>
+              <li><a href="#">Terms of service</a></li>
+            </ul>
+          </div>
         </div>
+
         <div class="footer-newsletter">
-          <strong>Get the Latest Information</strong>
-          <form>
-            <input type="email" placeholder="Email address" />
-            <button type="submit" class="btn btn-primary">Submit</button>
+          <h4>Get the Latest Information</h4>
+          <form class="newsletter-form" onsubmit="return false;">
+            <label for="newsletter-email" class="sr-only">Email address</label>
+            <input
+              type="email"
+              id="newsletter-email"
+              placeholder="Enter your email"
+              required
+            />
+            <button type="submit" class="btn btn-accent">Submit</button>
           </form>
         </div>
       </div>
-      <div class="footer-bottom">
-        <div class="copyright-bar">
-          <p>Copyright © 2026 Associa8. All rights reserved</p>
+
+      <div class="container">
+        <div class="footer-bottom">
+          <p>Copyright &copy; 2026 Associa8. All rights reserved</p>
           <div class="social-icons">
-            <div class="icon image-placeholder"></div>
-            <div class="icon image-placeholder"></div>
-            <div class="icon image-placeholder"></div>
-            <div class="icon image-placeholder"></div>
+            <a href="#" class="social-icon" aria-label="Facebook"></a>
+            <a href="#" class="social-icon" aria-label="Twitter"></a>
+            <a href="#" class="social-icon" aria-label="Instagram"></a>
+            <a href="#" class="social-icon" aria-label="LinkedIn"></a>
           </div>
         </div>
       </div>
