@@ -7,10 +7,12 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="shortcut icon" href="images/fav-logo.png" type="image/x-icon" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://code.iconify.design/iconify-icon/3.0.2/iconify-icon.min.js"></script>
   </head>
   <body>
     <!-- ============================= -->
@@ -19,9 +21,7 @@
     <header class="hero">
       <nav class="navbar container">
         <a href="#" class="logo">
-          <img src="images/brand-logo.png" alt="Brand Logo" />
-          <!-- <span class="logo-icon" aria-hidden="true"></span>
-          <span class="logo-text">Associa8</span> -->
+          <img src="images/brand-logo.png" alt="Brand logo" />
         </a>
 
         <ul class="nav-links">
@@ -36,6 +36,8 @@
           <a href="#" class="btn btn-accent">Sign Up</a>
         </div>
       </nav>
+
+      <div class="hero-bg"></div>
 
       <div class="hero-content container">
         <div class="hero-text">
@@ -52,11 +54,14 @@
         </div>
 
         <div class="hero-image">
-          <div
-            class="placeholder-arch"
-            role="img"
-            aria-label="Product preview placeholder"
-          ></div>
+          <div class="slider-container">
+            <div
+              class="placeholder-arch"
+              role="img"
+              aria-label="Product preview placeholder"
+            ></div>
+          </div>
+          <div class="hero-dots"></div>
         </div>
       </div>
     </header>
@@ -68,7 +73,9 @@
       <div class="container features-grid">
         <div class="features-cards">
           <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true"></div>
+            <div class="feature-icon feature-icon-1" aria-hidden="true">
+              <iconify-icon icon="lets-icons:user-light"></iconify-icon>
+            </div>
             <h3>Membership Management</h3>
             <p>
               Effortlessly manage member profiles, roles, zones, and lifecycle
@@ -77,7 +84,9 @@
           </article>
 
           <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true"></div>
+            <div class="feature-icon feature-icon-2" aria-hidden="true">
+              <iconify-icon icon="ei:plus"></iconify-icon>
+            </div>
             <h3>Admissions Workflow</h3>
             <p>
               Simplify member onboarding with online applications, approval
@@ -86,7 +95,9 @@
           </article>
 
           <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true"></div>
+            <div class="feature-icon feature-icon-3" aria-hidden="true">
+              <iconify-icon icon="hugeicons:cashier-02"></iconify-icon>
+            </div>
             <h3>Financial Tracking</h3>
             <p>
               Track dues, payments, levies, and financial reports with complete
@@ -95,7 +106,9 @@
           </article>
 
           <article class="feature-card">
-            <div class="feature-icon" aria-hidden="true"></div>
+            <div class="feature-icon feature-icon-4" aria-hidden="true">
+              <iconify-icon icon="ph:user-check-light"></iconify-icon>
+            </div>
             <h3>Attendance Monitoring</h3>
             <p>
               Monitor meeting attendance, event participation, and member
@@ -131,33 +144,45 @@
           </p>
         </div>
 
-        <div class="process-grid">
-          <article class="process-card">
-            <span class="process-number" aria-hidden="true">1</span>
-            <h3>Create Your Organization</h3>
-            <p>
-              Creating an account and configuring your profile and
-              administrative settings.
-            </p>
-          </article>
+        <div class="process-path" id="processPath">
+          <span class="process-blob process-blob-1" aria-hidden="true"></span>
+          <span class="process-blob process-blob-2" aria-hidden="true"></span>
 
-          <article class="process-card">
-            <span class="process-number" aria-hidden="true">2</span>
-            <h3>Manage Members</h3>
-            <p>
-              Add members, assign roles and organize them into zones, and keep
-              member information up to date.
-            </p>
-          </article>
+          <svg class="process-line" aria-hidden="true">
+            <path id="processLinePath"></path>
+          </svg>
 
-          <article class="process-card">
-            <span class="process-number" aria-hidden="true">3</span>
-            <h3>Streamline Operations</h3>
-            <p>
-              Manage admissions, track attendance, over finances, share
-              documents, and communicate with members.
-            </p>
-          </article>
+          <div class="process-steps">
+            <article class="process-step process-step-1">
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="process-number" aria-hidden="true">1</span>
+              <h3>Create Your Organization</h3>
+              <p>
+                Creating an account and configuring your profile and
+                administrative settings.
+              </p>
+            </article>
+
+            <article class="process-step process-step-2">
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="process-number" aria-hidden="true">2</span>
+              <h3>Manage Members</h3>
+              <p>
+                Add members, assign roles and organize them into zones, and keep
+                member information up to date.
+              </p>
+            </article>
+
+            <article class="process-step process-step-3">
+              <span class="step-dot" aria-hidden="true"></span>
+              <span class="process-number" aria-hidden="true">3</span>
+              <h3>Streamline Operations</h3>
+              <p>
+                Manage admissions, track attendance, over finances, share
+                documents, and communicate with members.
+              </p>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -174,64 +199,83 @@
 
         <div class="pricing-grid">
           <article class="pricing-card">
-            <h3>Basic</h3>
-            <p class="price">
-              <span class="price-amount">$49</span
-              ><span class="price-period">/month</span>
-            </p>
-            <p class="pricing-description">
-              For small associations that need to manage members and track
-              attendance without the extras.
-            </p>
-            <a href="#" class="btn btn-outline-accent">Start a Free Trail</a>
-            <ul class="pricing-features">
-              <li>Up to 100 members</li>
-              <li>Member directory</li>
-              <li>Attendance tracking</li>
-              <li>Basic reporting</li>
-              <li>Email support</li>
-            </ul>
+            <div class="price-desc">
+              <h3>Basic</h3>
+              <p class="pricing-description">
+                For small associations that need to manage members and track
+                attendance without the extras.
+              </p>
+            </div>
+            <div class="price-content">
+              <p class="price">
+                <span class="price-amount">$49</span><span class="slash">/</span
+                ><span class="price-period">month</span>
+              </p>
+
+              <a href="#" class="btn btn-accent">Start a Free Trail</a>
+              <p class="inc">includes:</p>
+              <ul class="pricing-features">
+                <li>Up to 100 members</li>
+                <li>Member directory</li>
+                <li>Attendance tracking</li>
+                <li>Basic reporting</li>
+                <li>Email support</li>
+              </ul>
+            </div>
           </article>
 
           <article class="pricing-card pricing-card-highlight">
-            <span class="badge">Most Popular</span>
-            <h3>Professional</h3>
-            <p class="price">
-              <span class="price-amount">$99</span
-              ><span class="price-period">/month</span>
-            </p>
-            <p class="pricing-description">
-              For growing associations that need deeper financial and
-              administrative control.
-            </p>
-            <a href="#" class="btn btn-accent">Start a Free Trail</a>
-            <ul class="pricing-features">
-              <li>Everything in Basic</li>
-              <li>Up to 500 members</li>
-              <li>Financial tracking</li>
-              <li>Administration management</li>
-              <li>Priority email support</li>
-            </ul>
+            <div class="price-desc">
+              <span class="badge">Most Popular</span>
+              <h3>Professional</h3>
+              <p class="pricing-description">
+                For growing associations that need deeper financial and
+                administrative control.
+              </p>
+            </div>
+            <div class="price-content">
+              <p class="price">
+                <span class="price-amount">$99</span><span class="slash">/</span
+                ><span class="price-period">month</span>
+              </p>
+
+              <a href="#" class="btn btn-accent">Start a Free Trail</a>
+              <p class="inc">includes:</p>
+              <ul class="pricing-features">
+                <li>Everything in Basic</li>
+                <li>Up to 500 members</li>
+                <li>Financial tracking</li>
+                <li>Administration management</li>
+                <li>Priority email support</li>
+              </ul>
+            </div>
           </article>
 
           <article class="pricing-card">
-            <h3>Elite</h3>
-            <p class="price">
-              <span class="price-amount">$199</span
-              ><span class="price-period">/month</span>
-            </p>
-            <p class="pricing-description">
-              For full-scale associations that run every operation through
-              Organizations.
-            </p>
-            <a href="#" class="btn btn-outline-accent">Start a Free Trail</a>
-            <ul class="pricing-features">
-              <li>Everything in Professional</li>
-              <li>Unlimited members</li>
-              <li>Custom report</li>
-              <li>API access</li>
-              <li>Phone &amp; email support</li>
-            </ul>
+            <div class="price-desc">
+              <h3>Elite</h3>
+              <p class="pricing-description">
+                For full-scale associations that run every operation through
+                Organizations.
+              </p>
+            </div>
+            <div class="price-content">
+              <p class="price">
+                <span class="price-amount">$199</span
+                ><span class="slash">/</span
+                ><span class="price-period">month</span>
+              </p>
+
+              <a href="#" class="btn btn-accent">Start a Free Trail</a>
+              <p class="inc">includes:</p>
+              <ul class="pricing-features">
+                <li>Everything in Professional</li>
+                <li>Unlimited members</li>
+                <li>Custom report</li>
+                <li>API access</li>
+                <li>Phone &amp; email support</li>
+              </ul>
+            </div>
           </article>
         </div>
       </div>
@@ -354,9 +398,9 @@
       <div class="container footer-top">
         <div class="footer-brand">
           <a href="#" class="logo">
-            <img src="images/brand-logo.png" alt="Brand Logo" />
-            <!-- <span class="logo-icon" aria-hidden="true"></span>
-            <span class="logo-text">Associa8</span> -->
+            <img src="images/" alt="" />
+            <span class="logo-icon" aria-hidden="true"></span>
+            <span class="logo-text">Associa8</span>
           </a>
           <p>
             An all-in-one platform that helps associations manage members,
@@ -416,5 +460,64 @@
         </div>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        var container = document.getElementById("processPath");
+        var svg = container ? container.querySelector(".process-line") : null;
+        var path = document.getElementById("processLinePath");
+        var dots = container ? container.querySelectorAll(".step-dot") : [];
+
+        if (!container || !svg || !path || dots.length < 2) return;
+
+        function drawLine() {
+          // Only draw when the curved layout is active (hidden on mobile via CSS)
+          if (window.getComputedStyle(svg).display === "none") return;
+
+          var containerRect = container.getBoundingClientRect();
+          svg.setAttribute("width", containerRect.width);
+          svg.setAttribute("height", containerRect.height);
+          svg.setAttribute(
+            "viewBox",
+            "0 0 " + containerRect.width + " " + containerRect.height,
+          );
+
+          var points = Array.prototype.map.call(dots, function (dot) {
+            var r = dot.getBoundingClientRect();
+            return {
+              x: r.left + r.width / 2 - containerRect.left,
+              y: r.top + r.height / 2 - containerRect.top,
+            };
+          });
+
+          var d = "M " + points[0].x + " " + points[0].y;
+          for (var i = 1; i < points.length; i++) {
+            var prev = points[i - 1];
+            var curr = points[i];
+            var midX = (prev.x + curr.x) / 2;
+            d +=
+              " C " +
+              midX +
+              " " +
+              prev.y +
+              ", " +
+              midX +
+              " " +
+              curr.y +
+              ", " +
+              curr.x +
+              " " +
+              curr.y;
+          }
+          path.setAttribute("d", d);
+        }
+
+        drawLine();
+        window.addEventListener("resize", drawLine);
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(drawLine);
+        }
+      })();
+    </script>
   </body>
 </html>
