@@ -26,7 +26,7 @@
 
         <ul class="nav-links">
           <li><a href="#">Home</a></li>
-          <li><a href="#">About</a></li>
+          <li><a href="about.html">About</a></li>
           <li><a href="#pricing">Pricing</a></li>
           <li><a href="#">Contact</a></li>
         </ul>
@@ -37,7 +37,7 @@
         </div>
       </nav>
 
-      <div class="hero-bg"></div>
+      <div class="hero-bg hero-bg-home"></div>
 
       <div class="hero-content container">
         <div class="hero-text">
@@ -55,12 +55,14 @@
 
         <div class="hero-image">
           <div class="slider-container">
-            <div
-              class="placeholder-arch"
-              role="img"
-              aria-label="Product preview placeholder"
-            ></div>
+            <img src="images/hero-banner1.jpg" class="slide slide1" alt="" />
+            <img src="images/hero-banner2.jpg" class="slide slide2" alt="" />
+            <img src="images/hero-banner3.jpg" class="slide slide3" alt="" />
+            <img src="images/hero-banner4.jpg" class="slide slide4" alt="" />
+            <img src="images/hero-banner5.jpg" class="slide slide4" alt="" />
+            <img src="images/hero-banner6.jpg" class="slide slide4" alt="" />
           </div>
+
           <div class="hero-dots"></div>
         </div>
       </div>
@@ -70,6 +72,21 @@
     <!-- SECTION 2: FEATURES -->
     <!-- ============================= -->
     <section class="features">
+      <div class="diamond diamond-md">
+        <span class="diamond-1"></span>
+        <span class="diamond-2"></span>
+        <span class="diamond-3"></span>
+      </div>
+      <div class="diamond diamond-sm">
+        <span class="diamond-1"></span>
+        <span class="diamond-2"></span>
+        <span class="diamond-3"></span>
+      </div>
+      <div class="diamond diamond-sm down">
+        <span class="diamond-1"></span>
+        <span class="diamond-2"></span>
+        <span class="diamond-3"></span>
+      </div>
       <div class="container features-grid">
         <div class="features-cards">
           <article class="feature-card">
@@ -118,7 +135,13 @@
         </div>
 
         <div class="features-intro">
-          <p class="eyebrow">— Our Feature</p>
+          <div class="eyebrow pointer-holder">
+            <span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span>
+            Our Feature
+          </div>
           <h2>Powerful Features Built for Modern Organizations</h2>
           <p class="section-description">
             Associa8 provides everything your organization needs in one secure,
@@ -136,7 +159,13 @@
     <section class="process">
       <div class="container">
         <div class="section-header">
-          <p class="eyebrow">— Our Process</p>
+          <div class="eyebrow center pointer-holder">
+            <span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span>
+            Our Process
+          </div>
           <h2>How Associa8 Works</h2>
           <p class="section-description">
             Get started in just a few simple steps and transform the way your
@@ -191,9 +220,29 @@
     <!-- SECTION 4: PRICING -->
     <!-- ============================= -->
     <section class="pricing" id="pricing">
+      <div class="diamond diamond-lg left">
+        <span class="diamond-1"></span>
+        <span class="diamond-2"></span>
+        <span class="diamond-3"></span>
+      </div>
+      <div class="diamond diamond-lg right">
+        <span class="diamond-1"></span>
+        <span class="diamond-2"></span>
+        <span class="diamond-3"></span>
+      </div>
       <div class="container">
         <div class="section-header">
-          <p class="eyebrow">— Pricing Plans —</p>
+          <div class="eyebrow center pointer-holder">
+            <span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span>
+            Pricing Plans
+            <span class="pointer">
+              <span class="block"></span>
+              <hr />
+            </span>
+          </div>
           <h2>Flexible Pricing for Every Organization</h2>
         </div>
 
@@ -351,10 +400,10 @@
 
         <div class="testimonial-controls">
           <button class="control-btn" aria-label="Previous testimonial">
-            &#8592;
+            <iconify-icon icon="ooui:next-rtl"></iconify-icon>
           </button>
           <button class="control-btn" aria-label="Next testimonial">
-            &#8594;
+            <iconify-icon icon="ooui:next-ltr"></iconify-icon>
           </button>
         </div>
       </div>
@@ -398,9 +447,7 @@
       <div class="container footer-top">
         <div class="footer-brand">
           <a href="#" class="logo">
-            <img src="images/" alt="" />
-            <span class="logo-icon" aria-hidden="true"></span>
-            <span class="logo-text">Associa8</span>
+            <img src="images/brand-logo.png" alt="Brand logo" />
           </a>
           <p>
             An all-in-one platform that helps associations manage members,
@@ -460,7 +507,6 @@
         </div>
       </div>
     </footer>
-
     <script>
       (function () {
         var container = document.getElementById("processPath");
@@ -519,5 +565,6 @@
         }
       })();
     </script>
+    <script src="js/fadeAnimate.js"></script>
   </body>
 </html>
