@@ -18,26 +18,32 @@
     <!-- ============================= -->
     <!-- SECTION 1: HERO -->
     <!-- ============================= -->
-    <header class="hero">
-      <nav class="navbar container">
-        <a href="#" class="logo">
-          <img src="images/brand-logo.png" alt="Brand logo" />
-        </a>
+    <header class="hero hero-home">
+      <!-- NEW: Full-width wrapper for the blur and fixed effect -->
+      <div class="navbar-wrapper" id="navbarWrapper">
+        <nav class="navbar container">
+          <a href="#" class="logo">
+            <img src="images/brand-logo.png" alt="Brand logo" />
+          </a>
 
-        <ul class="nav-links">
-          <li><a href="#">Home</a></li>
-          <li><a href="about.html">About</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#">Contact</a></li>
-        </ul>
+          <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="about.php">About</a></li>
+            <li><a href="pricing.php">Pricing</a></li>
+            <li><a href="contact.php">Contact</a></li>
+          </ul>
 
-        <div class="nav-actions">
-          <a href="#" class="btn btn-outline-light">Login</a>
-          <a href="#" class="btn btn-accent">Sign Up</a>
-        </div>
-      </nav>
+          <div class="nav-actions">
+            <a href="admin/index.php" class="btn btn-outline-light" target="_blank"
+              >Login</a
+            >
+            <a href="signup.php" class="btn btn-white">Sign Up</a>
+          </div>
+        </nav>
+      </div>
 
       <div class="hero-bg hero-bg-home"></div>
+      <!-- ... rest of your hero content ... -->
 
       <div class="hero-content container">
         <div class="hero-text">
@@ -158,8 +164,8 @@
     <!-- ============================= -->
     <section class="process">
       <div class="container">
-        <div class="section-header">
-          <div class="eyebrow center pointer-holder">
+        <div class="section-header process-section-header">
+          <div class="eyebrow pointer-holder">
             <span class="pointer">
               <hr />
               <span class="block"></span>
@@ -173,45 +179,52 @@
           </p>
         </div>
 
-        <div class="process-path" id="processPath">
+        <div class="process-path">
           <span class="process-blob process-blob-1" aria-hidden="true"></span>
           <span class="process-blob process-blob-2" aria-hidden="true"></span>
 
-          <svg class="process-line" aria-hidden="true">
-            <path id="processLinePath"></path>
+          <svg
+            class="process-line"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M1,42 C7,60 5,62 6,55 C16,47 27,38 38,30 C50,21 58,12 68,5 C74,1 80,2 84,4"
+              vector-effect="non-scaling-stroke"
+            />
           </svg>
 
-          <div class="process-steps">
-            <article class="process-step process-step-1">
-              <span class="step-dot" aria-hidden="true"></span>
-              <span class="process-number" aria-hidden="true">1</span>
-              <h3>Create Your Organization</h3>
-              <p>
-                Creating an account and configuring your profile and
-                administrative settings.
-              </p>
-            </article>
+          <span class="step-dot step-dot-1" aria-hidden="true"></span>
+          <span class="step-dot step-dot-2" aria-hidden="true"></span>
+          <span class="step-dot step-dot-3" aria-hidden="true"></span>
 
-            <article class="process-step process-step-2">
-              <span class="step-dot" aria-hidden="true"></span>
-              <span class="process-number" aria-hidden="true">2</span>
-              <h3>Manage Members</h3>
-              <p>
-                Add members, assign roles and organize them into zones, and keep
-                member information up to date.
-              </p>
-            </article>
+          <article class="process-step process-step-1">
+            <span class="process-number" aria-hidden="true">1</span>
+            <h3>Create Your Organization</h3>
+            <p>
+              Creating an account and configuring your profile and
+              administrative settings.
+            </p>
+          </article>
 
-            <article class="process-step process-step-3">
-              <span class="step-dot" aria-hidden="true"></span>
-              <span class="process-number" aria-hidden="true">3</span>
-              <h3>Streamline Operations</h3>
-              <p>
-                Manage admissions, track attendance, over finances, share
-                documents, and communicate with members.
-              </p>
-            </article>
-          </div>
+          <article class="process-step process-step-2">
+            <span class="process-number" aria-hidden="true">2</span>
+            <h3>Manage Members</h3>
+            <p>
+              Add members, assign roles and organize them into zones, and keep
+              member information up to date.
+            </p>
+          </article>
+
+          <article class="process-step process-step-3">
+            <span class="process-number" aria-hidden="true">3</span>
+            <h3>Streamline Operations</h3>
+            <p>
+              Manage admissions, track attendance, oversee finances, share
+              documents, and communicate with members.
+            </p>
+          </article>
         </div>
       </div>
     </section>
@@ -346,63 +359,89 @@
           </p>
         </div>
 
-        <div class="testimonials-grid">
-          <article class="testimonial-card">
-            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
-            <p class="testimonial-text">
-              Associa8 has completely transformed the way we manage our
-              association. From member registration and attendance tracking to
-              financial management, everything is finally in one place.
-            </p>
-            <div class="testimonial-footer">
-              <span class="avatar" aria-hidden="true"></span>
-              <div>
-                <p class="testimonial-name">Mark W.</p>
-                <p class="testimonial-title">Chairman, Charlton Group</p>
+        <div class="testimonials-viewport">
+          <div class="testimonials-track" id="testimonialsTrack">
+            <article class="testimonial-card">
+              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <p class="testimonial-text">
+                Associa8 has completely transformed the way we manage our
+                association. From member registration and attendance tracking
+                to financial management, everything is finally in one place.
+              </p>
+              <div class="testimonial-footer">
+                <span class="avatar" aria-hidden="true"></span>
+                <div>
+                  <p class="testimonial-name">Mark W.</p>
+                  <p class="testimonial-title">Chairman, Charlton Group</p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
 
-          <article class="testimonial-card">
-            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
-            <p class="testimonial-text">
-              We were drowning in spreadsheets for membership renewals. Associa8
-              let us track payments and send reminders in one place. Saves us
-              hours each month.
-            </p>
-            <div class="testimonial-footer">
-              <span class="avatar" aria-hidden="true"></span>
-              <div>
-                <p class="testimonial-name">Nneka O.</p>
-                <p class="testimonial-title">
-                  Secretary, Community Association
-                </p>
+            <article class="testimonial-card">
+              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <p class="testimonial-text">
+                We were drowning in spreadsheets for membership renewals.
+                Associa8 let us track payments and send reminders in one
+                place. Saves us hours each month.
+              </p>
+              <div class="testimonial-footer">
+                <span class="avatar" aria-hidden="true"></span>
+                <div>
+                  <p class="testimonial-name">Nneka O.</p>
+                  <p class="testimonial-title">
+                    Secretary, Community Association
+                  </p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
 
-          <article class="testimonial-card">
-            <span class="quote-icon" aria-hidden="true">&rdquo;</span>
-            <p class="testimonial-text">
-              Attendance tracking used to mean passing a sheet around meetings.
-              Now members check in on their phones. Simple and no more data
-              entry.
-            </p>
-            <div class="testimonial-footer">
-              <span class="avatar" aria-hidden="true"></span>
-              <div>
-                <p class="testimonial-name">Joseph R.</p>
-                <p class="testimonial-title">Treasurer, Professional Group</p>
+            <article class="testimonial-card">
+              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <p class="testimonial-text">
+                Attendance tracking used to mean passing a sheet around
+                meetings. Now members check in on their phones. Simple and no
+                more lost data.
+              </p>
+              <div class="testimonial-footer">
+                <span class="avatar" aria-hidden="true"></span>
+                <div>
+                  <p class="testimonial-name">Joseph R.</p>
+                  <p class="testimonial-title">Treasurer, Professional Group</p>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+
+            <article class="testimonial-card">
+              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <p class="testimonial-text">
+                Setting up our organization took less than ten minutes.
+                Adding members and assigning roles was straightforward.
+                Exactly what a small association needs.
+              </p>
+              <div class="testimonial-footer">
+                <span class="avatar" aria-hidden="true"></span>
+                <div>
+                  <p class="testimonial-name">Adekemi K.</p>
+                  <p class="testimonial-title">President, Alumni Network</p>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
 
         <div class="testimonial-controls">
-          <button class="control-btn" aria-label="Previous testimonial">
+          <button
+            class="control-btn"
+            id="testimonialPrev"
+            aria-label="Previous testimonial"
+          >
             <iconify-icon icon="ooui:next-rtl"></iconify-icon>
           </button>
-          <button class="control-btn" aria-label="Next testimonial">
+          <button
+            class="control-btn"
+            id="testimonialNext"
+            aria-label="Next testimonial"
+          >
             <iconify-icon icon="ooui:next-ltr"></iconify-icon>
           </button>
         </div>
@@ -507,64 +546,60 @@
         </div>
       </div>
     </footer>
+
     <script>
       (function () {
-        var container = document.getElementById("processPath");
-        var svg = container ? container.querySelector(".process-line") : null;
-        var path = document.getElementById("processLinePath");
-        var dots = container ? container.querySelectorAll(".step-dot") : [];
+        var track = document.getElementById("testimonialsTrack");
+        var prevBtn = document.getElementById("testimonialPrev");
+        var nextBtn = document.getElementById("testimonialNext");
 
-        if (!container || !svg || !path || dots.length < 2) return;
+        if (!track || !prevBtn || !nextBtn) return;
 
-        function drawLine() {
-          // Only draw when the curved layout is active (hidden on mobile via CSS)
-          if (window.getComputedStyle(svg).display === "none") return;
+        var cards = Array.prototype.slice.call(track.children);
+        var index = 0;
 
-          var containerRect = container.getBoundingClientRect();
-          svg.setAttribute("width", containerRect.width);
-          svg.setAttribute("height", containerRect.height);
-          svg.setAttribute(
-            "viewBox",
-            "0 0 " + containerRect.width + " " + containerRect.height,
-          );
-
-          var points = Array.prototype.map.call(dots, function (dot) {
-            var r = dot.getBoundingClientRect();
-            return {
-              x: r.left + r.width / 2 - containerRect.left,
-              y: r.top + r.height / 2 - containerRect.top,
-            };
-          });
-
-          var d = "M " + points[0].x + " " + points[0].y;
-          for (var i = 1; i < points.length; i++) {
-            var prev = points[i - 1];
-            var curr = points[i];
-            var midX = (prev.x + curr.x) / 2;
-            d +=
-              " C " +
-              midX +
-              " " +
-              prev.y +
-              ", " +
-              midX +
-              " " +
-              curr.y +
-              ", " +
-              curr.x +
-              " " +
-              curr.y;
-          }
-          path.setAttribute("d", d);
+        function visibleCount() {
+          if (window.innerWidth <= 768) return 1;
+          if (window.innerWidth <= 1024) return 2;
+          return 3;
         }
 
-        drawLine();
-        window.addEventListener("resize", drawLine);
-        if (document.fonts && document.fonts.ready) {
-          document.fonts.ready.then(drawLine);
+        function maxIndex() {
+          return Math.max(0, cards.length - visibleCount());
         }
+
+        function update() {
+          var cardRect = cards[0].getBoundingClientRect();
+          var gap =
+            parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) ||
+            0;
+          var offset = index * (cardRect.width + gap);
+          track.style.transform = "translateX(-" + offset + "px)";
+
+          prevBtn.disabled = index === 0;
+          nextBtn.disabled = index >= maxIndex();
+        }
+
+        prevBtn.addEventListener("click", function () {
+          index = Math.max(0, index - 1);
+          update();
+        });
+
+        nextBtn.addEventListener("click", function () {
+          index = Math.min(maxIndex(), index + 1);
+          update();
+        });
+
+        window.addEventListener("resize", function () {
+          index = Math.min(index, maxIndex());
+          update();
+        });
+
+        update();
       })();
     </script>
+
+    <script src="js/fixedtop.js"></script>
     <script src="js/fadeAnimate.js"></script>
   </body>
 </html>

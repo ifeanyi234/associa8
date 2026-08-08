@@ -92,6 +92,25 @@ h4 {
   outline: 3px solid var(--color-accent);
   outline-offset: 3px;
 }
+/* --------------------------------------------------------------------------
+   FORM FONT INHERITANCE FIX
+   -------------------------------------------------------------------------- */
+/* Ensures input values, select dropdowns, and buttons use Inter/body font */
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Ensures placeholders explicitly inherit font-family across all browsers */
+input::placeholder,
+textarea::placeholder {
+  font-family: inherit;
+  opacity: 1; /* Normalizes Firefox placeholder opacity default */
+}
 
 /* =============================================
    1. BUTTONS
@@ -297,18 +316,23 @@ h4 {
   width: 100%;
   height: 100%;
 
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.789), rgba(0, 0, 0, 0.789)),
-    url("../images/bg-hero.jpg");
-
-  background-size: cover;
-  background-position: center;
-
   z-index: 1;
 }
 .hero-bg-home {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.555), rgba(0, 0, 0, 0.555)),
+    url("../images/bg-hero.jpg");
+  background-size: cover;
+  background-position: center;
   width: 75%;
   border-bottom-right-radius: 55%;
+}
+.hero-bg-about {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.555), rgba(0, 0, 0, 0.555)),
+    url("../images/hero-banner4.jpg");
+  background-size: cover;
+  background-position: center;
 }
 .feature-icon iconify-icon {
   color: var(--color-white);
@@ -316,7 +340,7 @@ h4 {
 iconify-icon {
   font-size: 30px;
 }
-.hero::after {
+.hero-home::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -333,6 +357,64 @@ iconify-icon {
   padding-top: 28px;
   padding-bottom: 28px;
   gap: 24px;
+  z-index: 1;
+}
+/* =============================================
+   FIXED NAVBAR & BLUR EFFECT
+============================================= */
+
+/* 1. Default state: sits at the top, scrolls away naturally */
+.navbar-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 9999;
+  background-color: transparent;
+}
+
+/* 2. Fix the "disoriented" hero by pushing the content down manually */
+.hero-content {
+  padding-top: 130px !important; /* Accounts for the 40px it had, plus the navbar height */
+}
+
+/* 3. The active scrolled state */
+.navbar-wrapper.scrolled {
+  position: fixed;
+  background-color: rgba(
+    10,
+    34,
+    68,
+    0.7
+  ); /* Using your dark blue variable base */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  /* The new line underneath when the blur appears */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+  /* Smooth slide-down animation */
+  animation: slideDown 0.4s ease-in-out forwards;
+}
+
+/* 4. Smooth padding transition on the original navbar */
+.navbar {
+  transition: padding 0.3s ease-in-out;
+}
+
+.navbar-wrapper.scrolled .navbar {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+/* 5. Animation keyframes */
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .logo {
@@ -549,6 +631,12 @@ iconify-icon {
 
 /* =============================================
    6. PROCESS
+   Fully deterministic — no JavaScript involved.
+   Dots and the connecting SVG curve both use the
+   SAME percentage coordinate space (viewBox 0 0
+   100 100 + preserveAspectRatio="none"), so they
+   can never drift apart from each other at any
+   screen size.
 ============================================= */
 .process {
   background-color: var(--color-bg-light);
@@ -560,9 +648,22 @@ iconify-icon {
   margin-bottom: 16px;
 }
 
+/* Process header: left-aligned and sitting close to the
+   diagram (above where step 1 begins) instead of centered
+   across the full section width like Pricing's header. */
+.process-section-header {
+  text-align: left;
+  max-width: 520px;
+  margin: 0 0 12px;
+}
+
+.process-section-header .section-description {
+  margin: 0;
+}
+
 .process-path {
   position: relative;
-  padding-top: 24px;
+  height: 480px;
 }
 
 .process-blob {
@@ -573,17 +674,21 @@ iconify-icon {
   pointer-events: none;
 }
 
+/* Sized and positioned to overlap step 1's dot/card directly
+   (rather than sitting fully behind it, hidden) while still
+   bleeding past the section's left edge. */
 .process-blob-1 {
-  width: 300px;
-  height: 300px;
-  left: -70px;
-  bottom: -10px;
+  width: 340px;
+  height: 340px;
+  left: -110px;
+  top: 38%;
+  z-index: 0;
 }
 
 .process-blob-2 {
-  width: 340px;
-  height: 340px;
-  right: -90px;
+  width: 320px;
+  height: 320px;
+  right: -80px;
   top: -20px;
 }
 
@@ -600,69 +705,145 @@ iconify-icon {
 .process-line path {
   fill: none;
   stroke: var(--color-accent);
-  stroke-width: 4;
+  stroke-width: 7;
   stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
 }
 
+/* Dots — positioned in the exact same 0-100 percentage
+   space as the SVG path points above, so they always
+   land exactly on the curve. */
 .step-dot {
   position: absolute;
-  top: -11px;
-  left: -11px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   background-color: var(--color-dark-blue);
   border: 4px solid var(--color-bg-light);
   z-index: 3;
+  transform: translate(-50%, -50%);
 }
 
-.process-steps {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: 28px;
+.step-dot-1 {
+  left: 6%;
+  top: 55%;
 }
 
+.step-dot-2 {
+  left: 38%;
+  top: 30%;
+}
+
+.step-dot-3 {
+  left: 68%;
+  top: 5%;
+}
+
+/* Step cards — anchored just below/right of their dot
+   with a fixed pixel gap (calc mixes % + px safely). */
 .process-step {
-  position: relative;
+  position: absolute;
+  z-index: 2;
+  max-width: 230px;
 }
 
 .process-step-1 {
-  margin-top: 216px;
+  left: 6%;
+  top: calc(55% + 26px);
 }
 
 .process-step-2 {
-  margin-top: 100px;
+  left: 38%;
+  top: calc(30% + 26px);
 }
 
 .process-step-3 {
-  margin-top: 0;
+  left: 68%;
+  top: calc(5% + 26px);
 }
 
 .process-number {
   display: block;
-  font-size: 6rem;
+  font-size: 4.5rem;
   font-weight: 800;
   color: var(--color-border);
   line-height: 1;
-  margin-bottom: -18px;
+  margin-bottom: -12px;
   user-select: none;
 }
 
 .process-step h3 {
   position: relative;
-  font-size: 1.15rem;
-  margin-bottom: 10px;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
   z-index: 1;
 }
 
 .process-step p {
   position: relative;
   color: var(--color-text-muted);
-  font-size: 0.95rem;
-  max-width: 260px;
+  font-size: 0.92rem;
   z-index: 1;
+}
+
+/* ---- Responsive ----
+   Below 1024px the diagonal layout has no room to breathe,
+   so it switches to a simple vertical timeline instead of
+   trying to keep the diagonal proportions alive. */
+@media (max-width: 1024px) {
+  .process-path {
+    height: auto;
+    padding-top: 8px;
+  }
+
+  .process-line,
+  .process-blob,
+  .step-dot {
+    display: none;
+  }
+
+  .process-step {
+    position: relative;
+    left: auto !important;
+    top: auto !important;
+    max-width: 100%;
+    padding-left: 30px;
+    padding-bottom: 40px;
+  }
+
+  .process-step::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    bottom: -4px;
+    width: 2px;
+    background-color: var(--color-border);
+  }
+
+  .process-step:last-child::before {
+    display: none;
+  }
+
+  .process-step::after {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: var(--color-dark-blue);
+    border: 3px solid var(--color-bg-light);
+  }
+
+  .process-number {
+    display: none;
+  }
+
+  .process-step h3 {
+    font-size: 1.05rem;
+  }
 }
 
 /* =============================================
@@ -823,13 +1004,19 @@ iconify-icon {
   text-align: right;
 }
 
-.testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.testimonials-viewport {
+  overflow: hidden;
+}
+
+.testimonials-track {
+  display: flex;
   gap: 24px;
+  transition: transform 0.4s ease;
+  will-change: transform;
 }
 
 .testimonial-card {
+  flex: 0 0 calc((100% - 48px) / 3);
   background-color: var(--color-white);
   border-radius: var(--radius-md);
   padding: 32px;
@@ -887,7 +1074,8 @@ iconify-icon {
   cursor: pointer;
   transition:
     background-color 0.15s ease,
-    color 0.15s ease;
+    color 0.15s ease,
+    opacity 0.15s ease;
 
   display: flex;
   justify-content: center;
@@ -900,6 +1088,14 @@ iconify-icon {
   background-color: var(--color-accent);
   color: var(--color-white);
   border-color: var(--color-accent);
+}
+
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: var(--color-white);
+  color: var(--color-dark-blue);
+  border-color: var(--color-border);
 }
 
 /* =============================================
@@ -1139,7 +1335,7 @@ iconify-icon {
     scale: 1.04;
   }
 }
-@keyframes glow-middle {
+/* @keyframes glow-middle {
   0%,
   100% {
     background-color: rgba(10, 34, 68, 0.05);
@@ -1167,7 +1363,7 @@ iconify-icon {
 
 .diamond-3 {
   animation: glow-inner 8s ease-in-out infinite;
-}
+} */
 .features .diamond {
   animation:
     float 8s ease-in-out infinite,
@@ -1176,6 +1372,7 @@ iconify-icon {
 .features .diamond-md {
   animation-duration: 10s, 12s;
   animation-delay: -2s;
+  top: -160px;
 }
 
 .features .diamond-sm {
@@ -1239,26 +1436,27 @@ center
    11. ABOUT PAGE STYLES
 ============================================= */
 
-/* Hero Overrides */
+/* Hero — same bottom-anchored recipe as Pricing/Contact for consistency */
 .hero-about {
-  padding-bottom: 80px;
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
 }
 
 .hero-about-content {
-  padding-top: 60px;
-  padding-bottom: 40px;
+  padding-bottom: 48px;
 }
 
 .hero-about-content h1 {
-  font-size: clamp(1rem, 5vw, 2rem);
+  font-size: clamp(1.7rem, 4vw, 2.1rem);
   color: var(--color-white);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 /* Section 2: About Intro */
 .about-intro {
   padding: var(--section-padding) 0;
-  background-color: var(--color-white);
+  background-color: var(--color-bg-light);
 }
 
 .about-grid {
@@ -1273,17 +1471,50 @@ center
   min-height: 420px;
 }
 
+/* Decorative dot cluster in the gap between the two photos */
+.about-images::before {
+  content: "";
+  position: absolute;
+  top: 6%;
+  left: 60%;
+  width: 130px;
+  height: 90px;
+  background-image: radial-gradient(
+    rgba(30, 86, 197, 0.35) 2px,
+    transparent 2px
+  );
+  background-size: 16px 16px;
+  z-index: 0;
+  pointer-events: none;
+}
+
 .img-back {
+  position: relative;
+  z-index: 1;
   width: 80%;
   height: 400px;
-  border-radius: 10%;
-  /* border-radius: 120px 120px var(--radius-md) var(--radius-md); */
+  border-radius: 0 28px 28px 28px; /* sharp top-left corner, rounded elsewhere */
+  overflow: hidden;
   background-color: var(--color-dark-blue);
-  background-image:
-    linear-gradient(rgba(10, 34, 68, 0.4), rgba(10, 34, 68, 0.4)),
-    url("../images/bg-hero.jpg");
   background-size: cover;
   background-position: center;
+}
+
+/* Triangular "cut corner" notch revealing the dot pattern behind it */
+.img-back::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 52px;
+  height: 52px;
+  background-color: var(--color-bg-light);
+  background-image: radial-gradient(
+    rgba(30, 86, 197, 0.4) 1.6px,
+    transparent 1.6px
+  );
+  background-size: 14px 14px;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
 }
 
 .img-front {
@@ -1293,10 +1524,11 @@ center
   position: absolute;
   bottom: -20px;
   right: 0;
-  background-color: var(--color-accent);
+  z-index: 2;
+  background-color: var(--color-cta-bg);
   background-size: cover;
   background-position: center;
-  border: 8px solid var(--color-white);
+  border: 6px solid var(--color-white);
   box-shadow: var(--shadow-card-strong);
 }
 
@@ -1320,6 +1552,10 @@ center
   max-width: 1000px;
   margin: 0 auto;
   position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .dark-box {
@@ -1334,6 +1570,7 @@ center
   z-index: 2;
   margin-bottom: -60px;
   box-shadow: var(--shadow-card-strong);
+  width: 80%;
 }
 
 .val-item {
@@ -1345,9 +1582,20 @@ center
   font-size: 1rem;
 }
 
-.val-item iconify-icon {
-  font-size: 36px;
-  color: var(--color-white);
+.val-item .icon-badge {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.val-item .icon-badge iconify-icon {
+  font-size: 24px;
+  color: var(--color-dark-blue);
 }
 
 .white-card {
@@ -1380,16 +1628,17 @@ center
 .col-icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   background-color: var(--color-accent);
   color: var(--color-white);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .col-icon iconify-icon {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .card-col p {
@@ -1400,7 +1649,7 @@ center
 /* Section 4: Demographics & Impact */
 .impact {
   padding: var(--section-padding) 0;
-  background-color: var(--color-white);
+  background-color: var(--color-bg-light);
 }
 
 .impact-grid {
@@ -1446,7 +1695,7 @@ center
 }
 
 .impact-stats {
-  background-color: var(--color-bg-light);
+  background-color: var(--color-white);
   padding: 48px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -1485,7 +1734,7 @@ center
 
 .split-left {
   flex: 1;
-  background-color: var(--color-cta-bg);
+  background-color: #0a2244cc;
   color: var(--color-white);
   padding: 80px 5%;
   display: flex;
@@ -1509,7 +1758,7 @@ center
 }
 
 .split-right {
-  flex: 1;
+  flex: 1 1 20%;
   background-color: var(--color-white);
   padding: 80px 5% 80px 0;
   display: flex;
@@ -1536,8 +1785,8 @@ center
   transform: translateX(-50%);
   width: 48px;
   height: 48px;
-  background-color: var(--color-white);
-  color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-white);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1545,7 +1794,7 @@ center
   font-weight: 700;
   font-size: 1.1rem;
   box-shadow: var(--shadow-card-strong);
-  border: 1px solid var(--color-border);
+  border: 5px solid var(--color-border);
   z-index: 3;
 }
 
@@ -1654,6 +1903,16 @@ center
     gap: 48px;
   }
 
+  .hero-about {
+    height: 320px;
+  }
+
+  .about-images {
+    min-height: 360px;
+    max-width: 460px;
+    margin: 0 auto;
+  }
+
   .white-card {
     flex-direction: column;
     padding-top: 80px;
@@ -1691,6 +1950,18 @@ center
 }
 
 @media (max-width: 560px) {
+  .about-images::before {
+    display: none;
+  }
+
+  .img-back {
+    height: 320px;
+  }
+
+  .img-front {
+    height: 200px;
+  }
+
   .dark-box {
     grid-template-columns: 1fr 1fr;
     display: grid;
@@ -1706,8 +1977,1023 @@ center
     grid-template-columns: 1fr;
   }
 }
+
 /* =============================================
-  12. RESPONSIVE
+  12. PRICING PAGE — INNER HERO
+============================================= */
+.hero-pricing {
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.hero-bg-pricing {
+  background:
+    linear-gradient(rgba(10, 22, 44, 0.5), rgba(10, 22, 44, 0.5)),
+    url("../images/hero-banner5.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-pricing-content {
+  padding-bottom: 48px;
+}
+
+.hero-pricing-content h1 {
+  color: var(--color-white);
+  font-size: clamp(1.7rem, 4vw, 2.1rem);
+  font-weight: 600;
+}
+
+/* =============================================
+  13. PRICING PAGE — PLAN COMPARISON TABLE
+============================================= */
+.pricing-compare {
+  background-color: var(--color-bg-light);
+  padding-bottom: var(--section-padding);
+}
+
+.compare-table-wrap {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compare-table thead th {
+  background-color: var(--color-accent-light);
+  color: var(--color-dark-blue);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 22px 24px;
+  white-space: nowrap;
+}
+
+.compare-table thead th.compare-feature-head {
+  width: 28%;
+}
+
+.compare-table tbody td {
+  text-align: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+}
+
+.compare-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.compare-feature {
+  text-align: left;
+  padding-left: 64px !important;
+  color: var(--color-dark-blue);
+  font-weight: 500;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 5px;
+  color: transparent;
+}
+
+.check.checked {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.check iconify-icon {
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .compare-table-wrap {
+    overflow-x: auto;
+  }
+
+  .compare-table {
+    min-width: 620px;
+  }
+
+  .hero-pricing {
+    height: 320px;
+  }
+}
+
+/* =============================================
+  14. CONTACT PAGE — INNER HERO
+============================================= */
+.hero-contact {
+  height: 420px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.hero-bg-contact {
+  background:
+    linear-gradient(rgba(10, 22, 44, 0.55), rgba(10, 22, 44, 0.55)),
+    url("../images/contact-bg.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+.hero-contact-content {
+  padding-bottom: 48px;
+}
+
+.hero-contact-content h1 {
+  color: var(--color-white);
+  font-size: clamp(1.7rem, 4vw, 2.1rem);
+  font-weight: 600;
+}
+
+/* =============================================
+  15. CONTACT PAGE — INFO + FORM
+============================================= */
+.contact-section {
+  background-color: var(--color-bg-light);
+  padding: var(--section-padding) 0;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.contact-intro .eyebrow {
+  margin-bottom: 20px;
+}
+
+.contact-intro h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 500;
+  margin-bottom: 44px;
+  line-height: 1.35;
+}
+
+.contact-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.contact-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.contact-icon {
+  width: 56px;
+  height: 56px;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+  background-color: var(--color-dark-blue);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.contact-icon iconify-icon {
+  font-size: 24px;
+}
+
+.contact-info-item h4 {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.contact-info-item p {
+  color: var(--color-dark-blue);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.contact-form-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 40px;
+}
+
+.contact-form-header {
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.contact-form-header .eyebrow {
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-dark-blue);
+}
+
+.contact-form-header .eyebrow .pointer > hr {
+  border-color: var(--color-accent);
+}
+
+.contact-form-header .eyebrow .block {
+  background-color: var(--color-accent);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 28px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 0.95rem;
+  color: var(--color-dark-blue);
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-white);
+  color: var(--color-text-dark);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9aa3b2;
+}
+
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  color: #9aa3b2;
+  cursor: pointer;
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.form-group select:valid {
+  color: var(--color-text-dark);
+}
+
+.form-group textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.contact-form-card .btn {
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
+.btn-dark {
+  background-color: var(--color-dark-blue);
+  color: var(--color-white);
+}
+
+.btn-dark:hover {
+  background-color: #10305e;
+}
+
+@media (max-width: 1024px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-contact {
+    height: 320px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-form-card {
+    padding: 28px 20px;
+  }
+}
+/* ========================================================================== */
+/* 16. AUTHENTICATION / LOGIN PAGE STYLES                                     */
+/* ========================================================================== */
+
+.auth-body {
+  margin: 0;
+  padding: 0;
+  font-family: "Manrope", sans-serif;
+  background-color: #081427;
+  overflow-x: hidden;
+}
+
+.auth-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* High quality office background image matching Figma context */
+  background: url("../images/login-bg.png") center/cover no-repeat;
+  padding: 2rem 1.5rem;
+}
+
+.auth-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 35, 70, 0.5);
+  z-index: 1;
+}
+
+.auth-container {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1180px;
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 3rem;
+}
+
+/* Left Section: Branding & Welcome */
+.auth-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem 0;
+  color: #ffffff;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.8rem;
+  letter-spacing: -0.02em;
+}
+
+.auth-brand .brand-name span {
+  color: #ffffff;
+}
+
+.auth-welcome {
+  margin-top: auto;
+  padding-bottom: 1.5rem;
+}
+
+.auth-welcome h1 {
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  color: #ffffff;
+}
+
+.auth-welcome p {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 440px;
+  line-height: 1.6;
+}
+
+/* Right Section: Login Modal Card */
+.auth-card {
+  width: 100%;
+  max-width: 600px;
+  background: rgba(10, 35, 70, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 2.75rem 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.auth-title {
+  color: #ffffff;
+  font-size: 1.65rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  letter-spacing: -0.01em;
+}
+
+/* Form Controls */
+.auth-form .form-group {
+  margin-bottom: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.auth-form label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="password"] {
+  width: 100%;
+  background: #050d1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.9rem 1.1rem;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.auth-form input[type="text"]:focus,
+.auth-form input[type="password"]:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.auth-form input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.password-field-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.btn-toggle-password {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.btn-toggle-password:hover {
+  color: #ffffff;
+}
+
+/* Options (Remember Me & Forgot Password) */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1.25rem 0 1.75rem;
+  font-size: 0.875rem;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.forgot-password {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.forgot-password:hover {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* Submit Button */
+.btn-auth-submit {
+  width: 100%;
+  background: #d8dde3;
+  color: #0b1727;
+  border: none;
+  border-radius: 12px;
+  padding: 0.95rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+  font-family: inherit;
+}
+
+.btn-auth-submit:hover {
+  background: #ffffff;
+}
+
+.btn-auth-submit:active {
+  transform: scale(0.99);
+}
+
+/* Divider */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.75rem 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.auth-divider::before {
+  margin-right: 0.85rem;
+}
+
+.auth-divider::after {
+  margin-left: 0.85rem;
+}
+
+/* Social Buttons Grid */
+.social-login-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: #050d1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
+  font-family: inherit;
+}
+
+.btn-social:hover {
+  background: #09172c;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+  .auth-container {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 2.5rem;
+  }
+
+  .auth-left {
+    align-items: center;
+    text-align: center;
+    padding: 0;
+  }
+
+  .auth-welcome {
+    margin-top: 1.5rem;
+  }
+
+  .auth-welcome p {
+    margin: 0 auto;
+  }
+
+  .auth-card {
+    max-width: 100%;
+  }
+}
+
+/* ========================================================================== */
+/* 17. SIGN UP / REGISTER ORGANISATION MULTI-STEP STYLES                      */
+/* ========================================================================== */
+
+/* Reuses the site's existing .hero, .navbar-wrapper, .navbar, .container,
+   .eyebrow/.pointer, and .site-footer components — no page-specific navbar
+   or footer classes needed here. */
+
+.hero-signup {
+  height: 460px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.hero-bg-signup {
+  background:
+    linear-gradient(rgba(6, 12, 24, 0.6), rgba(6, 12, 24, 0.6)),
+    url("../images/create_organization.jpg");
+  background-size: cover;
+  background-position: center 20%;
+}
+
+.hero-signup-content {
+  padding-bottom: 48px;
+}
+
+.hero-signup-content h1 {
+  color: var(--color-white);
+  font-size: clamp(1.8rem, 4vw, 2.2rem);
+  font-weight: 700;
+}
+
+.signup-section {
+  position: relative;
+  background-color: var(--color-bg-light);
+  padding: var(--section-padding) 0 calc(var(--section-padding) + 40px);
+  overflow: hidden;
+}
+
+.signup-corner-shape {
+  position: absolute;
+  background-color: var(--color-dark-blue);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.signup-corner-top {
+  top: 0;
+  right: 0;
+  width: 30%;
+  height: 240px;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+}
+
+.signup-corner-bottom {
+  bottom: 0;
+  left: 0;
+  width: 36%;
+  height: 320px;
+  clip-path: polygon(0 100%, 0 0, 100% 100%);
+}
+
+.signup-intro {
+  margin-bottom: 40px;
+}
+
+.signup-intro h2 {
+  font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+  font-weight: 600;
+  max-width: 620px;
+  margin: 0;
+}
+
+.signup-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card-strong);
+  overflow: hidden;
+  max-width: 1000px;
+}
+
+.signup-card-header {
+  background-color: var(--color-accent-light);
+  padding: 36px 40px 24px;
+}
+
+.stepper-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  margin-bottom: 24px;
+  max-width: 180px;
+}
+
+.stepper-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-border);
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.stepper-step {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  box-sizing: content-box;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.stepper-step.active {
+  background-color: var(--color-accent);
+  color: var(--color-white);
+}
+
+.step-title-wrap {
+  display: inline-block;
+}
+
+.step-title {
+  color: var(--color-dark-blue);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.step-title-underline {
+  display: block;
+  width: 48px;
+  height: 2px;
+  background-color: var(--color-accent);
+}
+
+.signup-card-body {
+  padding: 40px;
+}
+
+.form-step {
+  display: none;
+}
+
+.form-step.active {
+  display: block;
+  animation: fadeInStep 0.35s ease-in-out;
+}
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.signup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 32px;
+}
+
+.signup-card .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signup-card label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.signup-card label .required {
+  color: #ef4444;
+}
+
+.signup-card input[type="text"],
+.signup-card input[type="email"],
+.signup-card input[type="tel"],
+.signup-card input[type="number"],
+.signup-card input[type="password"],
+.signup-card select {
+  width: 100%;
+  padding: 13px 16px;
+  background-color: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--color-text-dark);
+  font-family: inherit;
+}
+
+.signup-card select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: #9aa3b2;
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23666666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.signup-card select:valid {
+  color: var(--color-text-dark);
+}
+
+.signup-card input:focus,
+.signup-card select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(30, 86, 197, 0.12);
+}
+
+.signup-card input::placeholder {
+  color: #b6bcc8;
+}
+
+.step-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 36px;
+}
+
+.step-actions.right-only {
+  justify-content: flex-end;
+}
+
+.step-actions.space-between {
+  justify-content: space-between;
+}
+
+.btn-step-next,
+.btn-step-submit {
+  background-color: #6b8cee;
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 36px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-step-next:hover,
+.btn-step-submit:hover {
+  background-color: var(--color-accent);
+}
+
+.btn-step-back {
+  background-color: var(--color-white);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 32px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.btn-step-back:hover {
+  background-color: var(--color-bg-light);
+}
+
+@media (max-width: 1024px) {
+  .hero-signup {
+    height: 340px;
+  }
+
+  .signup-corner-top {
+    width: 40%;
+    height: 180px;
+  }
+
+  .signup-corner-bottom {
+    width: 44%;
+    height: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .signup-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .signup-card-body {
+    padding: 24px;
+  }
+
+  .signup-card-header {
+    padding: 24px 24px 16px;
+  }
+
+  .signup-corner-shape {
+    display: none;
+  }
+
+  .step-actions.space-between,
+  .step-actions.right-only {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .btn-step-back,
+  .btn-step-next,
+  .btn-step-submit {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* =============================================
+  18. TESTIMONIALS CAROUSEL — RESPONSIVE
+============================================= */
+@media (max-width: 1024px) {
+  .testimonial-card {
+    flex-basis: calc((100% - 24px) / 2);
+  }
+}
+
+@media (max-width: 768px) {
+  .testimonial-card {
+    flex-basis: 100%;
+  }
+
+  .testimonials-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .testimonials-header .section-description {
+    text-align: left;
+  }
+}
+
+/* =============================================
+  19. RESPONSIVE
 ============================================= */
 @media (min-width: 1024px) {
   .feature-card:nth-child(1) {
@@ -1729,7 +3015,9 @@ center
   :root {
     --section-padding: 72px;
   }
-
+  .hero-about {
+    height: 300px;
+  }
   .hero-content {
     grid-template-columns: 1fr;
     gap: 48px;
@@ -1748,63 +3036,6 @@ center
     align-items: flex-start;
   }
 
-  .process-line,
-  .process-blob,
-  .step-dot {
-    display: none;
-  }
-
-  .process-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .process-step {
-    position: relative;
-    margin-top: 0 !important;
-    padding-left: 30px;
-    padding-bottom: 40px;
-  }
-
-  .process-step::before {
-    content: "";
-    position: absolute;
-    left: 10px;
-    top: 6px;
-    bottom: -4px;
-    width: 2px;
-    background-color: var(--color-border);
-  }
-
-  .process-step:last-child::before {
-    display: none;
-  }
-
-  .process-step::after {
-    content: "";
-    position: absolute;
-    left: 3px;
-    top: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background-color: var(--color-dark-blue);
-    border: 3px solid var(--color-bg-light);
-  }
-
-  .process-number {
-    display: none;
-  }
-
-  .process-step h3 {
-    font-size: 1.05rem;
-  }
-
-  .process-step p {
-    max-width: 100%;
-  }
-
   .pricing-grid {
     grid-template-columns: 1fr;
     max-width: 460px;
@@ -1813,19 +3044,6 @@ center
 
   .pricing-card-highlight {
     transform: none;
-  }
-
-  .testimonials-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .testimonials-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .testimonials-header .section-description {
-    text-align: left;
   }
 
   .cta-banner {

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admission Management - Associa8</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="shortcut icon"
+      href="../images/fav-logo.png"
+      type="image/x-icon"
+    />
+
+    <!-- Admin Dashboard CSS -->
+    <link rel="stylesheet" href="../css/preloader.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+  </head>
+  <body class="admin-body">
+    <!-- Preloader -->
+    <?php include('inc/preloader.php') ?>
+
+    <div class="admin-layout">
+      <!-- SIDEBAR NAVIGATION -->
+      <?php include('inc/sidebar.php') ?>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="admin-main">
+        <!-- Top Navigation Header -->
+        <header class="admin-header">
+          <div class="header-left">
+            <button class="header-toggle-btn" id="sidebarToggle">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="page-title">Admission Management</h1>
+          </div>
+
+          <div class="header-right">
+            <div class="header-search" style="border-right: 1px solid #e2e8f0; padding-right: 12px;">
+              <i class="fa-solid fa-magnifying-glass header-search-icon"></i>
+              <input type="text" placeholder="Search...." />
+            </div>
+
+            <button class="notification-btn" aria-label="Notifications">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notification-badge"></span>
+            </button>
+
+            <div class="admin-user-profile">
+              <div class="avatar-badge">SA</div>
+              <div class="user-info">
+                <span class="user-name">Super Admin</span>
+                <span class="user-role">Full Access</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Dashboard Body Content -->
+        <div class="dashboard-content">
+          <!-- Page Main Action Header -->
+          <div class="page-action-header mb-4">
+            <div>
+              <h2 class="page-title-main">Admission Management</h2>
+              <p class="page-subtitle">Schedules, Applications, CBT, Sponsors & Onboarding</p>
+            </div>
+            <button class="btn-outline-primary">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>New Admission Window</span>
+            </button>
+          </div>
+
+          <!-- Summary Stat Cards Grid -->
+          <section class="stats-grid mb-4">
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">18</div>
+    <div class="suspension-stat-label">Application Review</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">23</div>
+    <div class="suspension-stat-label">CBT Review</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">14</div>
+    <div class="suspension-stat-label">Onboarding</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value text-primary">9</div>
+    <div class="suspension-stat-label">Approved</div>
+  </div>
+</section>
+
+          <!-- Data Table Card -->
+          <div class="table-responsive-card">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Applicant</th>
+                  <th>Guarantor</th>
+                  <th>Stage</th>
+                  <th>Date</th>
+                  <th>CBT Score</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Row 1 -->
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      <div class="member-avatar">CO</div>
+                      <div class="member-info">
+                        <span class="member-name">Chukwuemeka Obi</span>
+                        <span class="member-email">c.obi@gmail.com</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>Joseph Raymond</td>
+                  <td><span class="badge-pill type-reinstatement">CBT Schedule</span></td>
+                  <td>20-05-2026</td>
+                  <td><span class="badge-pill dues-arrears">Pending</span></td>
+                  <td>
+                    <button class="btn-action-trigger" aria-label="Options">
+                      <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Row 2 -->
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      <div class="member-avatar">CO</div>
+                      <div class="member-info">
+                        <span class="member-name">Chukwuemeka Obi</span>
+                        <span class="member-email">c.obi@gmail.com</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>Joseph Raymond</td>
+                  <td><span class="badge-pill type-suspension">Onboarding</span></td>
+                  <td>20-05-2026</td>
+                  <td><span class="badge-pill dues-current">78%</span></td>
+                  <td>
+                    <button class="btn-action-trigger" aria-label="Options">
+                      <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Row 3 -->
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      <div class="member-avatar">CO</div>
+                      <div class="member-info">
+                        <span class="member-name">Chukwuemeka Obi</span>
+                        <span class="member-email">c.obi@gmail.com</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>Joseph Raymond</td>
+                  <td><span class="badge-pill status-under-review">Application Review</span></td>
+                  <td>20-05-2026</td>
+                  <td><span class="badge-pill dues-arrears">Pending</span></td>
+                  <td>
+                    <button class="btn-action-trigger" aria-label="Options">
+                      <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Row 4 -->
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      <div class="member-avatar">CO</div>
+                      <div class="member-info">
+                        <span class="member-name">Chukwuemeka Obi</span>
+                        <span class="member-email">c.obi@gmail.com</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>Joseph Raymond</td>
+                  <td><span class="badge-pill status-active">Approved</span></td>
+                  <td>20-05-2026</td>
+                  <td><span class="badge-pill dues-current">85%</span></td>
+                  <td>
+                    <button class="btn-action-trigger" aria-label="Options">
+                      <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Row 5 -->
+                <tr>
+                  <td>
+                    <div class="member-cell">
+                      <div class="member-avatar">CO</div>
+                      <div class="member-info">
+                        <span class="member-name">Chukwuemeka Obi</span>
+                        <span class="member-email">c.obi@gmail.com</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>Joseph Raymond</td>
+                  <td><span class="badge-pill status-inactive">Rejected</span></td>
+                  <td>20-05-2026</td>
+                  <td><span class="badge-pill status-inactive">2%</span></td>
+                  <td>
+                    <button class="btn-action-trigger" aria-label="Options">
+                      <i class="fa-solid fa-ellipsis"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Table Pagination Footer -->
+            <div class="table-pagination-footer">
+              <span>Showing 5 of 5</span>
+              <div class="pagination-controls">
+                <button class="page-btn">Prev</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <?php include('inc/footer.php')?>
+      </main>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script>
+      // 1. Sidebar Dropdown Accordion Toggle Logic
+      const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
+
+      dropdownItems.forEach((item) => {
+        const link = item.querySelector(".sidebar-link");
+        const submenu = item.querySelector(".sidebar-submenu");
+
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isOpen = item.classList.contains("open");
+
+          dropdownItems.forEach((otherItem) => {
+            if (otherItem !== item) {
+              otherItem.classList.remove("open");
+              const otherSub = otherItem.querySelector(".sidebar-submenu");
+              if (otherSub) otherSub.style.maxHeight = null;
+            }
+          });
+
+          if (!isOpen) {
+            item.classList.add("open");
+            submenu.style.maxHeight = submenu.scrollHeight + "px";
+          } else {
+            item.classList.remove("open");
+            submenu.style.maxHeight = null;
+          }
+        });
+      });
+
+      // 2. Mobile Sidebar Toggle
+      document.getElementById("sidebarToggle").addEventListener("click", () => {
+        document.getElementById("adminSidebar").classList.toggle("open");
+      });
+    </script>
+    <script src="../js/preloader.js"></script>
+  </body>
+</html>

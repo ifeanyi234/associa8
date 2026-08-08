@@ -10,6 +10,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="shortcut icon" href="images/fav-logo.png" type="image/x-icon" />
     <!-- Iconify for Icons -->
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
     <link rel="stylesheet" href="css/styles.css" />
@@ -17,24 +18,30 @@
   <body>
     <!-- SECTION 1: HERO -->
     <header class="hero hero-about">
-      <div class="hero-bg"></div>
-      <div class="container">
-        <nav class="navbar">
-          <a href="index.html" class="logo">
+      <div class="hero-bg hero-bg-about"></div>
+
+      <!-- Full-width wrapper for the dynamic fixed blur header -->
+      <div class="navbar-wrapper" id="navbarWrapper">
+        <nav class="navbar container">
+          <a href="index.php" class="logo">
             <img src="images/brand-logo.png" alt="" />
           </a>
           <ul class="nav-links">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="#pricing">Pricing</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="pricing.php">Pricing</a></li>
+            <li><a href="contact.php">Contact</a></li>
           </ul>
           <div class="nav-actions">
-            <a href="#" class="btn btn-outline-light">Login</a>
-            <a href="#" class="btn btn-white">Sign Up</a>
+            <a href="admin/index.php" class="btn btn-outline-light" target="_blank"
+              >Login</a
+            >
+            <a href="signup.php" class="btn btn-white">Sign Up</a>
           </div>
         </nav>
+      </div>
 
+      <div class="container">
         <div class="hero-about-content">
           <h1>About</h1>
         </div>
@@ -45,8 +52,15 @@
     <section class="about-intro">
       <div class="container about-grid">
         <div class="about-images">
-          <div class="img-back"></div>
-          <div class="img-front"></div>
+          <!-- <div
+            class="img-back"
+            style="background-image: url(&quot;images/about1.jpg&quot;)"
+          ></div>
+          <div
+            class="img-front"
+            style="background-image: url(&quot;images/about2.png&quot;)"
+          ></div> -->
+          <img src="images/abot pics.png" alt="about picture">
         </div>
         <div class="about-text">
           <div class="eyebrow pointer-holder">
@@ -82,14 +96,17 @@
     <section class="value-prop">
       <div class="container">
         <div class="section-header">
-          <div class="eyebrow center pointer-holder"><span class="pointer">
+          <div class="eyebrow center pointer-holder">
+            <span class="pointer">
               <hr />
               <span class="block"></span>
-            </span> Our Value Preposition <span class="pointer">
-             
+            </span>
+            Our Value Preposition
+            <span class="pointer">
               <span class="block"></span>
-               <hr />
-            </span></div>
+              <hr />
+            </span>
+          </div>
           <h2>Flexible Pricing for Every Organization</h2>
         </div>
 
@@ -97,19 +114,27 @@
           <!-- Overlapping Dark Card -->
           <div class="dark-box">
             <div class="val-item">
-              <iconify-icon icon="lucide:shield-time"></iconify-icon>
+              <span class="icon-badge">
+                <iconify-icon icon="lucide:shield-time"></iconify-icon>
+              </span>
               <span>Security</span>
             </div>
             <div class="val-item">
-              <iconify-icon icon="lucide:star"></iconify-icon>
+              <span class="icon-badge">
+                <iconify-icon icon="lucide:star"></iconify-icon>
+              </span>
               <span>Innovation</span>
             </div>
             <div class="val-item">
-              <iconify-icon icon="lucide:clock"></iconify-icon>
+              <span class="icon-badge">
+                <iconify-icon icon="lucide:clock"></iconify-icon>
+              </span>
               <span>Collaboration</span>
             </div>
             <div class="val-item">
-              <iconify-icon icon="lucide:handshake"></iconify-icon>
+              <span class="icon-badge">
+                <iconify-icon icon="lucide:handshake"></iconify-icon>
+              </span>
               <span>Integrity</span>
             </div>
           </div>
@@ -150,10 +175,13 @@
     <section class="impact">
       <div class="container impact-grid">
         <div class="demographics">
-          <div class="eyebrow pointer-holder"><span class="pointer">
+          <div class="eyebrow pointer-holder">
+            <span class="pointer">
               <hr />
               <span class="block"></span>
-            </span> Who we serve</div>
+            </span>
+            Who we serve
+          </div>
           <h2>Built for Organizations That Bring People Together.</h2>
 
           <div class="progress-bars">
@@ -206,10 +234,13 @@
         </div>
 
         <div class="impact-stats">
-          <div class="eyebrow pointer-holder"><span class="pointer">
+          <div class="eyebrow pointer-holder">
+            <span class="pointer">
               <hr />
               <span class="block"></span>
-            </span> Our impact in numbers</div>
+            </span>
+            Our impact in numbers
+          </div>
           <h2>Driving Measurable Success for Organizations Everywhere</h2>
           <div class="stats-grid">
             <div class="stat">
@@ -296,9 +327,7 @@
             </button>
             <div class="faq-content">
               <p>
-                Associa8 is designed for associations of all sizes including
-                professional bodies, NGOs, alumni networks, and community
-                groups.
+                Associa8 is designed for membership-based organizations of all sizes. Whether you manage a professional association, church, nonprofit, alumni association, cooperative, club, educational institution, or community group, our platform provides the tools you need to streamline operations, engage members, and manage your organization efficiently.
               </p>
             </div>
           </div>
@@ -309,8 +338,7 @@
             </button>
             <div class="faq-content">
               <p>
-                Yes, we offer smooth CSV and Excel data import tools along with
-                onboarding support to migrate your member profiles effortlessly.
+                Absolutely. We can help you migrate your existing member records, financial data, and other essential information from your current system to Associa8. Our onboarding team works with you to make the transition as smooth as possible while minimizing disruption to your organization.
               </p>
             </div>
           </div>
@@ -321,8 +349,7 @@
             </button>
             <div class="faq-content">
               <p>
-                You can create your account and start setting up member
-                directories and event links in under 15 minutes.
+                Yes. Our dedicated support team is available to assist you with onboarding, platform setup, troubleshooting, and ongoing questions. We also provide helpful resources, guides, and documentation to ensure you get the most out of Associa8.
               </p>
             </div>
           </div>
@@ -333,8 +360,7 @@
             </button>
             <div class="faq-content">
               <p>
-                Absolutely. We enforce bank-level SSL encryption, automated
-                backups, and strict data confidentiality protocols.
+                Yes. Security is a top priority at Associa8. We use industry-standard security practices, encrypted data transmission, role-based access controls, and secure cloud infrastructure to help protect your organization's information. Regular backups and continuous monitoring ensure your data remains safe, available, and reliable.
               </p>
             </div>
           </div>
@@ -448,7 +474,7 @@
         </div>
       </div>
     </footer>
-
-    <script src="js/accordion.js""></script>
+    <script src="js/fixedtop.js"></script>
+    <script src="js/accordion.js"></script>
   </body>
 </html>

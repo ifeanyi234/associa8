@@ -1,0 +1,70 @@
+/* =============================================
+   PRELOADER
+============================================= */
+
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background-color: var(--color-dark-blue, rgba(10, 34, 68, 1));
+  transition:
+    opacity 0.6s ease,
+    visibility 0.6s ease;
+}
+
+#preloader.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader-mark {
+  width: 96px;
+  height: 96px;
+}
+
+/* Real path length for two r=12 circles is ~150.8 (2 * 2 * PI * 12).
+   dasharray/dashoffset now match that instead of an arbitrary 340,
+   so the draw animation is visible across the whole cycle instead
+   of sitting invisible for the first half. */
+.preloader-mark path {
+  fill: none;
+  stroke: var(--color-white, #ffffff);
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 152;
+  stroke-dashoffset: 152;
+  animation: draw-eight 1.8s ease-in-out infinite;
+}
+
+@keyframes draw-eight {
+  0% {
+    stroke-dashoffset: 152;
+    stroke: var(--color-white, #ffffff);
+  }
+  45% {
+    stroke-dashoffset: 0;
+    stroke: var(--color-accent, #1e56c5);
+  }
+  80% {
+    stroke-dashoffset: -152;
+    stroke: var(--color-white, #ffffff);
+  }
+  100% {
+    stroke-dashoffset: -152;
+    stroke: var(--color-white, #ffffff);
+  }
+}
+
+.preloader-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

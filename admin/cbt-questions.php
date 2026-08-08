@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CBT Questions - Associa8</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- Favicon -->
+    <link
+      rel="shortcut icon"
+      href="../images/fav-logo.png"
+      type="image/x-icon"
+    />
+
+    <!-- Admin Dashboard CSS -->
+    <link rel="stylesheet" href="../css/preloader.css" />
+    <link rel="stylesheet" href="../css/dashboard.css" />
+  </head>
+  <body class="admin-body">
+    <!-- Preloader -->
+    <?php include('inc/preloader.php') ?>
+
+    <div class="admin-layout">
+      <!-- SIDEBAR NAVIGATION -->
+      <?php include('inc/sidebar.php') ?>
+
+      <!-- MAIN CONTENT AREA -->
+      <main class="admin-main">
+        <!-- Top Navigation Header -->
+        <header class="admin-header">
+          <div class="header-left">
+            <button class="header-toggle-btn" id="sidebarToggle">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1 class="page-title">CBT Management</h1>
+          </div>
+
+          <div class="header-right">
+            <div class="header-search">
+              <i class="fa-solid fa-magnifying-glass header-search-icon"></i>
+              <input type="text" placeholder="Search...." />
+            </div>
+
+            <button class="notification-btn" aria-label="Notifications">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notification-badge"></span>
+            </button>
+
+            <div class="admin-user-profile">
+              <div class="avatar-badge">SA</div>
+              <div class="user-info">
+                <span class="user-name">Super Admin</span>
+                <span class="user-role">Full Access</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Dashboard Body Content -->
+        <div class="dashboard-content">
+          <!-- Page Main Action Header -->
+          <div class="page-action-header mb-4">
+            <div>
+              <h2 class="page-title-main">CBT Questions</h2>
+              <p class="page-subtitle">CBT Schedule & Onboarding</p>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn-outline-primary">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Questions</span>
+              </button>
+              <button class="btn-outline-primary">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Export Question</span>
+              </button>
+              <button class="btn-outline-primary">
+                <i class="fa-solid fa-upload"></i>
+                <span>Bulk Upload</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary Stat Cards Grid -->
+          <section class="stats-grid mb-4">
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">18</div>
+    <div class="suspension-stat-label">Application Review</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">23</div>
+    <div class="suspension-stat-label">CBT Review</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value">14</div>
+    <div class="suspension-stat-label">Onboarding</div>
+  </div>
+  <div class="suspension-stat-card">
+    <div class="suspension-stat-value text-primary">9</div>
+    <div class="suspension-stat-label">Approved</div>
+  </div>
+</section>
+
+          <!-- Questions Container Card -->
+          <div class="table-responsive-card" style="padding: 0; overflow: hidden;">
+            <div style="background: #0f2744; color: #ffffff; padding: 16px 24px; font-weight: 600; font-size: 1.05rem;">
+              Questions
+            </div>
+
+            <div style="padding: 24px;">
+              <!-- Question Item 1 -->
+              <div style="margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 1</h3>
+                <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
+                  An insurance policy covering fire damage to stock pays 70% of the cost for the first $1000 and all the cost thereafter up to total of $7000, following a claim , the claimant had to pay an additional of $2000 to damage stock. how much was the stock cost?
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
+                  <div>(A) . $9000</div>
+                  <div>(B) . $9700</div>
+                  <div>(C) . $9300</div>
+                  <div>(D) . $8700</div>
+                  <div>(E) . $8300</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
+                    Ans: C
+                  </span>
+                  <button type="button" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                    Del
+                  </button>
+                </div>
+              </div>
+
+              <!-- Question Item 2 -->
+              <div style="margin-bottom: 12px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 2</h3>
+                <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
+                  An insurance policy covering fire damage to stock pays 70% of the cost for the first $1000 and all the cost thereafter up to total of $7000, following a claim , the claimant had to pay an additional of $2000 to damage stock. how much was the stock cost?
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
+                  <div>(A) . $9000</div>
+                  <div>(B) . $9700</div>
+                  <div>(C) . $9300</div>
+                  <div>(D) . $8700</div>
+                  <div>(E) . $8300</div>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
+                    Ans: C
+                  </span>
+                  <button type="button" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
+                    Del
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <?php include('inc/footer.php')?>
+      </main>
+    </div>
+
+    <!-- Interactive Scripts -->
+    <script>
+      const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
+      dropdownItems.forEach((item) => {
+        const link = item.querySelector(".sidebar-link");
+        const submenu = item.querySelector(".sidebar-submenu");
+
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const isOpen = item.classList.contains("open");
+
+          dropdownItems.forEach((otherItem) => {
+            if (otherItem !== item) {
+              otherItem.classList.remove("open");
+              const otherSub = otherItem.querySelector(".sidebar-submenu");
+              if (otherSub) otherSub.style.maxHeight = null;
+            }
+          });
+
+          if (!isOpen) {
+            item.classList.add("open");
+            submenu.style.maxHeight = submenu.scrollHeight + "px";
+          } else {
+            item.classList.remove("open");
+            submenu.style.maxHeight = null;
+          }
+        });
+      });
+
+      document.getElementById("sidebarToggle").addEventListener("click", () => {
+        document.getElementById("adminSidebar").classList.toggle("open");
+      });
+    </script>
+    <script src="../js/preloader.js"></script>
+  </body>
+</html>
