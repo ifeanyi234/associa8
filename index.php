@@ -20,27 +20,7 @@
     <!-- ============================= -->
     <header class="hero hero-home">
       <!-- NEW: Full-width wrapper for the blur and fixed effect -->
-      <div class="navbar-wrapper" id="navbarWrapper">
-        <nav class="navbar container">
-          <a href="#" class="logo">
-            <img src="images/brand-logo.png" alt="Brand logo" />
-          </a>
-
-          <ul class="nav-links">
-            <li><a href="#">Home</a></li>
-            <li><a href="about.php">About</a></li>
-            <li><a href="pricing.php">Pricing</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-
-          <div class="nav-actions">
-            <a href="admin/index.php" class="btn btn-outline-light" target="_blank"
-              >Login</a
-            >
-            <a href="signup.php" class="btn btn-white">Sign Up</a>
-          </div>
-        </nav>
-      </div>
+      <?php include("inc/navbar.php") ?>
 
       <div class="hero-bg hero-bg-home"></div>
       <!-- ... rest of your hero content ... -->
@@ -73,7 +53,7 @@
         </div>
       </div>
     </header>
-
+    <?php include("inc/mobile-nav.php") ?>
     <!-- ============================= -->
     <!-- SECTION 2: FEATURES -->
     <!-- ============================= -->
@@ -174,8 +154,8 @@
           </div>
           <h2>How Associa8 Works</h2>
           <p class="section-description">
-            Get started in just a few simple steps and transform the way your
-            organization manages members, operations, and communication.
+            Get started in just a few simple steps and transform <br> the way your
+            organization manages members,<br> operations, and communication.
           </p>
         </div>
 
@@ -183,17 +163,12 @@
           <span class="process-blob process-blob-1" aria-hidden="true"></span>
           <span class="process-blob process-blob-2" aria-hidden="true"></span>
 
-          <svg
+          <img
+            src="images/process-line.png"
             class="process-line"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
+            alt=""
             aria-hidden="true"
-          >
-            <path
-              d="M1,42 C7,60 5,62 6,55 C16,47 27,38 38,30 C50,21 58,12 68,5 C74,1 80,2 84,4"
-              vector-effect="non-scaling-stroke"
-            />
-          </svg>
+          />
 
           <span class="step-dot step-dot-1" aria-hidden="true"></span>
           <span class="step-dot step-dot-2" aria-hidden="true"></span>
@@ -247,13 +222,13 @@
         <div class="section-header">
           <div class="eyebrow center pointer-holder">
             <span class="pointer">
-              <hr />
               <span class="block"></span>
+              <hr />
             </span>
-            Pricing Plans
+            Pricing Plan
             <span class="pointer">
-              <span class="block"></span>
               <hr />
+              <span class="block"></span>
             </span>
           </div>
           <h2>Flexible Pricing for Every Organization</h2>
@@ -262,7 +237,11 @@
         <div class="pricing-grid">
           <article class="pricing-card">
             <div class="price-desc">
-              <h3>Basic</h3>
+              <h3>Basic<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
+              
               <p class="pricing-description">
                 For small associations that need to manage members and track
                 attendance without the extras.
@@ -277,11 +256,11 @@
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
               <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Up to 100 members</li>
-                <li>Member directory</li>
-                <li>Attendance tracking</li>
-                <li>Basic reporting</li>
-                <li>Email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
@@ -289,7 +268,10 @@
           <article class="pricing-card pricing-card-highlight">
             <div class="price-desc">
               <span class="badge">Most Popular</span>
-              <h3>Professional</h3>
+              <h3>Professional<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
               <p class="pricing-description">
                 For growing associations that need deeper financial and
                 administrative control.
@@ -304,18 +286,21 @@
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
               <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Everything in Basic</li>
-                <li>Up to 500 members</li>
-                <li>Financial tracking</li>
-                <li>Administration management</li>
-                <li>Priority email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
 
           <article class="pricing-card">
             <div class="price-desc">
-              <h3>Elite</h3>
+              <h3>Elite<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
               <p class="pricing-description">
                 For full-scale associations that run every operation through
                 Organizations.
@@ -331,11 +316,11 @@
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
               <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Everything in Professional</li>
-                <li>Unlimited members</li>
-                <li>Custom report</li>
-                <li>API access</li>
-                <li>Phone &amp; email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
@@ -362,14 +347,18 @@
         <div class="testimonials-viewport">
           <div class="testimonials-track" id="testimonialsTrack">
             <article class="testimonial-card">
-              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <div class="quotes">
+                <span class="quote-icon" aria-hidden="true">&ldquo;</span>
+                <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              </div>
+              
               <p class="testimonial-text">
                 Associa8 has completely transformed the way we manage our
                 association. From member registration and attendance tracking
                 to financial management, everything is finally in one place.
               </p>
               <div class="testimonial-footer">
-                <span class="avatar" aria-hidden="true"></span>
+                <span class="avatar" aria-hidden="true"><img src="images/client1.png" alt="client 1"></span>
                 <div>
                   <p class="testimonial-name">Mark W.</p>
                   <p class="testimonial-title">Chairman, Charlton Group</p>
@@ -378,14 +367,17 @@
             </article>
 
             <article class="testimonial-card">
-              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <div class="quotes">
+                <span class="quote-icon" aria-hidden="true">&ldquo;</span>
+                <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              </div>
               <p class="testimonial-text">
                 We were drowning in spreadsheets for membership renewals.
                 Associa8 let us track payments and send reminders in one
                 place. Saves us hours each month.
               </p>
               <div class="testimonial-footer">
-                <span class="avatar" aria-hidden="true"></span>
+                <span class="avatar" aria-hidden="true"><img src="images/client2.png" alt="client 2"></span>
                 <div>
                   <p class="testimonial-name">Nneka O.</p>
                   <p class="testimonial-title">
@@ -396,14 +388,17 @@
             </article>
 
             <article class="testimonial-card">
-              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <div class="quotes">
+                <span class="quote-icon" aria-hidden="true">&ldquo;</span>
+                <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              </div>
               <p class="testimonial-text">
                 Attendance tracking used to mean passing a sheet around
                 meetings. Now members check in on their phones. Simple and no
                 more lost data.
               </p>
               <div class="testimonial-footer">
-                <span class="avatar" aria-hidden="true"></span>
+                <span class="avatar" aria-hidden="true"><img src="images/client3.png" alt="client 3"></span>
                 <div>
                   <p class="testimonial-name">Joseph R.</p>
                   <p class="testimonial-title">Treasurer, Professional Group</p>
@@ -412,14 +407,17 @@
             </article>
 
             <article class="testimonial-card">
-              <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              <div class="quotes">
+                <span class="quote-icon" aria-hidden="true">&ldquo;</span>
+                <span class="quote-icon" aria-hidden="true">&rdquo;</span>
+              </div>
               <p class="testimonial-text">
                 Setting up our organization took less than ten minutes.
                 Adding members and assigning roles was straightforward.
                 Exactly what a small association needs.
               </p>
               <div class="testimonial-footer">
-                <span class="avatar" aria-hidden="true"></span>
+                <span class="avatar" aria-hidden="true"><img src="images/client4.png" alt="client 4"></span>
                 <div>
                   <p class="testimonial-name">Adekemi K.</p>
                   <p class="testimonial-title">President, Alumni Network</p>
@@ -451,101 +449,12 @@
     <!-- ============================= -->
     <!-- SECTION 6: CTA BLOCK -->
     <!-- ============================= -->
-    <section class="cta-section">
-      <div class="container">
-        <div class="cta-banner">
-          <div class="cta-text">
-            <h2>Join million people who already trust us</h2>
-            <p>
-              Automate registrations, dues, and reporting so your team spends
-              less time on admin and more time growing the community that
-              matters to them.
-            </p>
-            <a href="#" class="btn btn-accent">Start a Free Trail</a>
-          </div>
-
-          <div class="cta-media">
-            <div
-              class="placeholder-video"
-              role="img"
-              aria-label="Video preview placeholder"
-            >
-              <button class="play-btn" aria-label="Play video">
-                <span class="play-triangle" aria-hidden="true"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <?php include("inc/cta.php")?>
 
     <!-- ============================= -->
     <!-- SECTION 7: SITE FOOTER -->
     <!-- ============================= -->
-    <footer class="site-footer">
-      <div class="container footer-top">
-        <div class="footer-brand">
-          <a href="#" class="logo">
-            <img src="images/brand-logo.png" alt="Brand logo" />
-          </a>
-          <p>
-            An all-in-one platform that helps associations manage members,
-            finances, attendance, and communication from a single secure
-            dashboard.
-          </p>
-        </div>
-
-        <div class="footer-links">
-          <div class="footer-links-group">
-            <h4>Features</h4>
-            <ul>
-              <li><a href="#">Membership</a></li>
-              <li><a href="#">Finance</a></li>
-              <li><a href="#">Attendance</a></li>
-              <li><a href="#">Events</a></li>
-              <li><a href="#">Communication</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-links-group">
-            <h4>Resources</h4>
-            <ul>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">FAQ</a></li>
-              <li><a href="#">Help</a></li>
-              <li><a href="#">Privacy policy</a></li>
-              <li><a href="#">Terms of service</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-newsletter">
-          <h4>Get the Latest Information</h4>
-          <form class="newsletter-form" onsubmit="return false;">
-            <label for="newsletter-email" class="sr-only">Email address</label>
-            <input
-              type="email"
-              id="newsletter-email"
-              placeholder="Enter your email"
-              required
-            />
-            <button type="submit" class="btn btn-accent">Submit</button>
-          </form>
-        </div>
-      </div>
-
-      <div class="container">
-        <div class="footer-bottom">
-          <p>Copyright &copy; 2026 Associa8. All rights reserved</p>
-          <div class="social-icons">
-            <a href="#" class="social-icon" aria-label="Facebook"></a>
-            <a href="#" class="social-icon" aria-label="Twitter"></a>
-            <a href="#" class="social-icon" aria-label="Instagram"></a>
-            <a href="#" class="social-icon" aria-label="LinkedIn"></a>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <?php include("inc/footer.php") ?>
 
     <script>
       (function () {
@@ -598,8 +507,9 @@
         update();
       })();
     </script>
-
+    <script src="js/mobilemenu.js"></script>
     <script src="js/fixedtop.js"></script>
     <script src="js/fadeAnimate.js"></script>
+    <script src="js/video-modal.js"></script>
   </body>
 </html>

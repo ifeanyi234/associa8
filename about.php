@@ -21,25 +21,7 @@
       <div class="hero-bg hero-bg-about"></div>
 
       <!-- Full-width wrapper for the dynamic fixed blur header -->
-      <div class="navbar-wrapper" id="navbarWrapper">
-        <nav class="navbar container">
-          <a href="index.php" class="logo">
-            <img src="images/brand-logo.png" alt="" />
-          </a>
-          <ul class="nav-links">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li><a href="pricing.php">Pricing</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-          <div class="nav-actions">
-            <a href="admin/index.php" class="btn btn-outline-light" target="_blank"
-              >Login</a
-            >
-            <a href="signup.php" class="btn btn-white">Sign Up</a>
-          </div>
-        </nav>
-      </div>
+      <?php include("inc/navbar.php")?>
 
       <div class="container">
         <div class="hero-about-content">
@@ -47,7 +29,7 @@
         </div>
       </div>
     </header>
-
+    <?php include("inc/mobile-nav.php") ?>
     <!-- SECTION 2: ABOUT ASSOCIA8 -->
     <section class="about-intro">
       <div class="container about-grid">
@@ -115,25 +97,25 @@
           <div class="dark-box">
             <div class="val-item">
               <span class="icon-badge">
-                <iconify-icon icon="lucide:shield-time"></iconify-icon>
+                <iconify-icon icon="icon-park-solid:protect"></iconify-icon>
               </span>
               <span>Security</span>
             </div>
             <div class="val-item">
               <span class="icon-badge">
-                <iconify-icon icon="lucide:star"></iconify-icon>
+                <iconify-icon icon="iconoir:star-solid"></iconify-icon>
               </span>
               <span>Innovation</span>
             </div>
             <div class="val-item">
               <span class="icon-badge">
-                <iconify-icon icon="lucide:clock"></iconify-icon>
+                <iconify-icon icon="flowbite:clock-solid"></iconify-icon>
               </span>
               <span>Collaboration</span>
             </div>
             <div class="val-item">
               <span class="icon-badge">
-                <iconify-icon icon="lucide:handshake"></iconify-icon>
+                <iconify-icon icon="fa7-solid:handshake"></iconify-icon>
               </span>
               <span>Integrity</span>
             </div>
@@ -157,7 +139,7 @@
             <div class="card-col vision-col">
               <div class="col-header">
                 <div class="col-icon">
-                  <iconify-icon icon="lucide:eye"></iconify-icon>
+                  <iconify-icon icon="tabler:mountain-filled"></iconify-icon>
                 </div>
                 <h3>Vision</h3>
               </div>
@@ -379,102 +361,15 @@
     <!-- ============================= -->
     <!-- SECTION 6: CTA BLOCK -->
     <!-- ============================= -->
-    <section class="cta-section">
-      <div class="container">
-        <div class="cta-banner">
-          <div class="cta-text">
-            <h2>Join million people who already trust us</h2>
-            <p>
-              Automate registrations, dues, and reporting so your team spends
-              less time on admin and more time growing the community that
-              matters to them.
-            </p>
-            <a href="#" class="btn btn-accent">Start a Free Trail</a>
-          </div>
-
-          <div class="cta-media">
-            <div
-              class="placeholder-video"
-              role="img"
-              aria-label="Video preview placeholder"
-            >
-              <button class="play-btn" aria-label="Play video">
-                <span class="play-triangle" aria-hidden="true"></span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <?php include("inc/cta.php")?>
 
     <!-- ============================= -->
     <!-- SECTION 7: SITE FOOTER -->
     <!-- ============================= -->
-    <footer class="site-footer">
-      <div class="container footer-top">
-        <div class="footer-brand">
-          <a href="#" class="logo">
-            <img src="images/brand-logo.png" alt="Brand logo" />
-          </a>
-          <p>
-            An all-in-one platform that helps associations manage members,
-            finances, attendance, and communication from a single secure
-            dashboard.
-          </p>
-        </div>
-
-        <div class="footer-links">
-          <div class="footer-links-group">
-            <h4>Features</h4>
-            <ul>
-              <li><a href="#">Membership</a></li>
-              <li><a href="#">Finance</a></li>
-              <li><a href="#">Attendance</a></li>
-              <li><a href="#">Events</a></li>
-              <li><a href="#">Communication</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-links-group">
-            <h4>Resources</h4>
-            <ul>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">FAQ</a></li>
-              <li><a href="#">Help</a></li>
-              <li><a href="#">Privacy policy</a></li>
-              <li><a href="#">Terms of service</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-newsletter">
-          <h4>Get the Latest Information</h4>
-          <form class="newsletter-form" onsubmit="return false;">
-            <label for="newsletter-email" class="sr-only">Email address</label>
-            <input
-              type="email"
-              id="newsletter-email"
-              placeholder="Enter your email"
-              required
-            />
-            <button type="submit" class="btn btn-accent">Submit</button>
-          </form>
-        </div>
-      </div>
-
-      <div class="container">
-        <div class="footer-bottom">
-          <p>Copyright &copy; 2026 Associa8. All rights reserved</p>
-          <div class="social-icons">
-            <a href="#" class="social-icon" aria-label="Facebook"></a>
-            <a href="#" class="social-icon" aria-label="Twitter"></a>
-            <a href="#" class="social-icon" aria-label="Instagram"></a>
-            <a href="#" class="social-icon" aria-label="LinkedIn"></a>
-          </div>
-        </div>
-      </div>
-    </footer>
+    <?php include("inc/footer.php")?>
+    <script src="js/mobilemenu.js"></script>
     <script src="js/fixedtop.js"></script>
     <script src="js/accordion.js"></script>
+    <script src="js/video-modal.js"></script>
   </body>
 </html>

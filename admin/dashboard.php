@@ -39,6 +39,9 @@
          ========================================== -->
         <?php include('inc/sidebar.php') ?>
 
+      <!-- Mobile sidebar backdrop: tap it to close the sidebar -->
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
       <!-- ==========================================
          MAIN CONTENT AREA
          ========================================== -->
@@ -310,29 +313,12 @@
           <!-- Bottom Row -->
           <section class="bottom-widgets-grid">
             <div class="dashboard-card">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  color: #16a34a;
-                  font-weight: 500;
-                  font-size: 0.85rem;
-                  margin-bottom: 0.75rem;
-                "
-              >
+              <div class="mini-stat-header success">
                 <i class="fa-solid fa-comment-dots"></i> Dues Compliance
               </div>
-              <div style="font-size: 1.5rem; font-weight: 700">
+              <div class="mini-stat-value">
                 78%
-                <span
-                  style="
-                    font-size: 0.8rem;
-                    font-weight: 400;
-                    color: var(--text-muted);
-                  "
-                  >members current</span
-                >
+                <span class="mini-stat-value-sub">members current</span>
               </div>
               <div class="progress-bar-wrapper">
                 <div class="progress-bar-fill" style="width: 78%"></div>
@@ -340,65 +326,27 @@
             </div>
 
             <div class="dashboard-card">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  color: #dc2626;
-                  font-weight: 500;
-                  font-size: 0.85rem;
-                  margin-bottom: 0.75rem;
-                "
-              >
+              <div class="mini-stat-header danger">
                 <i class="fa-regular fa-clock"></i> CBT Pending
               </div>
-              <div style="font-size: 1.5rem; font-weight: 700">
+              <div class="mini-stat-value">
                 23
-                <span
-                  style="
-                    font-size: 0.8rem;
-                    font-weight: 400;
-                    color: var(--text-muted);
-                  "
-                  >applicants awaiting test</span
-                >
+                <span class="mini-stat-value-sub">applicants awaiting test</span>
               </div>
-              <div
-                style="font-size: 0.75rem; color: #ef4444; margin-top: 0.5rem"
-              >
+              <div class="mini-stat-footnote danger">
                 Next session Dec,12 2026
               </div>
             </div>
 
             <div class="dashboard-card">
-              <div
-                style="
-                  display: flex;
-                  align-items: center;
-                  gap: 0.5rem;
-                  color: #9333ea;
-                  font-weight: 500;
-                  font-size: 0.85rem;
-                  margin-bottom: 0.75rem;
-                "
-              >
+              <div class="mini-stat-header purple">
                 <i class="fa-solid fa-bell"></i> Notification Sent
               </div>
-              <div style="font-size: 1.5rem; font-weight: 700">
+              <div class="mini-stat-value">
                 1,204
-                <span
-                  style="
-                    font-size: 0.8rem;
-                    font-weight: 400;
-                    color: var(--text-muted);
-                  "
-                  >this month</span
-                >
+                <span class="mini-stat-value-sub">this month</span>
               </div>
-              <div
-                style="font-size: 0.75rem; color: #9333ea; margin-top: 0.5rem"
-              >
+              <div class="mini-stat-footnote purple">
                 3 Newsletter pending
               </div>
             </div>
@@ -444,9 +392,40 @@
         });
       });
 
-      // 2. Mobile Sidebar Toggle
+      // 2. Mobile Sidebar Toggle (with backdrop + outside-tap/Escape to close)
+      const sidebarEl = document.getElementById("adminSidebar");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      function openSidebar() {
+        sidebarEl.classList.add("open");
+        sidebarOverlay.classList.add("active");
+      }
+
+      function closeSidebar() {
+        sidebarEl.classList.remove("open");
+        sidebarOverlay.classList.remove("active");
+      }
+
       document.getElementById("sidebarToggle").addEventListener("click", () => {
-        document.getElementById("adminSidebar").classList.toggle("open");
+        sidebarEl.classList.contains("open") ? closeSidebar() : openSidebar();
+      });
+
+      // Tap the backdrop to close
+      sidebarOverlay.addEventListener("click", closeSidebar);
+
+      // Escape key to close
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSidebar();
+      });
+
+      // Close as soon as a real nav link (not a dropdown toggle) is tapped,
+      // so it doesn't stay open while the new page loads
+      sidebarEl.querySelectorAll(".sidebar-link").forEach((link) => {
+        const parentItem = link.closest(".sidebar-item");
+        const isDropdownToggle = parentItem && parentItem.classList.contains("dropdown") && link === parentItem.querySelector(":scope > .sidebar-link");
+        if (!isDropdownToggle) {
+          link.addEventListener("click", closeSidebar);
+        }
       });
 
       // 3. Member Growth Line Chart

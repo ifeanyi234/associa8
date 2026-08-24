@@ -18,7 +18,8 @@
   --color-white: #ffffff;
   --color-text-dark: #333333;
   --color-text-muted: #666666;
-  --color-cta-bg: #6a7c92;
+  --color-cta-bg: #0a224480;
+
   --color-border: #e7eaf3;
 
   --radius-sm: 8px;
@@ -125,15 +126,20 @@ textarea::placeholder {
   font-size: 0.95rem;
   white-space: nowrap;
   border: 2px solid transparent;
+  cursor: pointer;
   transition:
-    transform 0.15s ease,
     background-color 0.15s ease,
     color 0.15s ease,
     border-color 0.15s ease;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+[class*="btn"],
+a[class*="btn"] {
+  cursor: pointer;
 }
 
 .btn-accent {
@@ -142,7 +148,9 @@ textarea::placeholder {
 }
 
 .btn-accent:hover {
-  background-color: var(--color-accent-hover);
+  background-color: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
 }
 
 .btn-outline-accent {
@@ -162,7 +170,9 @@ textarea::placeholder {
 }
 
 .btn-white:hover {
-  background-color: var(--color-bg-light);
+  background-color: transparent;
+  border: 2px solid var(--color-white);
+  color: var(--color-white);
 }
 
 .btn-outline-light {
@@ -230,16 +240,16 @@ textarea::placeholder {
   align-items: center;
 }
 .feature-icon-1 {
-  border-radius: 20px 0 0 0;
+  border-radius: var(--radius-sm);
 }
 .feature-icon-2 {
-  border-radius: 0 20px 0 0;
+  border-radius: var(--radius-sm);
 }
 .feature-icon-3 {
-  border-radius: 0 0 0 20px;
+  border-radius: var(--radius-sm);
 }
 .feature-icon-4 {
-  border-radius: 0 0 20px 0;
+  border-radius: var(--radius-sm);
 }
 
 .placeholder-arch {
@@ -251,11 +261,16 @@ textarea::placeholder {
 }
 
 .avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: var(--color-border);
+  border-radius: 10px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .social-icon {
@@ -270,8 +285,8 @@ textarea::placeholder {
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 3;
-  background-color: rgba(255, 255, 255, 0.25);
-  border-radius: var(--radius-md);
+  /* background-color: rgba(255, 255, 255, 0.25); */
+  /* border-radius: var(--radius-md); */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,6 +311,121 @@ textarea::placeholder {
   border-bottom: 10px solid transparent;
   border-left: 16px solid var(--color-white);
   margin-left: 4px;
+}
+
+.placeholder-video {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(rgba(4, 16, 34, 0.42), rgba(4, 16, 34, 0.42)),
+    url("../images/cta-bg.jpg") center / cover no-repeat;
+  cursor: pointer;
+  transition: filter 0.25s ease;
+}
+
+.placeholder-video:hover {
+  filter: brightness(1.12);
+}
+
+.placeholder-video:focus-visible {
+  outline-color: var(--color-white);
+  outline-offset: -6px;
+}
+
+.video-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
+}
+
+.video-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.video-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 10, 22, 0.84);
+  backdrop-filter: blur(8px);
+}
+
+.video-modal-dialog {
+  position: relative;
+  width: min(960px, 100%);
+  overflow: hidden;
+  background: #07182e;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-md);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.25s ease;
+}
+
+.video-modal.active .video-modal-dialog {
+  transform: translateY(0) scale(1);
+}
+
+.video-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.video-modal-header h2 {
+  color: var(--color-white);
+  font-size: 1rem;
+}
+
+.video-modal-close {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-white);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.video-modal-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.video-modal-player {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+body.video-modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 560px) {
+  .video-modal {
+    padding: 12px;
+  }
+
+  .video-modal-header {
+    padding: 12px 14px;
+  }
 }
 
 /* =============================================
@@ -324,8 +454,12 @@ textarea::placeholder {
     url("../images/bg-hero.jpg");
   background-size: cover;
   background-position: center;
-  width: 75%;
-  border-bottom-right-radius: 55%;
+}
+@media (min-width: 1024px) {
+  .hero-bg-home {
+    width: 75%;
+    border-bottom-right-radius: 55%;
+  }
 }
 .hero-bg-about {
   background:
@@ -631,16 +765,11 @@ iconify-icon {
 
 /* =============================================
    6. PROCESS
-   Fully deterministic — no JavaScript involved.
-   Dots and the connecting SVG curve both use the
-   SAME percentage coordinate space (viewBox 0 0
-   100 100 + preserveAspectRatio="none"), so they
-   can never drift apart from each other at any
-   screen size.
 ============================================= */
 .process {
   background-color: var(--color-bg-light);
   padding: var(--section-padding) 0;
+  overflow: hidden;
 }
 
 .section-header h2 {
@@ -665,6 +794,14 @@ iconify-icon {
   position: relative;
   height: 480px;
 }
+@media (min-width: 1024px) {
+  .process-section-header {
+    margin: 0 0 0;
+  }
+  .process-path {
+    margin-top: -200px;
+  }
+}
 
 .process-blob {
   position: absolute;
@@ -680,16 +817,15 @@ iconify-icon {
 .process-blob-1 {
   width: 340px;
   height: 340px;
-  left: -110px;
-  top: 38%;
-  z-index: 0;
+  left: -190px;
+  top: -5%; /* was 38% — moved down to sit behind dot 1 */
 }
 
 .process-blob-2 {
   width: 320px;
   height: 320px;
-  right: -80px;
-  top: -20px;
+  right: -200px;
+  top: -10%; /* was -20px — moved down slightly to sit behind dot 3 */
 }
 
 .process-line {
@@ -698,8 +834,17 @@ iconify-icon {
   width: 100%;
   height: 100%;
   z-index: 1;
-  overflow: visible;
+  object-fit: fill; /* stretches to fill container exactly like the old SVG did */
   pointer-events: none;
+
+  user-select: none;
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+
+  /* Prevents dragging the element */
+  user-drag: none;
+  -webkit-user-drag: none;
 }
 
 .process-line path {
@@ -715,28 +860,28 @@ iconify-icon {
    land exactly on the curve. */
 .step-dot {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background-color: var(--color-dark-blue);
-  border: 4px solid var(--color-bg-light);
+  border: 10px solid var(--color-bg-light);
   z-index: 3;
   transform: translate(-50%, -50%);
 }
 
 .step-dot-1 {
-  left: 6%;
-  top: 55%;
+  left: 10.6%;
+  top: 94%;
 }
 
 .step-dot-2 {
-  left: 38%;
-  top: 30%;
+  left: 40%;
+  top: 40%;
 }
 
 .step-dot-3 {
-  left: 68%;
-  top: 5%;
+  left: 80%;
+  top: 15%;
 }
 
 /* Step cards — anchored just below/right of their dot
@@ -748,28 +893,35 @@ iconify-icon {
 }
 
 .process-step-1 {
-  left: 6%;
-  top: calc(55% + 26px);
+  left: 9%;
+  top: calc(75% + 26px);
 }
 
 .process-step-2 {
   left: 38%;
   top: calc(30% + 26px);
+  max-width: 300px;
 }
 
 .process-step-3 {
-  left: 68%;
-  top: calc(5% + 26px);
+  left: 79%;
+  top: calc(0% + 26px);
+  max-width: 400px;
 }
 
 .process-number {
   display: block;
-  font-size: 4.5rem;
+  font-size: 6.5rem;
   font-weight: 800;
-  color: var(--color-border);
+  color: rgba(213, 213, 213, 1);
   line-height: 1;
   margin-bottom: -12px;
   user-select: none;
+  text-align: right;
+}
+
+.process-step-2 .process-number {
+  padding-right: 50px;
 }
 
 .process-step h3 {
@@ -786,10 +938,7 @@ iconify-icon {
   z-index: 1;
 }
 
-/* ---- Responsive ----
-   Below 1024px the diagonal layout has no room to breathe,
-   so it switches to a simple vertical timeline instead of
-   trying to keep the diagonal proportions alive. */
+/* ---- Responsive ---- */
 @media (max-width: 1024px) {
   .process-path {
     height: auto;
@@ -944,15 +1093,21 @@ iconify-icon {
   color: var(--color-text-dark);
 }
 
-.pricing-features li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 4px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background-color: var(--color-accent);
+.pricing-features li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-left: 0;
+  font-size: 0.95rem;
+  color: var(--color-text-dark);
+}
+
+.pricing-features li iconify-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--color-accent);
+  margin-top: 1px;
 }
 
 .pricing-card-highlight {
@@ -1001,7 +1156,7 @@ iconify-icon {
 
 .testimonials-header .section-description {
   max-width: 360px;
-  text-align: right;
+  text-align: left;
 }
 
 .testimonials-viewport {
@@ -1028,9 +1183,15 @@ iconify-icon {
 .quote-icon {
   font-family: Georgia, serif;
   font-size: 3.5rem;
-  color: var(--color-accent);
-  line-height: 1;
-  margin-bottom: 8px;
+  color: rgba(0, 0, 0, 0.6);
+  height: fit-content;
+  line-height: 0.5;
+}
+
+.quotes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .testimonial-text {
@@ -1109,11 +1270,15 @@ iconify-icon {
 .cta-banner {
   background-color: var(--color-cta-bg);
   border-radius: var(--radius-lg);
-  padding: 64px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 48px;
   align-items: center;
+  overflow: hidden;
+}
+
+.cta-text {
+  padding: 64px 0 64px 64px;
 }
 
 .cta-text h2 {
@@ -1126,6 +1291,15 @@ iconify-icon {
   color: rgba(255, 255, 255, 0.85);
   margin-bottom: 28px;
   max-width: 440px;
+}
+
+.cta-media {
+  width: 100%;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.64), rgba(0, 0, 0, 0.64)),
+    url(../images/cta-bg.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
 /* =============================================
@@ -1193,18 +1367,19 @@ iconify-icon {
 
 .newsletter-form input {
   padding: 14px 18px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.06);
-  color: var(--color-white);
+  background-color: rgb(255, 255, 255);
+  color: rgba(0, 0, 0, 0.5);
   font-size: 0.95rem;
 }
 
 .newsletter-form input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.5);
 }
 
 .newsletter-form .btn {
+  cursor: pointer;
   width: 100%;
 }
 
@@ -1227,6 +1402,14 @@ iconify-icon {
 .social-icons {
   display: flex;
   gap: 12px;
+}
+
+.social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  font-size: 18px;
 }
 /* ===========================
    DIAMOND COMPONENT
@@ -1335,35 +1518,7 @@ iconify-icon {
     scale: 1.04;
   }
 }
-/* @keyframes glow-middle {
-  0%,
-  100% {
-    background-color: rgba(10, 34, 68, 0.05);
-  }
 
-  50% {
-    background-color: rgba(10, 34, 68, 0.12);
-  }
-}
-
-@keyframes glow-inner {
-  0%,
-  100% {
-    background-color: rgba(151, 71, 255, 0.1);
-  }
-
-  50% {
-    background-color: rgba(151, 71, 255, 0.2);
-  }
-}
-
-.diamond-2 {
-  animation: glow-middle 6s ease-in-out infinite;
-}
-
-.diamond-3 {
-  animation: glow-inner 8s ease-in-out infinite;
-} */
 .features .diamond {
   animation:
     float 8s ease-in-out infinite,
@@ -1411,13 +1566,13 @@ line thingy
   height: 0;
   width: 29px;
   border-width: 1px;
-  border-color: #448aff;
+  border-color: #4489ffab;
 }
 .pointer .block {
-  width: 10px;
-  height: 10px;
+  width: 6px;
+  height: 6px;
   transform: rotate(45deg);
-  background-color: #448aff;
+  background-color: #4489ffab;
   border-radius: 50%;
 }
 .pointer-holder {
@@ -1436,7 +1591,6 @@ center
    11. ABOUT PAGE STYLES
 ============================================= */
 
-/* Hero — same bottom-anchored recipe as Pricing/Contact for consistency */
 .hero-about {
   height: 420px;
   display: flex;
@@ -1471,7 +1625,6 @@ center
   min-height: 420px;
 }
 
-/* Decorative dot cluster in the gap between the two photos */
 .about-images::before {
   content: "";
   position: absolute;
@@ -1493,14 +1646,13 @@ center
   z-index: 1;
   width: 80%;
   height: 400px;
-  border-radius: 0 28px 28px 28px; /* sharp top-left corner, rounded elsewhere */
+  border-radius: 0 28px 28px 28px;
   overflow: hidden;
   background-color: var(--color-dark-blue);
   background-size: cover;
   background-position: center;
 }
 
-/* Triangular "cut corner" notch revealing the dot pattern behind it */
 .img-back::after {
   content: "";
   position: absolute;
@@ -1533,7 +1685,7 @@ center
 }
 
 .about-text h2 {
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  font-size: clamp(1.8rem, 1.4vw, 2.4rem);
   margin-bottom: 20px;
 }
 
@@ -1549,8 +1701,8 @@ center
 }
 
 .overlap-container {
-  max-width: 1000px;
-  margin: 0 auto;
+  /* max-width: 1000px; */
+  /* margin: 0 auto; */
   position: relative;
   display: flex;
   align-items: center;
@@ -1568,7 +1720,7 @@ center
   align-items: center;
   position: relative;
   z-index: 2;
-  margin-bottom: -60px;
+  margin-bottom: -11%;
   box-shadow: var(--shadow-card-strong);
   width: 80%;
 }
@@ -1578,15 +1730,15 @@ center
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  font-weight: 600;
+  font-weight: 200;
   font-size: 1rem;
 }
 
 .val-item .icon-badge {
-  width: 58px;
+  /* width: 58px;
   height: 58px;
   border-radius: 50%;
-  background-color: var(--color-white);
+  background-color: var(--color-white); */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1595,13 +1747,28 @@ center
 
 .val-item .icon-badge iconify-icon {
   font-size: 24px;
-  color: var(--color-dark-blue);
+  color: var(--color-white);
+}
+@media (min-width: 1024px) {
+  .val-item .icon-badge iconify-icon {
+    font-size: 47.54px;
+  }
+  .val-item {
+    font-size: 24px;
+  }
+  .val-item:nth-child(1),
+  .val-item:nth-child(4) {
+    transform: translateY(-45px);
+  }
+  .dark-box {
+    padding-top: 85px;
+  }
 }
 
 .white-card {
   background-color: var(--color-white);
   border-radius: var(--radius-lg);
-  padding: 100px 48px 48px;
+  padding: 20% 82px 10%;
   display: flex;
   box-shadow: var(--shadow-card);
   border: 1px solid var(--color-border);
@@ -1626,11 +1793,11 @@ center
 }
 
 .col-icon {
-  width: 40px;
+  /* width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background-color: var(--color-accent);
-  color: var(--color-white);
+  border-radius: 50%; */
+  /* background-color: var(--color-accent); */
+  color: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1639,6 +1806,14 @@ center
 
 .col-icon iconify-icon {
   font-size: 20px;
+}
+iconify-icon[icon="lucide:shrink"] {
+  transform: rotate(45deg);
+}
+@media (min-width: 1024px) {
+  .col-icon iconify-icon {
+    font-size: 44.5px;
+  }
 }
 
 .card-col p {
@@ -1740,14 +1915,14 @@ center
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-end;
-  text-align: right;
+  /* align-items: flex-end;
+  text-align: right; */
 }
 
 .split-left h2 {
   color: var(--color-white);
   font-size: clamp(2.2rem, 4vw, 3.5rem);
-  line-height: 1.15;
+  line-height: 1.3;
   margin-bottom: 20px;
 }
 
@@ -1828,7 +2003,7 @@ center
 }
 
 .faq-item {
-  background-color: var(--color-white);
+  background-color: #d9d9d94d;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -1842,7 +2017,7 @@ center
 .faq-toggle {
   width: 100%;
   text-align: left;
-  background: none;
+  background-color: #d9d9d94d;
   border: none;
   padding: 20px 24px;
   font-size: 1.05rem;
@@ -1989,7 +2164,7 @@ center
 
 .hero-bg-pricing {
   background:
-    linear-gradient(rgba(10, 22, 44, 0.5), rgba(10, 22, 44, 0.5)),
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
     url("../images/hero-banner5.jpg");
   background-size: cover;
   background-position: center;
@@ -2104,7 +2279,7 @@ center
 
 .hero-bg-contact {
   background:
-    linear-gradient(rgba(10, 22, 44, 0.55), rgba(10, 22, 44, 0.55)),
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
     url("../images/contact-bg.jpg");
   background-size: cover;
   background-position: center;
@@ -2289,7 +2464,9 @@ center
 }
 
 .btn-dark:hover {
-  background-color: #10305e;
+  background-color: transparent;
+  border: 2px solid var(--color-dark-blue);
+  color: var(--color-dark-blue);
 }
 
 @media (max-width: 1024px) {
@@ -2648,7 +2825,7 @@ center
 
 .hero-bg-signup {
   background:
-    linear-gradient(rgba(6, 12, 24, 0.6), rgba(6, 12, 24, 0.6)),
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
     url("../images/create_organization.jpg");
   background-size: cover;
   background-position: center 20%;
@@ -3010,6 +3187,18 @@ center
   .feature-card:nth-child(4) {
     border-radius: 0 0 30px 0;
   }
+  .feature-icon-1 {
+    border-radius: 20px 0 0 0;
+  }
+  .feature-icon-2 {
+    border-radius: 0 20px 0 0;
+  }
+  .feature-icon-3 {
+    border-radius: 0 0 0 20px;
+  }
+  .feature-icon-4 {
+    border-radius: 0 0 20px 0;
+  }
 }
 @media (max-width: 1024px) {
   :root {
@@ -3048,11 +3237,15 @@ center
 
   .cta-banner {
     grid-template-columns: 1fr;
-    padding: 40px;
+    /* padding: 40px; */
+  }
+
+  .cta-text {
+    padding: 40px 40px 0 40px;
   }
 
   .cta-media {
-    max-width: 420px;
+    /* max-width: 420px; */
   }
 
   .footer-top {
@@ -3094,6 +3287,7 @@ center
 @media (max-width: 560px) {
   .container {
     padding: 0 18px;
+    padding-bottom: 18px;
   }
 
   .features-cards {
@@ -3122,5 +3316,223 @@ center
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+/* =============================================
+  20. MOBILE MENU — UNIQUE TOGGLE & SLIDE PANEL
+============================================= */
+
+.menu-toggle {
+  display: none;
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 10001;
+}
+
+/* 2x2 dot grid — each dot positioned individually so it can travel
+   to the center and become one arm of the X on open */
+.menu-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-white);
+  transition:
+    transform 0.35s cubic-bezier(0.65, 0, 0.35, 1),
+    width 0.3s ease,
+    height 0.3s ease,
+    border-radius 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.menu-dot-1 {
+  top: 14px;
+  left: 14px;
+}
+.menu-dot-2 {
+  top: 14px;
+  right: 14px;
+  /* background-color: var(--color-accent); */
+}
+.menu-dot-3 {
+  bottom: 14px;
+  left: 14px;
+  /* background-color: var(--color-accent); */
+}
+.menu-dot-4 {
+  bottom: 14px;
+  right: 14px;
+}
+
+/* Open state: dots stretch and rotate into an X made of two crossing bars */
+.menu-toggle.active .menu-dot {
+  width: 18px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-white);
+}
+
+.menu-toggle.active .menu-dot-1 {
+  top: 21px;
+  left: 13px;
+  transform: rotate(45deg);
+}
+
+.menu-toggle.active .menu-dot-2 {
+  top: 21px;
+  right: 13px;
+  transform: rotate(-45deg);
+}
+
+.menu-toggle.active .menu-dot-3 {
+  bottom: 21px;
+  left: 13px;
+  transform: rotate(-45deg);
+}
+
+.menu-toggle.active .menu-dot-4 {
+  bottom: 21px;
+  right: 13px;
+  transform: rotate(45deg);
+}
+
+/* Slide-in panel */
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(340px, 82vw);
+  height: 100vh;
+  background-color: var(--color-dark-blue);
+  z-index: 10000;
+  padding: 100px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+  overflow-y: auto;
+}
+
+.mobile-menu.active {
+  transform: translateX(0);
+}
+
+/* Dot-grid texture, echoing .hero-dots, tucked in the top-left corner */
+.mobile-menu-dots {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 70px;
+  height: 70px;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.35) 2px,
+    transparent 2px
+  );
+  background-size: 14px 14px;
+  pointer-events: none;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-nav-links li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 4px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+  font-size: 1.15rem;
+  transition:
+    color 0.15s ease,
+    padding-left 0.2s ease;
+}
+
+/* Accent dot appears before the link on hover — same pointer motif as desktop eyebrows */
+.mobile-nav-links a::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-links a:hover,
+.mobile-nav-links a:focus-visible {
+  color: var(--color-white);
+  padding-left: 8px;
+}
+
+.mobile-nav-links a:hover::before,
+.mobile-nav-links a:focus-visible::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.mobile-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: auto;
+}
+
+.mobile-menu-actions .btn {
+  width: 100%;
+}
+
+/* Dark overlay behind the panel */
+.mobile-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(6, 12, 24, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.mobile-menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+body.mobile-menu-open {
+  overflow: hidden;
+}
+
+/* Show toggle, hide desktop nav below 768px */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .nav-actions {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
   }
 }

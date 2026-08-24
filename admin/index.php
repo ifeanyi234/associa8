@@ -28,7 +28,7 @@
         <!-- Left Column: Branding & Welcome Text -->
         <div class="auth-left">
           <div class="auth-brand">
-            <a href="index.php" class="">
+            <a href="../index.php" class="">
               <!-- Associa8 Logo Icon -->
               <img src="../images/brand-logo-white.png" alt="white brand logo" />
             </a>

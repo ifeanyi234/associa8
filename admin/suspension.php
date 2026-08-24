@@ -278,8 +278,35 @@
       });
 
       // 2. Mobile Sidebar Toggle
+      const sidebarEl = document.getElementById("adminSidebar");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      function openSidebar() {
+        sidebarEl.classList.add("open");
+        sidebarOverlay.classList.add("active");
+      }
+
+      function closeSidebar() {
+        sidebarEl.classList.remove("open");
+        sidebarOverlay.classList.remove("active");
+      }
+
       document.getElementById("sidebarToggle").addEventListener("click", () => {
-        document.getElementById("adminSidebar").classList.toggle("open");
+        sidebarEl.classList.contains("open") ? closeSidebar() : openSidebar();
+      });
+
+      sidebarOverlay.addEventListener("click", closeSidebar);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSidebar();
+      });
+
+      sidebarEl.querySelectorAll(".sidebar-link").forEach((link) => {
+        const parentItem = link.closest(".sidebar-item");
+        const isDropdownToggle = parentItem && parentItem.classList.contains("dropdown") && link === parentItem.querySelector(":scope > .sidebar-link");
+        if (!isDropdownToggle) {
+          link.addEventListener("click", closeSidebar);
+        }
       });
     </script>
     <script src="../js/preloader.js"></script>

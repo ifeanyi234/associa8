@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login - Associa8</title>
+    <title>Sign Up - Associa8</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,7 +28,7 @@
         <!-- Left Column: Branding & Welcome Text -->
         <div class="auth-left">
           <div class="auth-brand">
-            <a href="index.php" class="">
+            <a href="../index.php" class="">
               <!-- Associa8 Logo Icon -->
               <img src="../images/brand-logo-white.png" alt="white brand logo" />
             </a>

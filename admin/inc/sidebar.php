@@ -12,7 +12,7 @@
           <li class="sidebar-item">
             <a href="dashboard.php" class="sidebar-link active">
               <div class="sidebar-link-content">
-                <i class="fa-solid fa-table-columns"></i>
+                <i class="fa-solid fa-cube"></i>
                 <span>Dashboard</span>
               </div>
             </a>
@@ -254,7 +254,7 @@
         </ul>
 
         <div class="sidebar-footer">
-          <a href="#" class="sidebar-link">
+          <a href="index.php" class="sidebar-link">
             <div class="sidebar-link-content">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
               <span>Logout</span>

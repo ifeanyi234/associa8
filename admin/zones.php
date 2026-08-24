@@ -111,29 +111,88 @@
           <section class="zone-list">
             
             <!-- Lagos Zone -->
-            <div class="zone-card">
-              <div class="zone-info-group">
-                <div class="zone-icon-box">
-                  <i class="fa-solid fa-location-dot"></i>
+            <div class="zone-group">
+              <div class="zone-card">
+                <div class="zone-info-group">
+                  <div class="zone-icon-box">
+                    <i class="fa-solid fa-location-dot"></i>
+                  </div>
+                  <div class="zone-details">
+                    <span class="zone-title">Lagos Zone</span>
+                    <span class="zone-coordinator">Coordinator: Joseph Raymond</span>
+                  </div>
                 </div>
-                <div class="zone-details">
-                  <span class="zone-title">Lagos Zone</span>
-                  <span class="zone-coordinator">Coordinator: Joseph Raymond</span>
+
+                <div class="zone-meta-group">
+                  <div class="zone-stat-unit">
+                    <span class="zone-stat-number">218</span>
+                    <span class="zone-stat-text">members</span>
+                  </div>
+                  <div class="zone-stat-unit">
+                    <span class="zone-stat-number">4</span>
+                    <span class="zone-stat-text">sub-zones</span>
+                  </div>
+                  <div class="zone-actions">
+                    <a href="#" class="btn-zone-action" aria-label="Edit Zone"><i class="fa-solid fa-pen"></i></a>
+                    <button type="button" class="btn-zone-action btn-zone-toggle" aria-label="Toggle sub-zones" aria-expanded="false">
+                      <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div class="zone-meta-group">
-                <div class="zone-stat-unit">
-                  <span class="zone-stat-number">218</span>
-                  <span class="zone-stat-text">members</span>
-                </div>
-                <div class="zone-stat-unit">
-                  <span class="zone-stat-number">4</span>
-                  <span class="zone-stat-text">sub-zones</span>
-                </div>
-                <div class="zone-actions">
-                  <a href="#" class="btn-zone-action" aria-label="Edit Zone"><i class="fa-solid fa-pen"></i></a>
-                  <a href="#" class="btn-zone-action" aria-label="View Zone"><i class="fa-solid fa-chevron-right"></i></a>
+              <div class="subzone-panel">
+                <div class="subzone-panel-inner">
+                  <div class="subzone-panel-header">
+                    <span class="subzone-panel-title">Sub-Zones</span>
+                    <a href="#" class="subzone-add-link"><i class="fa-solid fa-plus"></i> Add sub-zones</a>
+                  </div>
+
+                  <div class="subzone-grid">
+                    <div class="subzone-card">
+                      <div class="subzone-info">
+                        <div class="subzone-icon-box"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="subzone-details">
+                          <span class="subzone-title">Lagos Island</span>
+                          <span class="subzone-coordinator">Amaka Giwa</span>
+                        </div>
+                      </div>
+                      <div class="subzone-count"><i class="fa-solid fa-users"></i><span>94</span></div>
+                    </div>
+
+                    <div class="subzone-card">
+                      <div class="subzone-info">
+                        <div class="subzone-icon-box"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="subzone-details">
+                          <span class="subzone-title">Surulere</span>
+                          <span class="subzone-coordinator">Bode Gantos</span>
+                        </div>
+                      </div>
+                      <div class="subzone-count"><i class="fa-solid fa-users"></i><span>82</span></div>
+                    </div>
+
+                    <div class="subzone-card">
+                      <div class="subzone-info">
+                        <div class="subzone-icon-box"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="subzone-details">
+                          <span class="subzone-title">Lagos Mainland</span>
+                          <span class="subzone-coordinator">Amaka Giwa</span>
+                        </div>
+                      </div>
+                      <div class="subzone-count"><i class="fa-solid fa-users"></i><span>94</span></div>
+                    </div>
+
+                    <div class="subzone-card">
+                      <div class="subzone-info">
+                        <div class="subzone-icon-box"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="subzone-details">
+                          <span class="subzone-title">Oshodi-Isolo</span>
+                          <span class="subzone-coordinator">Bode Gantos</span>
+                        </div>
+                      </div>
+                      <div class="subzone-count"><i class="fa-solid fa-users"></i><span>82</span></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -264,8 +323,35 @@
       });
 
       // 2. Mobile Sidebar Toggle
+      const sidebarEl = document.getElementById("adminSidebar");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      function openSidebar() {
+        sidebarEl.classList.add("open");
+        sidebarOverlay.classList.add("active");
+      }
+
+      function closeSidebar() {
+        sidebarEl.classList.remove("open");
+        sidebarOverlay.classList.remove("active");
+      }
+
       document.getElementById("sidebarToggle").addEventListener("click", () => {
-        document.getElementById("adminSidebar").classList.toggle("open");
+        sidebarEl.classList.contains("open") ? closeSidebar() : openSidebar();
+      });
+
+      sidebarOverlay.addEventListener("click", closeSidebar);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSidebar();
+      });
+
+      sidebarEl.querySelectorAll(".sidebar-link").forEach((link) => {
+        const parentItem = link.closest(".sidebar-item");
+        const isDropdownToggle = parentItem && parentItem.classList.contains("dropdown") && link === parentItem.querySelector(":scope > .sidebar-link");
+        if (!isDropdownToggle) {
+          link.addEventListener("click", closeSidebar);
+        }
       });
     </script>
     <script src="../js/preloader.js"></script>

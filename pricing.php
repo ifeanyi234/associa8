@@ -23,25 +23,7 @@
       <div class="hero-bg hero-bg-pricing"></div>
 
       <!-- Full-width wrapper for the dynamic fixed blur header -->
-      <div class="navbar-wrapper" id="navbarWrapper">
-        <nav class="navbar container">
-          <a href="index.php" class="logo">
-            <img src="images/brand-logo.png" alt="Brand logo" />
-          </a>
-          <ul class="nav-links">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="about.php">About</a></li>
-            <li><a href="#">Pricing</a></li>
-            <li><a href="contact.php">Contact</a></li>
-          </ul>
-          <div class="nav-actions">
-            <a href="admin/index.php" class="btn btn-outline-light" target="_blank"
-              >Login</a
-            >
-            <a href="signup.php" class="btn btn-white">Sign Up</a>
-          </div>
-        </nav>
-      </div>
+      <?php include("inc/navbar.php")?>
 
       <div class="container">
         <div class="hero-pricing-content">
@@ -49,7 +31,7 @@
         </div>
       </div>
     </header>
-
+    <?php include("inc/mobile-nav.php") ?>
     <!-- ============================= -->
     <!-- SECTION 2: PRICING PLANS -->
     <!-- ============================= -->
@@ -68,13 +50,13 @@
         <div class="section-header">
           <div class="eyebrow center pointer-holder">
             <span class="pointer">
-              <hr />
               <span class="block"></span>
+              <hr />
             </span>
             Pricing Plan
             <span class="pointer">
-              <span class="block"></span>
               <hr />
+              <span class="block"></span>
             </span>
           </div>
           <h2>Explore Our Affordable<br />Price</h2>
@@ -83,7 +65,11 @@
         <div class="pricing-grid">
           <article class="pricing-card">
             <div class="price-desc">
-              <h3>Basic</h3>
+              <h3>Basic<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
+              
               <p class="pricing-description">
                 For small associations that need to manage members and track
                 attendance without the extras.
@@ -96,13 +82,13 @@
               </p>
 
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
-              <p class="inc">Includes:</p>
+              <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Up to 100 members</li>
-                <li>Member directory</li>
-                <li>Attendance tracking</li>
-                <li>Basic reporting</li>
-                <li>Email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
@@ -110,10 +96,13 @@
           <article class="pricing-card pricing-card-highlight">
             <div class="price-desc">
               <span class="badge">Most Popular</span>
-              <h3>Professional</h3>
+              <h3>Professional<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
               <p class="pricing-description">
-                For growing associations that need membership, finance, and
-                admissions working together.
+                For growing associations that need deeper financial and
+                administrative control.
               </p>
             </div>
             <div class="price-content">
@@ -123,20 +112,23 @@
               </p>
 
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
-              <p class="inc">Includes:</p>
+              <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Everything in Basic</li>
-                <li>Up to 500 members</li>
-                <li>Financial tracking</li>
-                <li>Administration management</li>
-                <li>Priority email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
 
           <article class="pricing-card">
             <div class="price-desc">
-              <h3>Elite</h3>
+              <h3>Elite<span class="pointer">
+              <hr />
+              <span class="block"></span>
+            </span></h3>
               <p class="pricing-description">
                 For full-scale associations that run every operation through
                 Organizations.
@@ -150,13 +142,13 @@
               </p>
 
               <a href="#" class="btn btn-accent">Start a Free Trail</a>
-              <p class="inc">Includes:</p>
+              <p class="inc">includes:</p>
               <ul class="pricing-features">
-                <li>Everything in professional</li>
-                <li>Unlimited members</li>
-                <li>Custom report</li>
-                <li>API access</li>
-                <li>Phone &amp; email support</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Up to 100 members</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Member directory</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Attendance tracking</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Basic reporting</li>
+                <li><iconify-icon icon="mdi:checkbox-marked"></iconify-icon> Email support</li>
               </ul>
             </div>
           </article>
@@ -327,71 +319,8 @@
     <!-- ============================= -->
     <!-- SECTION 4: SITE FOOTER -->
     <!-- ============================= -->
-    <footer class="site-footer">
-      <div class="container footer-top">
-        <div class="footer-brand">
-          <a href="#" class="logo">
-            <img src="images/brand-logo.png" alt="Brand logo" />
-          </a>
-          <p>
-            Empowering associations, churches, clubs, NGOs, and organizations
-            with an all-in-one platform to manage memberships, finances, events,
-            attendance, and communication.
-          </p>
-        </div>
-
-        <div class="footer-links">
-          <div class="footer-links-group">
-            <h4>Features</h4>
-            <ul>
-              <li><a href="#">Membership</a></li>
-              <li><a href="#">Finance</a></li>
-              <li><a href="#">Attendance</a></li>
-              <li><a href="#">Events</a></li>
-              <li><a href="#">Communication</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-links-group">
-            <h4>Resources</h4>
-            <ul>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">FAQ</a></li>
-              <li><a href="#">Help</a></li>
-              <li><a href="#">Privacy policy</a></li>
-              <li><a href="#">Terms of service</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="footer-newsletter">
-          <h4>Get the Latest Information</h4>
-          <form class="newsletter-form" onsubmit="return false;">
-            <label for="newsletter-email" class="sr-only">Email address</label>
-            <input
-              type="email"
-              id="newsletter-email"
-              placeholder="Enter your email"
-              required
-            />
-            <button type="submit" class="btn btn-accent">Submit</button>
-          </form>
-        </div>
-      </div>
-
-      <div class="container">
-        <div class="footer-bottom">
-          <p>Copyright &copy; 2026 Associa8. All rights reserved</p>
-          <div class="social-icons">
-            <a href="#" class="social-icon" aria-label="Facebook"></a>
-            <a href="#" class="social-icon" aria-label="Twitter"></a>
-            <a href="#" class="social-icon" aria-label="Instagram"></a>
-            <a href="#" class="social-icon" aria-label="LinkedIn"></a>
-          </div>
-        </div>
-      </div>
-    </footer>
-
+    <?php include("inc/footer.php")?>
+    <script src="js/mobilemenu.js"></script>
     <script src="js/fixedtop.js"></script>
   </body>
 </html>
