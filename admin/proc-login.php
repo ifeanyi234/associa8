@@ -1,13 +1,12 @@
 <?php
 session_start();
-require_once "../associa8/inc/db.php";
+require_once ("../inc/db.php");
 
-if ($_SERVER["REQUEST_METHOD"] == "POST"){
-    $username = mysqli_real_escape_string($conn, trim($_POST["username"]));
-    $password =trim($_POST["password"]);
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = mysqli_real_escape_string($conn, trim($_POST["username"] ?? ""));
+    $password = $_POST["password"] ?? "";
 
-    
-    $sql = "SELECT * FROM `acc-info` WHERE `username` = '$username'";
+    $sql = "SELECT * FROM `acc-info` WHERE `username` = '$username' LIMIT 1";
     $result = mysqli_query($conn, $sql);
 
     if ($result && mysqli_num_rows($result) === 1) {
@@ -22,9 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST"){
         }
     }
 
-    header("Location: login.php?error=1");
+    header("Location: index.php?error=1");
     exit;
 }
-
-
 ?>
