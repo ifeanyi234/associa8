@@ -85,9 +85,9 @@
           <div class="signup-card-body">
             <form
               id="signupForm"
-              action="#"
+              action="proc-signup.php"
               method="POST"
-              onsubmit="event.preventDefault()"
+              novalidate
             >
               <!-- STEP 1: ORGANIZATION INFORMATION -->
               <div class="form-step active" id="step-1">
@@ -102,7 +102,7 @@
                       id="orgName"
                       name="orgName"
                       placeholder="Enter organization name"
-                      required
+                      
                     />
                   </div>
 
@@ -111,7 +111,7 @@
                       >Type of Organization
                       <span class="required">*</span></label
                     >
-                    <select id="orgType" name="orgType" required>
+                    <select id="orgType" name="orgType">
                       <option value="" disabled selected hidden>
                         Select organization type
                       </option>
@@ -147,7 +147,7 @@
                       id="orgPhone"
                       name="orgPhone"
                       placeholder="Enter organization number"
-                      required
+                      
                     />
                   </div>
 
@@ -160,7 +160,7 @@
                       id="orgCountry"
                       name="orgCountry"
                       placeholder="Enter organization country"
-                      required
+                      
                     />
                   </div>
 
@@ -168,7 +168,7 @@
                     <label for="orgState"
                       >State / Province <span class="required">*</span></label
                     >
-                    <select id="orgState" name="orgState" required>
+                    <select id="orgState" name="orgState">
                       <option value="" disabled selected hidden>
                         Select state / province
                       </option>
@@ -182,7 +182,7 @@
                     <label for="orgPricing"
                       >Pricing <span class="required">*</span></label
                     >
-                    <select id="orgPricing" name="orgPricing" required>
+                    <select id="orgPricing" name="orgPricing" >
                       <option value="" disabled selected hidden>
                         Select pricing plan
                       </option>
@@ -202,7 +202,7 @@
                       id="orgMembers"
                       name="orgMembers"
                       placeholder="Select number"
-                      required
+                      min="0"
                     />
                   </div>
                 </div>
@@ -230,7 +230,7 @@
                       id="adminFirstName"
                       name="adminFirstName"
                       placeholder="Enter first name"
-                      required
+                      
                     />
                   </div>
 
@@ -243,7 +243,7 @@
                       id="adminLastName"
                       name="adminLastName"
                       placeholder="Enter last name"
-                      required
+                      
                     />
                   </div>
 
@@ -269,7 +269,7 @@
                       id="adminPhone"
                       name="adminPhone"
                       placeholder="Enter number"
-                      required
+                      
                     />
                   </div>
 
@@ -282,7 +282,7 @@
                       id="adminJobTitle"
                       name="adminJobTitle"
                       placeholder="Enter job title"
-                      required
+                      
                     />
                   </div>
 
@@ -290,7 +290,7 @@
                     <label for="adminRole"
                       >Role <span class="required">*</span></label
                     >
-                    <select id="adminRole" name="adminRole" required>
+                    <select id="adminRole" name="adminRole" >
                       <option value="" disabled selected hidden>
                         Select role
                       </option>
@@ -331,7 +331,7 @@
                       id="accUsername"
                       name="accUsername"
                       placeholder="Enter username"
-                      required
+                      
                       autocomplete="username"
                     />
                   </div>
@@ -345,8 +345,7 @@
                       id="accPassword"
                       name="accPassword"
                       placeholder="Enter password"
-                      required
-                      autocomplete="new-password"
+                      
                     />
                   </div>
 
@@ -359,8 +358,6 @@
                       id="accConfirmPassword"
                       name="accConfirmPassword"
                       placeholder="Enter password"
-                      required
-                      autocomplete="new-password"
                     />
                   </div>
 
@@ -373,7 +370,6 @@
                       id="accOtp"
                       name="accOtp"
                       placeholder="Enter OTP"
-                      required
                       maxlength="6"
                     />
                   </div>
@@ -412,6 +408,11 @@
       };
 
       function goToStep(stepNumber) {
+        var currentStep = document.querySelector(".form-step.active");
+        if (stepNumber > 1 && !validateStep(currentStep)) {
+          return;
+        }
+
         document.querySelectorAll(".form-step").forEach(function (step) {
           step.classList.remove("active");
         });
@@ -437,6 +438,114 @@
           .querySelector(".signup-card")
           .scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
+
+      function validateStep(step) {
+        var fields = step.querySelectorAll("input, select");
+        var firstInvalid = null;
+
+        fields.forEach(function (field) {
+          var isInvalid = !field.value.trim();
+
+          if (field.type === "email" && field.value.trim()) {
+            isInvalid = !field.validity.valid;
+          }
+
+          field.classList.toggle("input-error", isInvalid);
+          if (isInvalid && !firstInvalid) {
+            firstInvalid = field;
+          }
+        });
+
+        if (firstInvalid) {
+          firstInvalid.focus();
+          return false;
+        }
+
+        return true;
+      }
+
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", function (event) {
+          var steps = document.querySelectorAll(".form-step");
+          var valid = true;
+          var firstInvalidStep = null;
+          var password = document.getElementById("accPassword");
+          var confirmPassword = document.getElementById("accConfirmPassword");
+          var passwordMismatch = false;
+
+          confirmPassword.setCustomValidity("");
+          confirmPassword.classList.remove("input-error");
+
+          steps.forEach(function (step) {
+            if (!validateStep(step)) {
+              valid = false;
+              if (!firstInvalidStep) {
+                firstInvalidStep = step;
+              }
+            }
+          });
+
+          if (password.value && confirmPassword.value && password.value !== confirmPassword.value) {
+            valid = false;
+            passwordMismatch = true;
+            if (!firstInvalidStep) {
+              firstInvalidStep = document.getElementById("step-3");
+            }
+            confirmPassword.classList.add("input-error");
+            confirmPassword.setCustomValidity("Passwords do not match.");
+          }
+
+          if (!valid) {
+            event.preventDefault();
+            document.querySelectorAll(".form-step").forEach(function (step) {
+              step.classList.remove("active");
+            });
+            if (firstInvalidStep) {
+              firstInvalidStep.classList.add("active");
+            }
+            if (window.AppModal) {
+              window.AppModal.open({
+                type: "error",
+                heading: "Please check your details",
+                body: passwordMismatch
+                  ? "The passwords do not match. Please enter the same password in both fields."
+                  : "Complete all registration information before submitting.",
+                detail: passwordMismatch
+                  ? "Enter the same password in both fields and try again."
+                  : "Your account has not been sent yet.",
+                trigger: event.submitter,
+              });
+            }
+            return;
+          }
+
+        });
+
+      window.addEventListener("DOMContentLoaded", function () {
+        var params = new URLSearchParams(window.location.search);
+        var status = params.get("status");
+        var message = params.get("msg");
+
+        if (status === "success" || status === "error") {
+          window.AppModal.open({
+            type: status,
+            heading:
+              status === "success"
+                ? "Account request received"
+                : "Signup could not be completed",
+            body:
+              status === "success"
+                ? "Your account information was submitted successfully."
+                : "Your information could not be saved.",
+            detail:
+              message ||
+              (status === "success"
+                ? "You can now sign in with your new account."
+                : "Please try again."),
+          });
+        }
+      });
     </script>
     <script src="js/mobilemenu.js"></script>
     <script src="js/fixedtop.js"></script>

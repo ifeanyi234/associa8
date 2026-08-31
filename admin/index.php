@@ -1,3 +1,11 @@
+<?php
+session_start();
+
+$loginError = '';
+if(isset($_GET['error'])) {
+    $loginError = "Incorrect username or password. Please try again.";
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -46,12 +54,13 @@
         <!-- Right Column: Login Card -->
         <div class="auth-card">
           <h2 class="auth-title">Login</h2>
-
+          <?php if($loginError !== ''):?>
+            <p class="login-error-message"><?php echo htmlspecialchars($loginError)?></p>
+          <?php endif;?>
           <form
             class="auth-form"
-            action="#"
+            action="proc-login.php"
             method="POST"
-            onsubmit="event.preventDefault()"
           >
             <!-- Username Input -->
             <div class="form-group">

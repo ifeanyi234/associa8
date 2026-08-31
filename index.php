@@ -134,7 +134,7 @@
             intuitive, and scalable platform. Focus on building stronger
             communities while we simplify the administration.
           </p>
-          <a href="#" class="btn btn-accent">Explore more</a>
+          <a href="about.php" class="btn btn-accent">Explore more</a>
         </div>
       </div>
     </section>

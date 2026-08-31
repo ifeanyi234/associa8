@@ -125,8 +125,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">3</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">3</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Patron"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Patron"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -153,8 +159,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">1</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">1</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit President"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete President"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -183,8 +195,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">2</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">2</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Vice President"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Vice President"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -211,8 +229,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">48</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">48</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Senior Fellow"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Senior Fellow"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -237,8 +261,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">212</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">212</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Fellow"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Fellow"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -265,8 +295,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">186</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">186</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Associate"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Associate"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
 
@@ -291,8 +327,14 @@
                 </div>
               </div>
               <div class="hierarchy-member-count">
-                <span class="count-number">195</span>
-                <span class="count-label">members</span>
+                <div class="hierarchy-member-total">
+                  <span class="count-number">195</span>
+                  <span class="count-label">members</span>
+                </div>
+                <div class="hierarchy-actions">
+                  <button type="button" class="hierarchy-action edit" aria-label="Edit Member"><i class="fa-solid fa-pen"></i></button>
+                  <button type="button" class="hierarchy-action delete" aria-label="Delete Member"><i class="fa-solid fa-trash"></i></button>
+                </div>
               </div>
             </div>
           </div>
