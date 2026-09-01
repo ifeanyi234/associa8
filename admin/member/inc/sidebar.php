@@ -68,7 +68,7 @@
           </li>
         </ul>
         <div class="sidebar-footer">
-          <a href="../index.php" class="sidebar-link">
+          <a href="../../logout.php" class="sidebar-link">
             <span class="sidebar-link-content">
               <i class="fa-solid fa-right-from-bracket"></i> Logout
             </span>

@@ -254,7 +254,7 @@
         </ul>
 
         <div class="sidebar-footer">
-          <a href="index.php" class="sidebar-link">
+          <a href="logout.php" class="sidebar-link">
             <div class="sidebar-link-content">
               <i class="fa-solid fa-arrow-right-from-bracket"></i>
               <span>Logout</span>

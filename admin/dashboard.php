@@ -88,7 +88,7 @@ if (!isset($_SESSION['user_id'])) {
         <div class="dashboard-content">
           <!-- Welcome Banner -->
           <section class="welcome-banner">
-            <h2 class="welcome-title">Good morning, Super admin 👋</h2>
+            <h2 class="welcome-title">Good morning, <?php echo $_SESSION['username'] ?> 👋</h2>
             <p class="welcome-subtitle">
               Here's what's happening in your organization today..
             </p>
