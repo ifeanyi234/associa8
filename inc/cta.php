@@ -15,7 +15,7 @@
             <button
               class="placeholder-video"
               type="button"
-              data-video-src=""
+              data-video-src="videos/associa8-demo.mp4"
               data-video-poster="images/cta-bg.jpg"
               aria-label="Play the Associa8 overview video"
             >

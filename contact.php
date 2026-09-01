@@ -1,3 +1,7 @@
+<?php
+$status = $_GET['status'] ?? '';
+$message = $_GET['msg'] ?? '';
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -100,7 +104,13 @@
             </div>
           </div>
 
-          <form class="contact-form" onsubmit="return false;">
+          <?php if ($status !== ''): ?>
+            <div class="contact-feedback <?php echo $status === 'success' ? 'success' : 'error'; ?>">
+              <?php echo htmlspecialchars($message ?: ($status === 'success' ? 'Your message was sent successfully.' : 'Your message could not be sent. Please try again.')); ?>
+            </div>
+          <?php endif; ?>
+
+          <form class="contact-form" method="POST" action="send-mail.php">
             <div class="form-grid">
               <div class="form-group">
                 <label for="fullName">Full Name</label>
