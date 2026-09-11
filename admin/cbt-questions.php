@@ -1,3 +1,11 @@
+<?php
+require_once "../inc/db.php";
+$questionResult = mysqli_query($conn, "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id ORDER BY q.created_at DESC");
+$questions = [];
+if ($questionResult) { while ($question = mysqli_fetch_assoc($questionResult)) { $questions[] = $question; } }
+$examCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM cbt_exams");
+$examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['total'] : 0;
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -82,10 +90,11 @@
               <p class="page-subtitle">CBT Schedule & Onboarding</p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <button class="btn-outline-primary">
+              <a href="add-cbt-question.php" class="btn-outline-primary">
                 <i class="fa-solid fa-plus"></i>
                 <span>Add Questions</span>
-              </button>
+              </a>
+              <a href="add-cbt-exam.php" class="btn-outline-primary"><i class="fa-solid fa-file-circle-plus"></i><span>Add Exam</span></a>
               <button class="btn-outline-primary">
                 <i class="fa-solid fa-file-export"></i>
                 <span>Export Question</span>
@@ -100,11 +109,11 @@
           <!-- Summary Stat Cards Grid -->
           <section class="stats-grid mb-4">
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">18</div>
+    <div class="suspension-stat-value"><?php echo count($questions); ?></div>
     <div class="suspension-stat-label">Application Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">23</div>
+    <div class="suspension-stat-value"><?php echo $examCount; ?></div>
     <div class="suspension-stat-label">CBT Review</div>
   </div>
   <div class="suspension-stat-card">
@@ -124,7 +133,26 @@
             </div>
 
             <div style="padding: 24px;">
-              <!-- Question Item 1 -->
+              <?php if ($questions): ?>
+                <?php foreach ($questions as $index => $question): ?>
+                  <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question <?php echo $index + 1; ?> <small>(<?php echo htmlspecialchars($question['exam_title']); ?>)</small></h3>
+                    <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;"><?php echo htmlspecialchars($question['question_text']); ?></p>
+                    <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
+                      <?php foreach (['a', 'b', 'c', 'd', 'e'] as $option): ?>
+                        <?php if ($question['option_' . $option] !== null && $question['option_' . $option] !== ''): ?><div>(<?php echo strtoupper($option); ?>) <?php echo htmlspecialchars($question['option_' . $option]); ?></div><?php endif; ?>
+                      <?php endforeach; ?>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Ans: <?php echo htmlspecialchars($question['correct_option']); ?></span>
+                      <form action="proc-delete-cbt-question.php" method="POST" onsubmit="return confirm('Delete this question?');">
+                        <input type="hidden" name="question_id" value="<?php echo (int) $question['id']; ?>" />
+                        <button type="submit" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">Del</button>
+                      </form>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
               <div style="margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0;">
                 <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 1</h3>
                 <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
@@ -146,7 +174,9 @@
                   </button>
                 </div>
               </div>
+              <?php endif; ?>
 
+              <?php if (!$questions): ?>
               <!-- Question Item 2 -->
               <div style="margin-bottom: 12px;">
                 <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 2</h3>
@@ -169,6 +199,7 @@
                   </button>
                 </div>
               </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -179,6 +210,21 @@
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        if (!status || !window.AppModal) return;
+        const success = status === "success";
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: success ? "Question deleted" : "Question not deleted",
+          body: params.get("msg") || "Please try again.",
+          detail: success ? "The question was removed from the database." : "No question was removed.",
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
     <script>
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
       dropdownItems.forEach((item) => {

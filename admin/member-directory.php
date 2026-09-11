@@ -1,3 +1,33 @@
+<?php
+require_once "../inc/db.php";
+$memberCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM members");
+$memberCount = $memberCountResult ? (int) mysqli_fetch_assoc($memberCountResult)['total'] : 0;
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$itemsPerPage = 10;
+$search = trim($_GET['q'] ?? '');
+$statusFilter = $_GET['status'] ?? '';
+$where = '';
+if ($search !== '') {
+  $safeSearch = mysqli_real_escape_string($conn, $search);
+  $where .= " WHERE (CONCAT(m.first_name, ' ', m.last_name) LIKE '%$safeSearch%' OR m.member_code LIKE '%$safeSearch%' OR m.email LIKE '%$safeSearch%')";
+}
+if (in_array($statusFilter, ['active', 'pending', 'suspended'], true)) {
+  $where .= $where === '' ? ' WHERE ' : ' AND ';
+  $where .= "m.status = '" . mysqli_real_escape_string($conn, $statusFilter) . "'";
+}
+$filteredCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM members m$where");
+$filteredCount = $filteredCountResult ? (int) mysqli_fetch_assoc($filteredCountResult)['total'] : 0;
+$totalPages = max(1, (int) ceil($filteredCount / $itemsPerPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $itemsPerPage;
+$membersResult = mysqli_query($conn, "SELECT m.id, m.member_code, m.first_name, m.last_name, m.email, m.status, m.joined_date, t.title, z.name AS zone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
+$members = [];
+if ($membersResult) {
+  while ($member = mysqli_fetch_assoc($membersResult)) {
+    $members[] = $member;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -82,12 +112,12 @@
           <div class="page-action-header">
             <div>
               <h2 class="page-title-main">Member Directory</h2>
-              <p class="page-subtitle">8 total members across all zones</p>
+              <p class="page-subtitle"><?php echo $memberCount; ?> total members across all zones</p>
             </div>
-            <button class="btn-outline-primary">
+            <a href="add-member.php" class="btn-outline-primary">
               <i class="fa-solid fa-user-plus"></i>
               <span>Add members</span>
-            </button>
+            </a>
           </div>
 
           <!-- Search & Status Filter Toolbar -->
@@ -104,13 +134,13 @@
               <button class="filter-pill active">All</button>
               <button class="filter-pill">Active</button>
               <button class="filter-pill">Suspended</button>
-              <button class="filter-pill">Inactive</button>
+              <button class="filter-pill">Pending</button>
             </div>
           </div>
 
           <!-- Directory Data Table Card -->
           <div class="table-responsive-card">
-            <table class="admin-table">
+            <table class="admin-table" data-record-count="<?php echo $memberCount; ?>" data-server-pagination="true">
               <thead>
                 <tr>
                   <th>Member</th>
@@ -124,6 +154,25 @@
                 </tr>
               </thead>
               <tbody>
+                <?php if ($members): ?>
+                  <?php foreach ($members as $member): ?>
+                    <?php
+                      $fullName = $member['first_name'] . ' ' . $member['last_name'];
+                      $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
+                      $statusClass = $member['status'] === 'active' ? 'status-active' : ($member['status'] === 'suspended' ? 'status-suspension' : 'status-inactive');
+                    ?>
+                    <tr>
+                      <td><div class="member-cell"><div class="member-avatar"><?php echo htmlspecialchars($initials); ?></div><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($fullName); ?></span><span class="member-email"><?php echo htmlspecialchars($member['email']); ?></span></div></div></td>
+                      <td><?php echo htmlspecialchars($member['member_code']); ?></td>
+                      <td><span class="cell-with-icon"><i class="fa-solid fa-shield-halved"></i> <?php echo htmlspecialchars($member['title'] ?: 'Unassigned'); ?></span></td>
+                      <td><span class="cell-with-icon"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($member['zone_name'] ?: 'Unassigned'); ?></span></td>
+                      <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucfirst($member['status']); ?></span></td>
+                      <td><span class="badge-pill dues-current">Not available</span></td>
+                      <td><?php echo htmlspecialchars($member['joined_date'] ?: 'Not provided'); ?></td>
+                      <td><button class="btn-action-trigger" type="button" aria-label="Options"><i class="fa-solid fa-ellipsis"></i></button></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
                 <!-- Row 1 -->
                 <tr>
                   <td>
@@ -383,18 +432,14 @@
                     </button>
                   </td>
                 </tr>
+                <?php endif; ?>
               </tbody>
             </table>
 
             <!-- Table Pagination Footer -->
             <div class="table-pagination-footer">
-              <span>Showing 8 of 8</span>
-              <div class="pagination-controls">
-                <button class="page-btn">Prev</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">Next</button>
-              </div>
+              <span><?php echo $filteredCount ? 'Showing ' . ($offset + 1) . '-' . min($offset + $itemsPerPage, $filteredCount) . ' of ' . $filteredCount : 'Showing 0-0 of 0'; ?></span>
+              <?php include('inc/pagination.php'); renderPagination($page, $filteredCount, $itemsPerPage, ['q' => $search, 'status' => $statusFilter]); ?>
             </div>
           </div>
         </div>

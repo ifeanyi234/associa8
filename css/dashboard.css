@@ -2471,6 +2471,92 @@ textarea::placeholder {
   object-fit: cover;
 }
 
+.structure-form-stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.structure-form-card {
+  max-width: 960px;
+}
+
+.structure-form-heading {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.structure-form-heading h3 {
+  margin: 0 0 0.35rem;
+  color: var(--text-primary, #0f172a);
+}
+
+.structure-form-heading p,
+.form-help {
+  margin: 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.875rem;
+}
+
+.structure-form-icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  place-items: center;
+  color: #2563eb;
+  background: #eff6ff;
+  border-radius: 8px;
+}
+
+.structure-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.structure-form .form-group {
+  /* display: grid; */
+  gap: 0.5rem;
+}
+
+.structure-form .form-control,
+.structure-form .form-select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.structure-form textarea.form-control {
+  resize: vertical;
+}
+
+.structure-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.zone-empty-state {
+  width: 100%;
+  margin: 0;
+  padding: 1.5rem;
+  color: var(--text-secondary, #64748b);
+  text-align: center;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+}
+
 /* Animated Reticle Overlay */
 .scanner-overlay {
   position: absolute;

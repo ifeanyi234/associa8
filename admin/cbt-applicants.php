@@ -1,3 +1,9 @@
+<?php
+require_once "../inc/db.php";
+$applicantsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status IN ('pending', 'under_review', 'approved') ORDER BY applied_at DESC");
+$applicants = [];
+if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResult)) { $applicants[] = $applicant; } }
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -82,10 +88,10 @@
               <p class="page-subtitle">CBT Schedule & Onboarding</p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <button class="btn-outline-primary">
+              <a href="add-admission.php" class="btn-outline-primary">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>Add Applicants</span>
-              </button>
+              </a>
               <button class="btn-outline-primary">
                 <i class="fa-solid fa-file-export"></i>
                 <span>Export Participant</span>
@@ -100,19 +106,19 @@
           <!-- Summary Stat Cards Grid -->
           <section class="stats-grid mb-4">
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">18</div>
+    <div class="suspension-stat-value"><?php echo count($applicants); ?></div>
     <div class="suspension-stat-label">Application Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">23</div>
+    <div class="suspension-stat-value"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'under_review')); ?></div>
     <div class="suspension-stat-label">CBT Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">14</div>
+    <div class="suspension-stat-value"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'pending')); ?></div>
     <div class="suspension-stat-label">Onboarding</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value text-primary">9</div>
+    <div class="suspension-stat-value text-primary"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'approved')); ?></div>
     <div class="suspension-stat-label">Approved</div>
   </div>
 </section>
@@ -133,6 +139,20 @@
                 </tr>
               </thead>
               <tbody>
+                <?php if ($applicants): ?>
+                  <?php foreach ($applicants as $applicant): ?>
+                    <tr>
+                      <td><?php echo (int) $applicant['id']; ?></td>
+                      <td><?php echo htmlspecialchars($applicant['applicant_name']); ?></td>
+                      <td><?php echo htmlspecialchars($applicant['application_number']); ?></td>
+                      <td><?php echo htmlspecialchars($applicant['email']); ?></td>
+                      <td><?php echo htmlspecialchars($applicant['phone']); ?></td>
+                      <td>Not assigned</td>
+                      <td><?php echo htmlspecialchars($applicant['applied_at']); ?></td>
+                      <td style="text-align: right;"><span class="badge-pill status-under-review"><?php echo ucwords(str_replace('_', ' ', $applicant['status'])); ?></span></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
                 <tr>
                   <td>01</td>
                   <td>Joseph</td>
@@ -193,6 +213,7 @@
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
                   </td>
                 </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>

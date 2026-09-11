@@ -1,3 +1,15 @@
+<?php
+require_once "../inc/db.php";
+$titleCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM titles");
+$titleCount = $titleCountResult ? (int) mysqli_fetch_assoc($titleCountResult)['total'] : 0;
+$titlesResult = mysqli_query($conn, "SELECT t.id, t.title, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id GROUP BY t.id, t.title, t.level, t.description ORDER BY t.level ASC");
+$titles = [];
+if ($titlesResult) {
+  while ($title = mysqli_fetch_assoc($titlesResult)) {
+    $titles[] = $title;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -83,13 +95,13 @@
             <div>
               <h2 class="page-title-main">Titles & Hierarchy</h2>
               <p class="page-subtitle">
-                Manage membership grades and organizational hierarchy
+                Manage <?php echo $titleCount; ?> membership grades and organizational hierarchy
               </p>
             </div>
-            <button class="btn-outline-primary">
+            <a href="add-title.php" class="btn-outline-primary">
               <i class="fa-solid fa-user-plus"></i>
               <span>Add titles</span>
-            </button>
+            </a>
           </div>
 
           <!-- Hierarchy List Outer Container -->
@@ -101,6 +113,48 @@
                 >Hierarchy flow from level 1 (highest) to level 7(entry)</span
               >
             </div>
+
+            <?php if ($titles): ?>
+              <?php foreach ($titles as $title): ?>
+                <?php
+                  $tierClass = match ((int) $title['level']) {
+                      1 => 'tag-patron',
+                      2 => 'tag-president',
+                      3 => 'tag-vice-president',
+                      4 => 'tag-president',
+                      5 => 'tag-fellow',
+                      6 => 'tag-associate',
+                      default => 'tag-member',
+                  };
+                ?>
+                <div class="hierarchy-item-card">
+                  <div class="hierarchy-left-col">
+                    <div class="level-reorder-group">
+                      <button class="reorder-btn" type="button" aria-label="Move Up"><i class="fa-solid fa-chevron-up"></i></button>
+                      <div class="level-badge">L<?php echo (int) $title['level']; ?></div>
+                      <button class="reorder-btn" type="button" aria-label="Move Down"><i class="fa-solid fa-chevron-down"></i></button>
+                    </div>
+                    <div class="hierarchy-details">
+                      <div class="title-header-group">
+                        <span class="title-name"><?php echo htmlspecialchars($title['title']); ?></span>
+                        <span class="tag-outline <?php echo $tierClass; ?>"><?php echo htmlspecialchars($title['title']); ?></span>
+                      </div>
+                      <p class="title-description"><?php echo htmlspecialchars($title['description'] ?: 'No description provided.'); ?></p>
+                    </div>
+                  </div>
+                  <div class="hierarchy-member-count">
+                    <div class="hierarchy-member-total">
+                      <span class="count-number"><?php echo (int) $title['member_count']; ?></span>
+                      <span class="count-label">members</span>
+                    </div>
+                    <div class="hierarchy-actions">
+                      <a href="edit-title.php?id=<?php echo (int) $title['id']; ?>" class="hierarchy-action edit" aria-label="Edit <?php echo htmlspecialchars($title['title']); ?>"><i class="fa-solid fa-pen"></i></a>
+                      <button type="button" class="hierarchy-action delete" aria-label="Delete <?php echo htmlspecialchars($title['title']); ?>"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            <?php else: ?>
 
             <!-- L1 Card -->
             <div class="hierarchy-item-card">
@@ -337,6 +391,7 @@
                 </div>
               </div>
             </div>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -346,6 +401,18 @@
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const titleStatus = new URLSearchParams(window.location.search);
+        if (titleStatus.get("status") && window.AppModal) {
+          window.AppModal.open({
+            type: titleStatus.get("status"),
+            heading: titleStatus.get("status") === "success" ? "Title saved" : "Title not saved",
+            body: titleStatus.get("msg") || "Please try again.",
+          });
+        }
+      });
+    </script>
     <script>
       // 1. Sidebar Dropdown Dynamic Accordion Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");

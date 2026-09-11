@@ -1,3 +1,12 @@
+<?php
+require_once "../inc/db.php";
+$admissionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM admissions GROUP BY status");
+$admissionStats = ['pending' => 0, 'under_review' => 0, 'approved' => 0, 'rejected' => 0];
+if ($admissionStatsResult) { while ($stat = mysqli_fetch_assoc($admissionStatsResult)) { $admissionStats[$stat['status']] = (int) $stat['total']; } }
+$admissionsResult = mysqli_query($conn, "SELECT application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions ORDER BY applied_at DESC");
+$admissions = [];
+if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResult)) { $admissions[] = $admission; } }
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -81,28 +90,28 @@
               <h2 class="page-title-main">Admission Management</h2>
               <p class="page-subtitle">Schedules, Applications, CBT, Sponsors & Onboarding</p>
             </div>
-            <button class="btn-outline-primary">
+            <a href="add-admission.php" class="btn-outline-primary">
               <i class="fa-solid fa-user-plus"></i>
-              <span>New Admission Window</span>
-            </button>
+              <span>New Application</span>
+            </a>
           </div>
 
           <!-- Summary Stat Cards Grid -->
           <section class="stats-grid mb-4">
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">18</div>
+    <div class="suspension-stat-value"><?php echo $admissionStats['pending'] + $admissionStats['under_review']; ?></div>
     <div class="suspension-stat-label">Application Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">23</div>
+    <div class="suspension-stat-value"><?php echo $admissionStats['under_review']; ?></div>
     <div class="suspension-stat-label">CBT Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">14</div>
+    <div class="suspension-stat-value"><?php echo $admissionStats['pending']; ?></div>
     <div class="suspension-stat-label">Onboarding</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value text-primary">9</div>
+    <div class="suspension-stat-value text-primary"><?php echo $admissionStats['approved']; ?></div>
     <div class="suspension-stat-label">Approved</div>
   </div>
 </section>
@@ -121,6 +130,12 @@
                 </tr>
               </thead>
               <tbody>
+                <?php if ($admissions): ?>
+                  <?php foreach ($admissions as $admission): ?>
+                    <?php $statusClass = $admission['status'] === 'approved' ? 'status-active' : ($admission['status'] === 'rejected' ? 'status-inactive' : 'status-under-review'); ?>
+                    <tr><td><div class="member-cell"><div class="member-avatar"><?php echo htmlspecialchars(strtoupper(substr($admission['applicant_name'], 0, 2))); ?></div><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($admission['applicant_name']); ?></span><span class="member-email"><?php echo htmlspecialchars($admission['email']); ?></span></div></div></td><td><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($admission['guarantor_name'] ?: 'Not provided'); ?></span><span class="member-email"><?php echo htmlspecialchars($admission['guarantor_relationship'] ?: ''); ?></span></div></td><td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucwords(str_replace('_', ' ', $admission['status'])); ?></span></td><td><?php echo htmlspecialchars($admission['applied_at']); ?></td><td><span class="badge-pill dues-arrears">Pending</span></td><td><button class="btn-action-trigger" type="button" aria-label="Options"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
                 <!-- Row 1 -->
                 <tr>
                   <td>
@@ -132,7 +147,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>Joseph Raymond</td>
+                  <td>Guarantor placeholder</td>
                   <td><span class="badge-pill type-reinstatement">CBT Schedule</span></td>
                   <td>20-05-2026</td>
                   <td><span class="badge-pill dues-arrears">Pending</span></td>
@@ -142,7 +157,6 @@
                     </button>
                   </td>
                 </tr>
-
                 <!-- Row 2 -->
                 <tr>
                   <td>
@@ -154,7 +168,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>Joseph Raymond</td>
+                  <td>Guarantor placeholder</td>
                   <td><span class="badge-pill type-suspension">Onboarding</span></td>
                   <td>20-05-2026</td>
                   <td><span class="badge-pill dues-current">78%</span></td>
@@ -176,7 +190,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>Joseph Raymond</td>
+                  <td>Guarantor placeholder</td>
                   <td><span class="badge-pill status-under-review">Application Review</span></td>
                   <td>20-05-2026</td>
                   <td><span class="badge-pill dues-arrears">Pending</span></td>
@@ -198,7 +212,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>Joseph Raymond</td>
+                  <td>Guarantor placeholder</td>
                   <td><span class="badge-pill status-active">Approved</span></td>
                   <td>20-05-2026</td>
                   <td><span class="badge-pill dues-current">85%</span></td>
@@ -220,7 +234,7 @@
                       </div>
                     </div>
                   </td>
-                  <td>Joseph Raymond</td>
+                  <td>Guarantor placeholder</td>
                   <td><span class="badge-pill status-inactive">Rejected</span></td>
                   <td>20-05-2026</td>
                   <td><span class="badge-pill status-inactive">2%</span></td>
@@ -230,6 +244,7 @@
                     </button>
                   </td>
                 </tr>
+                <?php endif; ?>
               </tbody>
             </table>
 
@@ -251,6 +266,20 @@
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.get("status") || !window.AppModal) return;
+        const success = params.get("status") === "success";
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: success ? "Admission saved" : "Admission not saved",
+          body: params.get("msg") || (success ? "The application is now in the review queue." : "Please try again."),
+          detail: success ? "The applicant can now move through the admission stages." : "No admission record was created.",
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");

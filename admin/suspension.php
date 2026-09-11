@@ -1,3 +1,27 @@
+<?php
+require_once "../inc/db.php";
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$itemsPerPage = 10;
+$suspensionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM suspensions GROUP BY status");
+$suspensionStats = ['active' => 0, 'under_review' => 0, 'completed' => 0];
+if ($suspensionStatsResult) {
+  while ($stat = mysqli_fetch_assoc($suspensionStatsResult)) {
+    $suspensionStats[$stat['status']] = (int) $stat['total'];
+  }
+}
+$recordCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM suspensions");
+$recordCount = $recordCountResult ? (int) mysqli_fetch_assoc($recordCountResult)['total'] : 0;
+$totalPages = max(1, (int) ceil($recordCount / $itemsPerPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $itemsPerPage;
+$recordsResult = mysqli_query($conn, "SELECT s.id, s.reason, s.action_type, s.status, s.action_date, m.first_name, m.last_name, m.member_code FROM suspensions s INNER JOIN members m ON m.id = s.member_id ORDER BY s.action_date DESC, s.id DESC LIMIT $itemsPerPage OFFSET $offset");
+$suspensionRecords = [];
+if ($recordsResult) {
+  while ($record = mysqli_fetch_assoc($recordsResult)) {
+    $suspensionRecords[] = $record;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -81,36 +105,36 @@
               <p class="page-subtitle">Manage member disciplinary actions and appeals.</p>
             </div>
             <div class="d-flex gap-2">
-              <button class="btn-action-danger-outline">
+              <a href="add-suspension.php?type=suspension" class="btn-action-danger-outline">
                 <i class="fa-ban"></i>
                 <span>Suspended</span>
-              </button>
-              <button class="btn-action-dark-outline">
+              </a>
+              <a href="add-suspension.php?type=reinstatement" class="btn-action-dark-outline">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>Reinstate</span>
-              </button>
+              </a>
             </div>
           </div>
 
           <!-- Top Summary Stat Cards Grid -->
           <section class="suspension-stats-grid">
             <div class="suspension-stat-card">
-              <div class="suspension-stat-value text-danger">2</div>
+              <div class="suspension-stat-value text-danger"><?php echo $suspensionStats['active']; ?></div>
               <div class="suspension-stat-label">Active Suspended</div>
             </div>
             <div class="suspension-stat-card">
-              <div class="suspension-stat-value text-primary">1</div>
+              <div class="suspension-stat-value text-primary"><?php echo $suspensionStats['under_review']; ?></div>
               <div class="suspension-stat-label">Under-Review</div>
             </div>
             <div class="suspension-stat-card">
-              <div class="suspension-stat-value text-dark">2</div>
+              <div class="suspension-stat-value text-dark"><?php echo $suspensionStats['completed']; ?></div>
               <div class="suspension-stat-label">Reinstate</div>
             </div>
           </section>
 
           <!-- Suspension Records Table -->
           <section class="table-responsive-card">
-            <table class="custom-admin-table">
+            <table class="custom-admin-table" data-record-count="<?php echo $recordCount; ?>" data-server-pagination="true">
               <thead>
                 <tr>
                   <th>Member</th>
@@ -122,119 +146,36 @@
                 </tr>
               </thead>
               <tbody>
-                
-                <!-- Row 1 -->
-                <tr>
-                  <td>
-                    <div class="table-member-profile">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-meta">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-id">ASC-001</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Paid all outstanding dues</td>
-                  <td><span class="badge-pill type-reinstatement">Reinstatement</span></td>
-                  <td>20-05-2026</td>
-                  <td><span class="badge-pill status-completed">Completed</span></td>
-                  <td>
-                    <button class="btn-row-action" aria-label="More Actions"><i class="fa-solid fa-ellipsis"></i></button>
-                  </td>
-                </tr>
-
-                <!-- Row 2 -->
-                <tr>
-                  <td>
-                    <div class="table-member-profile">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-meta">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-id">ASC-001</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Gross misconduct at meeting</td>
-                  <td><span class="badge-pill type-suspension">Suspension</span></td>
-                  <td>20-05-2026</td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td>
-                    <button class="btn-row-action" aria-label="More Actions"><i class="fa-solid fa-ellipsis"></i></button>
-                  </td>
-                </tr>
-
-                <!-- Row 3 -->
-                <tr>
-                  <td>
-                    <div class="table-member-profile">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-meta">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-id">ASC-001</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Paid all outstanding dues</td>
-                  <td><span class="badge-pill type-reinstatement">Reinstatement</span></td>
-                  <td>20-05-2026</td>
-                  <td><span class="badge-pill status-completed">Completed</span></td>
-                  <td>
-                    <button class="btn-row-action" aria-label="More Actions"><i class="fa-solid fa-ellipsis"></i></button>
-                  </td>
-                </tr>
-
-                <!-- Row 4 -->
-                <tr>
-                  <td>
-                    <div class="table-member-profile">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-meta">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-id">ASC-001</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Non-payment of dues(2yrs)</td>
-                  <td><span class="badge-pill type-suspension">Suspension</span></td>
-                  <td>20-05-2026</td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td>
-                    <button class="btn-row-action" aria-label="More Actions"><i class="fa-solid fa-ellipsis"></i></button>
-                  </td>
-                </tr>
-
-                <!-- Row 5 -->
-                <tr>
-                  <td>
-                    <div class="table-member-profile">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-meta">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-id">ASC-001</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>Violate code of conduct</td>
-                  <td><span class="badge-pill type-suspension">Suspension</span></td>
-                  <td>20-05-2026</td>
-                  <td><span class="badge-pill status-under-review">Under review</span></td>
-                  <td>
-                    <button class="btn-row-action" aria-label="More Actions"><i class="fa-solid fa-ellipsis"></i></button>
-                  </td>
-                </tr>
+                <?php if ($suspensionRecords): ?>
+                  <?php foreach ($suspensionRecords as $record): ?>
+                    <?php
+                      $fullName = $record['first_name'] . ' ' . $record['last_name'];
+                      $initials = strtoupper(substr($record['first_name'], 0, 1) . substr($record['last_name'], 0, 1));
+                      $statusClass = $record['status'] === 'under_review' ? 'status-under-review' : ($record['status'] === 'completed' ? 'status-completed' : 'status-active');
+                      $typeClass = $record['action_type'] === 'reinstatement' ? 'type-reinstatement' : 'type-suspension';
+                    ?>
+                    <tr>
+                      <td><div class="table-member-profile"><div class="member-avatar"><?php echo htmlspecialchars($initials); ?></div><div class="member-meta"><span class="member-name"><?php echo htmlspecialchars($fullName); ?></span><span class="member-id"><?php echo htmlspecialchars($record['member_code']); ?></span></div></div></td>
+                      <td><?php echo htmlspecialchars($record['reason']); ?></td>
+                      <td><span class="badge-pill <?php echo $typeClass; ?>"><?php echo ucfirst($record['action_type']); ?></span></td>
+                      <td><?php echo htmlspecialchars($record['action_date']); ?></td>
+                      <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucwords(str_replace('_', ' ', $record['status'])); ?></span></td>
+                      <td><button class="btn-row-action" type="button" aria-label="More actions"><i class="fa-solid fa-ellipsis"></i></button></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="6" class="zone-empty-state">No suspension or reinstatement records have been added yet.</td>
+                  </tr>
+                <?php endif; ?>
 
               </tbody>
             </table>
 
             <!-- Table Pagination Footer -->
             <div class="table-footer">
-              <span class="table-footer-info">Showing 8 of 8</span>
-              <div class="pagination-wrapper">
-                <button class="page-btn">Prev</button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">Next</button>
-              </div>
+              <span class="table-footer-info"><?php echo $recordCount ? 'Showing ' . ($offset + 1) . '-' . min($offset + $itemsPerPage, $recordCount) . ' of ' . $recordCount : 'Showing 0-0 of 0'; ?></span>
+              <?php include('inc/pagination.php'); renderPagination($page, $recordCount, $itemsPerPage); ?>
             </div>
           </section>
 
@@ -247,6 +188,22 @@
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        if (!status || !window.AppModal) return;
+
+        const success = status === "success";
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: success ? "Action saved successfully" : "Action could not be saved",
+          body: params.get("msg") || (success ? "The member status and history were updated." : "Please review the action and try again."),
+          detail: success ? "The updated record is now visible in the suspension history." : "No member status change was committed.",
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
