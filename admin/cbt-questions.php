@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $questionResult = mysqli_query($conn, "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id ORDER BY q.created_at DESC");
 $questions = [];

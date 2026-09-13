@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: admission-management.php'); exit; }
 $number = trim($_POST['application_number'] ?? '');

@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $zoneOptions = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
 $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);

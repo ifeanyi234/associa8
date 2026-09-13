@@ -1,9 +1,12 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $titleCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM titles");
 $titleCount = $titleCountResult ? (int) mysqli_fetch_assoc($titleCountResult)['total'] : 0;
 $titlesResult = mysqli_query($conn, "SELECT t.id, t.title, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id GROUP BY t.id, t.title, t.level, t.description ORDER BY t.level ASC");
 $titles = [];
+
 if ($titlesResult) {
   while ($title = mysqli_fetch_assoc($titlesResult)) {
     $titles[] = $title;

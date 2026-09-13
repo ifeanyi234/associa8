@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $memberCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM members");
 $memberCount = $memberCountResult ? (int) mysqli_fetch_assoc($memberCountResult)['total'] : 0;

@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $admissionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM admissions GROUP BY status");
 $admissionStats = ['pending' => 0, 'under_review' => 0, 'approved' => 0, 'rejected' => 0];

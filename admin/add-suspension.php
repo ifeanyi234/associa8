@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $type = $_GET['type'] ?? 'suspension';
 $type = in_array($type, ['suspension', 'reinstatement'], true) ? $type : 'suspension';

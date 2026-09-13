@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: cbt-questions.php'); exit; }
 $examId = (int) ($_POST['exam_id'] ?? 0);

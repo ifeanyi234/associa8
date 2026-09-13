@@ -1,3 +1,4 @@
+<?php require_once "inc/auth.php"; ?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -85,7 +86,7 @@
 
           <!-- Document Upload Form Card -->
           <div class="dashboard-card" style="padding: 2.5rem 2rem;">
-            <form action="" method="POST" enctype="multipart/form-data">
+            <form action="proc-upload-document.php" method="POST" enctype="multipart/form-data">
               
               <!-- Document Title -->
               <div style="margin-bottom: 1.75rem;">
@@ -234,6 +235,20 @@
         if (!isDropdownToggle) {
           link.addEventListener("click", closeSidebar);
         }
+      });
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        if (!status || !window.AppModal) return;
+        const success = status === "success";
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: success ? "Document uploaded" : "Upload failed",
+          body: params.get("msg") || (success ? "The document was saved." : "Please try again."),
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
       });
     </script>
     <script src="../js/preloader.js"></script>

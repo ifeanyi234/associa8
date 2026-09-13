@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $portalSettings = ['admission' => ['start_at' => '', 'end_at' => ''], 'cbt' => ['start_at' => '', 'end_at' => '']];
 $settingsResult = mysqli_query($conn, "SELECT portal_key, start_at, end_at FROM portal_settings WHERE portal_key IN ('admission', 'cbt')");

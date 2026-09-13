@@ -1,3 +1,18 @@
+<?php
+require_once "inc/auth.php";
+require_once "../inc/db.php";
+
+$documentCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM documents");
+$documentCount = $documentCountResult ? (int) mysqli_fetch_assoc($documentCountResult)['total'] : 0;
+
+$documentsResult = mysqli_query($conn, "SELECT id, title, owner_name, file_path, file_type, file_size, category, created_at FROM documents ORDER BY created_at DESC");
+$documents = [];
+if ($documentsResult) {
+  while ($document = mysqli_fetch_assoc($documentsResult)) {
+    $documents[] = $document;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -90,9 +105,11 @@
               <button class="btn-navy-outline">
                 <i class="fa-solid fa-sliders"></i> Filter
               </button>
-              <button class="btn-navy-filled">
+              <a href="upload-document.php">
+              <button class="btn-navy-filled" style="height: 100%;">
                 <i class="fa-solid fa-circle-plus"></i> Add Document
               </button>
+              </a>
             </div>
           </div>
 
@@ -121,95 +138,30 @@
                 </tr>
               </thead>
               <tbody>
-                <!-- Row 1 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Row 2 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Row 3 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Row 4 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Row 5 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Row 6 -->
-                <tr>
-                  <td class="fw-semibold">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td>CBD Guide 1st Edition.pdf</td>
-                  <td>Admin</td>
-                  <td style="text-align: center;">
-                    <div style="display: inline-flex; gap: 0.5rem;">
-                      <button class="btn-action-edit">Edit</button>
-                      <button class="btn-action-delete">Delete</button>
-                    </div>
-                  </td>
-                </tr>
+                <?php if ($documents): ?>
+                  <?php foreach ($documents as $document): ?>
+                    <tr>
+                      <td class="fw-semibold"><?php echo htmlspecialchars($document['title']); ?></td>
+                      <td><?php echo htmlspecialchars($document['owner_name'] ?: 'Not provided'); ?></td>
+                      <td><?php echo htmlspecialchars($document['file_type'] ?: 'Not set'); ?></td>
+                      <td><a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
+                      <td><?php echo htmlspecialchars($document['category'] ?: 'General'); ?></td>
+                      <td style="text-align: center;">
+                        <div style="display: inline-flex; gap: 0.5rem;">
+                          <a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="btn-action-edit" target="_blank">View</a>
+                          <form action="proc-delete-document.php" method="POST" onsubmit="return confirm('Delete this document?');" style="display: inline;">
+                            <input type="hidden" name="document_id" value="<?php echo (int) $document['id']; ?>" />
+                            <button type="submit" class="btn-action-delete">Delete</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="6" class="zone-empty-state">No documents have been uploaded yet.</td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </div>
@@ -285,6 +237,31 @@
         if (!isDropdownToggle) {
           link.addEventListener("click", closeSidebar);
         }
+      });
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        const action = params.get("action");
+        if (!status || !window.AppModal) return;
+
+        const success = status === "success";
+        const isUpload = action === "upload";
+
+        const headings = {
+          upload: { success: "Document uploaded", error: "Upload failed" },
+          delete: { success: "Document deleted", error: "Delete failed" },
+        };
+        const defaultHeading = success ? "Success" : "Something went wrong";
+        const heading = headings[action] ? headings[action][success ? "success" : "error"] : defaultHeading;
+
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: heading,
+          body: params.get("msg") || (success ? "The action completed successfully." : "Please try again."),
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
       });
     </script>
     <script src="../js/preloader.js"></script>

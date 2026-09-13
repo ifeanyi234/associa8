@@ -1,3 +1,4 @@
+<?php require_once "inc/auth.php"; ?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -128,92 +129,272 @@
             </div>
           </section>
 
-          <!-- Module Navigation Tabs -->
+                    <!-- Module Navigation Tabs -->
           <div class="filter-pill-group" style="margin-bottom: 0.5rem;">
-            <button class="filter-pill active">Overview</button>
-            <button class="filter-pill">Dues & Levies</button>
-            <button class="filter-pill">Payment</button>
-            <button class="filter-pill">Budget Tracking</button>
+            <button class="filter-pill active" data-tab="overview">Overview</button>
+            <button class="filter-pill" data-tab="dues-levies">Dues & Levies</button>
+            <button class="filter-pill" data-tab="payment">Payment</button>
+            <button class="filter-pill" data-tab="budget-tracking">Budget Tracking</button>
           </div>
 
-          <!-- Split Grid (Chart vs Budget Allocations) -->
-          <section class="dashboard-split-grid">
-            <!-- Left Card: Monthly Collection Vs Expected Bar Chart -->
-            <div class="dashboard-card">
-              <div class="dashboard-card-header">
-                <div>
-                  <h3 class="dashboard-card-title">Monthly Collection Vs Expected</h3>
-                  <p class="dashboard-card-subtitle">&#8358; in naira</p>
+          <div class="tab-content">
+
+            <!-- ============ OVERVIEW TAB ============ -->
+            <div class="tab-pane active" id="tab-overview">
+              <section class="dashboard-split-grid">
+                <!-- Left Card: Monthly Collection Vs Expected Bar Chart -->
+                <div class="dashboard-card">
+                  <div class="dashboard-card-header">
+                    <div>
+                      <h3 class="dashboard-card-title">Monthly Collection Vs Expected</h3>
+                      <p class="dashboard-card-subtitle">&#8358; in naira</p>
+                    </div>
+                  </div>
+                  <div style="height: 280px; position: relative">
+                    <canvas id="monthlyCollectionChart"></canvas>
+                  </div>
                 </div>
-              </div>
-              <div style="height: 280px; position: relative">
-                <canvas id="monthlyCollectionChart"></canvas>
-              </div>
+
+                <!-- Right Card: Budget Allocations Progress Bars -->
+                <div class="dashboard-card">
+                  <div class="dashboard-card-header">
+                    <h3 class="dashboard-card-title">Budget Allocations</h3>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    <!-- Item 1 -->
+                    <div>
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                        <span>Programs & Events</span>
+                        <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
+                      </div>
+                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                        <div class="progress-bar-fill" style="width: 72%; background-color: #3b82f6;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div>
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                        <span>Administrations</span>
+                        <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
+                      </div>
+                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                        <div class="progress-bar-fill" style="width: 72%; background-color: #0f172a;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Item 3 -->
+                    <div>
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                        <span>Infrastructure</span>
+                        <span style="color: #2563eb;">65% <span style="font-weight: 400; color: #64748b;">(520K - 820K)</span></span>
+                      </div>
+                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                        <div class="progress-bar-fill" style="width: 65%; background-color: #3b82f6;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Item 4 -->
+                    <div>
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                        <span>Welfare Dues</span>
+                        <span style="color: #2563eb;">50% <span style="font-weight: 400; color: #64748b;">(180K - 320K)</span></span>
+                      </div>
+                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                        <div class="progress-bar-fill" style="width: 50%; background-color: #3b82f6;"></div>
+                      </div>
+                    </div>
+
+                    <!-- Item 5 -->
+                    <div>
+                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                        <span>Publications</span>
+                        <span style="color: #2563eb;">43% <span style="font-weight: 400; color: #64748b;">(130K - 300K)</span></span>
+                      </div>
+                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                        <div class="progress-bar-fill" style="width: 43%; background-color: #3b82f6;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </div>
 
-            <!-- Right Card: Budget Allocations Progress Bars -->
-            <div class="dashboard-card">
-              <div class="dashboard-card-header">
-                <h3 class="dashboard-card-title">Budget Allocations</h3>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                <!-- Item 1 -->
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                    <span>Programs & Events</span>
-                    <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
+            <!-- ============ DUES & LEVIES TAB ============ -->
+            <div class="tab-pane" id="tab-dues-levies">
+              <section class="dashboard-split-grid">
+                <!-- Annual Dues -->
+                <div class="dashboard-card">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <h3 class="dashboard-card-title">Annual Dues</h3>
+                      <p class="dashboard-card-subtitle">Per Year</p>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;45,000</div>
                   </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 72%; background-color: #3b82f6;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
+                    <span>505 / 648 members paid</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">78%</span>
                   </div>
-                </div>
-
-                <!-- Item 2 -->
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                    <span>Administrations</span>
-                    <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
-                  </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 72%; background-color: #0f172a;"></div>
+                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
+                    <div class="progress-bar-fill" style="width: 78%; background-color: #3b82f6;"></div>
                   </div>
                 </div>
 
-                <!-- Item 3 -->
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                    <span>Infrastructure</span>
-                    <span style="color: #2563eb;">65% <span style="font-weight: 400; color: #64748b;">(520K - 820K)</span></span>
+                <!-- Development Levy -->
+                <div class="dashboard-card">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <h3 class="dashboard-card-title">Development Levy</h3>
+                      <p class="dashboard-card-subtitle">Per Year</p>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;15,000</div>
                   </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
+                    <span>420 / 648 members paid</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">65%</span>
+                  </div>
+                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
                     <div class="progress-bar-fill" style="width: 65%; background-color: #3b82f6;"></div>
                   </div>
                 </div>
 
-                <!-- Item 4 -->
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                    <span>Welfare Dues</span>
-                    <span style="color: #2563eb;">50% <span style="font-weight: 400; color: #64748b;">(180K - 320K)</span></span>
+                <!-- Special Project Levy -->
+                <div class="dashboard-card">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <h3 class="dashboard-card-title">Special Project Levy</h3>
+                      <p class="dashboard-card-subtitle">One - Time</p>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;25,000</div>
                   </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 50%; background-color: #3b82f6;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
+                    <span>312 / 648 members paid</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">48%</span>
+                  </div>
+                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
+                    <div class="progress-bar-fill" style="width: 48%; background-color: #3b82f6;"></div>
                   </div>
                 </div>
 
-                <!-- Item 5 -->
-                <div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                    <span>Publications</span>
-                    <span style="color: #2563eb;">43% <span style="font-weight: 400; color: #64748b;">(130K - 300K)</span></span>
+                <!-- Welfare Fund -->
+                <div class="dashboard-card">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                      <h3 class="dashboard-card-title">Welfare Fund</h3>
+                      <p class="dashboard-card-subtitle">Per Quarter</p>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;5,000</div>
                   </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 43%; background-color: #3b82f6;"></div>
+                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
+                    <span>600 / 648 members paid</span>
+                    <span style="font-weight: 600; color: var(--text-primary);">93%</span>
+                  </div>
+                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
+                    <div class="progress-bar-fill" style="width: 93%; background-color: #3b82f6;"></div>
                   </div>
                 </div>
+              </section>
+            </div>
+
+            <!-- ============ PAYMENT TAB ============ -->
+            <div class="tab-pane" id="tab-payment">
+              <div class="table-responsive-card">
+                <table class="custom-admin-table">
+                  <thead>
+                    <tr>
+                      <th>Reference</th>
+                      <th>Member</th>
+                      <th>Type</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><span class="tx-ref-code">Pay - 2024 - 1180</span></td>
+                      <td class="fw-semibold">James Raymond</td>
+                      <td>Annual Dues</td>
+                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
+                      <td>2026 - 06 - 26</td>
+                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
+                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
+                    </tr>
+                    <tr>
+                      <td><span class="tx-ref-code">Pay - 2024 - 1181</span></td>
+                      <td class="fw-semibold">Joy Peters</td>
+                      <td>Develop. Levy</td>
+                      <td class="amount-cell amount-neutral">&#8358;15,000</td>
+                      <td>2026 - 06 - 26</td>
+                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
+                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
+                    </tr>
+                    <tr>
+                      <td><span class="tx-ref-code">Pay - 2024 - 1182</span></td>
+                      <td class="fw-semibold">James Raymond</td>
+                      <td>Annual Dues</td>
+                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
+                      <td>2026 - 06 - 26</td>
+                      <td><span class="badge-finance badge-finance-pending">Pending</span></td>
+                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
+                    </tr>
+                    <tr>
+                      <td><span class="tx-ref-code">Pay - 2024 - 1183</span></td>
+                      <td class="fw-semibold">Adamu Philips</td>
+                      <td>Special Levy</td>
+                      <td class="amount-cell amount-neutral">&#8358;25,000</td>
+                      <td>2026 - 06 - 26</td>
+                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
+                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
+                    </tr>
+                    <tr>
+                      <td><span class="tx-ref-code">Pay - 2024 - 1184</span></td>
+                      <td class="fw-semibold">James Raymond</td>
+                      <td>Annual Dues</td>
+                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
+                      <td>2026 - 06 - 26</td>
+                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
+                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-          </section>
+
+            <!-- ============ BUDGET TRACKING TAB ============ -->
+            <div class="tab-pane" id="tab-budget-tracking">
+              <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                  <h3 class="dashboard-card-title">FYB 2026 Budget</h3>
+                  <button class="btn-outline-primary" type="button">
+                    <i class="fa-solid fa-file-export"></i>
+                    <span>Generate Report</span>
+                  </button>
+                </div>
+                <div style="display: flex; justify-content: space-around; text-align: center; padding: 1.5rem 0;">
+                  <div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Total Budget</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">&#8358;2.4M</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Total Spent</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: #2563eb;">&#8358;1.64M</div>
+                  </div>
+                  <div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Balance</div>
+                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">&#8358;750k</div>
+                  </div>
+                </div>
+                <div class="progress-bar-wrapper" style="height: 10px;">
+                  <div class="progress-bar-fill" style="width: 68%; background-color: #2563eb;"></div>
+                </div>
+                <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.6rem;">68% annual budget utilized</div>
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <!-- Footer -->
@@ -223,6 +404,24 @@
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+// Financial page tab switching
+const filterPills = document.querySelectorAll(".filter-pill-group .filter-pill[data-tab]");
+const tabPanes = document.querySelectorAll(".tab-pane");
+
+filterPills.forEach((pill) => {
+  pill.addEventListener("click", () => {
+    filterPills.forEach((p) => p.classList.remove("active"));
+    pill.classList.add("active");
+
+    const targetId = "tab-" + pill.dataset.tab;
+    tabPanes.forEach((pane) => {
+      pane.classList.toggle("active", pane.id === targetId);
+    });
+  });
+});
+    </script>
 
     <script>
       // Sidebar Dropdown Accordion Toggle Logic

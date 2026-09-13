@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $titlesResult = mysqli_query($conn, "SELECT id, title, level FROM titles ORDER BY level");
 $zonesResult = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");

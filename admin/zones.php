@@ -1,5 +1,7 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $zoneStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_zones FROM zones");
 $zoneStats = $zoneStatsResult ? mysqli_fetch_assoc($zoneStatsResult) : ['total_zones' => 0];
 $subzoneStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_subzones FROM subzones");

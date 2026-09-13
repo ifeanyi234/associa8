@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $id = (int) ($_GET['id'] ?? 0);
 $zoneResult = mysqli_query($conn, "SELECT id, name, coordinator_name FROM zones WHERE id = $id LIMIT 1");

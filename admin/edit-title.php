@@ -1,4 +1,5 @@
 <?php
+require_once "inc/auth.php";
 require_once "../inc/db.php";
 $id = (int) ($_GET['id'] ?? 0);
 $titleResult = mysqli_query($conn, "SELECT id, title, level, description FROM titles WHERE id = $id LIMIT 1");
