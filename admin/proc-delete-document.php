@@ -13,7 +13,6 @@ if ($documentId < 1) {
     exit;
 }
 
-// Look up the file path first, so we can remove the actual file after deleting the row
 $lookupStatement = mysqli_prepare($conn, 'SELECT file_path FROM documents WHERE id = ?');
 mysqli_stmt_bind_param($lookupStatement, 'i', $documentId);
 mysqli_stmt_execute($lookupStatement);
@@ -29,7 +28,6 @@ $deleteStatement = mysqli_prepare($conn, 'DELETE FROM documents WHERE id = ?');
 mysqli_stmt_bind_param($deleteStatement, 'i', $documentId);
 $success = mysqli_stmt_execute($deleteStatement) && mysqli_stmt_affected_rows($deleteStatement) === 1;
 
-// Only remove the physical file once the database row is confirmed deleted
 if ($success) {
     $filePath = __DIR__ . '/' . $document['file_path'];
     if (is_file($filePath)) {

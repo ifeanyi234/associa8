@@ -10,7 +10,8 @@ $membersResult = mysqli_query($conn, "SELECT id, member_code, first_name, last_n
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><?php echo ucfirst($type); ?> Member - Associa8</title>
+    <title>
+<?php echo ucfirst($type); ?> Member - Associa8</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
@@ -23,31 +24,65 @@ $membersResult = mysqli_query($conn, "SELECT id, member_code, first_name, last_n
     <?php include('inc/preloader.php'); ?>
     <div class="admin-layout">
       <?php include('inc/sidebar.php'); ?>
-      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+      <div class="sidebar-overlay" id="sidebarOverlay">
+</div>
       <main class="admin-main">
         <header class="admin-header">
           <div class="header-left">
-            <button class="header-toggle-btn" id="sidebarToggle" type="button" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
-            <h1 class="page-title"><?php echo ucfirst($type); ?> Member</h1>
+            <button class="header-toggle-btn" id="sidebarToggle" type="button" aria-label="Open navigation">
+<i class="fa-solid fa-bars">
+</i>
+</button>
+            <h1 class="page-title">
+<?php echo ucfirst($type); ?> Member</h1>
           </div>
           <div class="header-right">
-            <div class="header-search"><i class="fa-solid fa-magnifying-glass header-search-icon"></i><input type="text" placeholder="Search...." /></div>
-            <button class="notification-btn" aria-label="Notifications" type="button"><i class="fa-solid fa-bell"></i><span class="notification-badge"></span></button>
-            <div class="admin-user-profile"><div class="avatar-badge">SA</div><div class="user-info"><span class="user-name">Super Admin</span><span class="user-role">Full Access</span></div></div>
+            <div class="header-search">
+<i class="fa-solid fa-magnifying-glass header-search-icon">
+</i>
+<input type="text" placeholder="Search...." />
+</div>
+            <button class="notification-btn" aria-label="Notifications" type="button">
+<i class="fa-solid fa-bell">
+</i>
+<span class="notification-badge">
+</span>
+</button>
+            <div class="admin-user-profile">
+<div class="avatar-badge">SA</div>
+<div class="user-info">
+<span class="user-name">Super Admin</span>
+<span class="user-role">Full Access</span>
+</div>
+</div>
           </div>
         </header>
         <div class="dashboard-content">
           <div class="page-action-header mb-4">
             <div>
-              <h2 class="page-title-main"><?php echo $type === 'reinstatement' ? 'Reinstate Member' : 'Suspend Member'; ?></h2>
-              <p class="page-subtitle"><?php echo $type === 'reinstatement' ? 'Restore an eligible member to active status and keep a record of the action.' : 'Record a disciplinary action and update the member status.'; ?></p>
+              <h2 class="page-title-main">
+<?php echo $type === 'reinstatement' ? 'Reinstate Member' : 'Suspend Member'; ?>
+</h2>
+              <p class="page-subtitle">
+<?php echo $type === 'reinstatement' ? 'Restore an eligible member to active status and keep a record of the action.' : 'Record a disciplinary action and update the member status.'; ?>
+</p>
             </div>
-            <a href="suspension.php" class="btn-outline-primary"><i class="fa-solid fa-arrow-left"></i><span>Back to suspension</span></a>
+            <a href="suspension.php" class="btn-outline-primary">
+<i class="fa-solid fa-arrow-left">
+</i>
+<span>Back to suspension</span>
+</a>
           </div>
           <section class="dashboard-card structure-form-card">
             <div class="structure-form-heading">
-              <div class="structure-form-icon"><i class="fa-solid fa-<?php echo $type === 'reinstatement' ? 'user-check' : 'ban'; ?>"></i></div>
-              <div><h3>Action information</h3><p>This action will update the member record and create a history entry.</p></div>
+              <div class="structure-form-icon">
+<i class="fa-solid fa-<?php echo $type === 'reinstatement' ? 'user-check' : 'ban'; ?>">
+</i>
+</div>
+              <div>
+<h3>Action information</h3>
+<p>This action will update the member record and create a history entry.</p>
+</div>
             </div>
             <form action="proc-suspension.php" method="POST" class="structure-form">
               <input type="hidden" name="action_type" value="<?php echo htmlspecialchars($type); ?>" />
@@ -84,16 +119,23 @@ $membersResult = mysqli_query($conn, "SELECT id, member_code, first_name, last_n
               </div>
               <div class="form-group">
                 <label for="reason" class="form-label">Reason or notes</label>
-                <textarea class="form-control" id="reason" name="reason" rows="4" placeholder="Explain the reason for this action" required></textarea>
+                <textarea class="form-control" id="reason" name="reason" rows="4" placeholder="Explain the reason for this action" required>
+</textarea>
               </div>
-              <div class="structure-form-actions"><a href="suspension.php" class="btn-action-dark-outline">Cancel</a><button type="submit" class="btn-navy-filled"><i class="fa-solid fa-check"></i> Save action</button></div>
+              <div class="structure-form-actions">
+<a href="suspension.php" class="btn-action-dark-outline">Cancel</a>
+<button type="submit" class="btn-navy-filled">
+<i class="fa-solid fa-check">
+</i> Save action</button>
+</div>
             </form>
           </section>
         </div>
         <?php include('inc/footer.php'); ?>
       </main>
     </div>
-    <script src="../js/admin-sidebar.js"></script>
+    <script src="../js/admin-sidebar.js">
+</script>
     <script>
       window.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
@@ -109,6 +151,8 @@ $membersResult = mysqli_query($conn, "SELECT id, member_code, first_name, last_n
         window.history.replaceState({}, document.title, window.location.pathname + `?type=<?php echo $type; ?>`);
       });
     </script>
-    <script src="../js/preloader.js"></script>
+    <script src="../js/preloader.js">
+</script>
   </body>
 </html>
+

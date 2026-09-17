@@ -1,7 +1,7 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
-$applicantsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status IN ('pending', 'under_review', 'approved') ORDER BY applied_at DESC");
+$applicantsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status = 'under_review' ORDER BY applied_at DESC");
 $applicants = [];
 if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResult)) { $applicants[] = $applicant; } }
 ?>
@@ -89,10 +89,6 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
               <p class="page-subtitle">CBT Schedule & Onboarding</p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <a href="add-admission.php" class="btn-outline-primary">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>Add Applicants</span>
-              </a>
               <button class="btn-outline-primary">
                 <i class="fa-solid fa-file-export"></i>
                 <span>Export Participant</span>
@@ -130,11 +126,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>First Name</th>
-                  <th>Last Name</th>
+                  <th>Full Name</th>
+                  <th>Application No.</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>Exam Code</th>
                   <th>Expire Date</th>
                   <th style="text-align: right;">Action</th>
                 </tr>
@@ -148,7 +143,6 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                       <td><?php echo htmlspecialchars($applicant['application_number']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['email']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['phone']); ?></td>
-                      <td>Not assigned</td>
                       <td><?php echo htmlspecialchars($applicant['applied_at']); ?></td>
                       <td style="text-align: right;"><span class="badge-pill status-under-review"><?php echo ucwords(str_replace('_', ' ', $applicant['status'])); ?></span></td>
                     </tr>
@@ -156,11 +150,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                 <?php else: ?>
                 <tr>
                   <td>01</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
+                  <td>Joseph Raymond</td>
+                  <td>APP-PLACEHOLDER</td>
                   <td>j-ray@gmail.com</td>
                   <td>081234565789</td>
-                  <td>102321</td>
                   <td>10-06-26</td>
                   <td style="text-align: right;">
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
@@ -168,11 +161,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                 </tr>
                 <tr>
                   <td>02</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
+                  <td>Joseph Raymond</td>
+                  <td>APP-PLACEHOLDER</td>
                   <td>j-ray@gmail.com</td>
                   <td>081234565789</td>
-                  <td>102321</td>
                   <td>10-06-26</td>
                   <td style="text-align: right;">
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
@@ -180,11 +172,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                 </tr>
                 <tr>
                   <td>03</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
+                  <td>Joseph Raymond</td>
+                  <td>APP-PLACEHOLDER</td>
                   <td>j-ray@gmail.com</td>
                   <td>081234565789</td>
-                  <td>102321</td>
                   <td>10-06-26</td>
                   <td style="text-align: right;">
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
@@ -192,11 +183,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                 </tr>
                 <tr>
                   <td>04</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
+                  <td>Joseph Raymond</td>
+                  <td>APP-PLACEHOLDER</td>
                   <td>j-ray@gmail.com</td>
                   <td>081234565789</td>
-                  <td>102321</td>
                   <td>10-06-26</td>
                   <td style="text-align: right;">
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
@@ -204,11 +194,10 @@ if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResul
                 </tr>
                 <tr>
                   <td>05</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
+                  <td>Joseph Raymond</td>
+                  <td>APP-PLACEHOLDER</td>
                   <td>j-ray@gmail.com</td>
                   <td>081234565789</td>
-                  <td>102321</td>
                   <td>10-06-26</td>
                   <td style="text-align: right;">
                     <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>

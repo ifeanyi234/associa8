@@ -891,6 +891,10 @@ textarea::placeholder {
   overflow: hidden;
 }
 
+.admission-table-card {
+  overflow: visible;
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -1027,6 +1031,23 @@ textarea::placeholder {
 
 .btn-action-trigger:hover {
   color: var(--text-primary);
+}
+
+.admission-actions .btn-action-trigger {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.admission-actions .btn-action-trigger:hover,
+.admission-actions.show .btn-action-trigger {
+  color: var(--primary-blue, #2563eb);
+  background: #eff6ff;
+  border-color: #bfdbfe;
 }
 
 /* Table Pagination Footer */
@@ -1695,6 +1716,11 @@ textarea::placeholder {
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
   box-shadow: var(--shadow-card, 0 1px 3px rgba(0, 0, 0, 0.05));
+}
+
+.table-responsive-card.admission-table-card {
+  overflow: visible;
+  overflow-x: visible;
 }
 
 .custom-admin-table {
@@ -2557,6 +2583,23 @@ textarea::placeholder {
   border-radius: 8px;
 }
 
+.admission-status-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admission-status-form select {
+  min-height: 2rem;
+  max-width: 8rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.75rem;
+}
+
 /* Animated Reticle Overlay */
 .scanner-overlay {
   position: absolute;
@@ -3287,6 +3330,49 @@ textarea.form-control {
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
   display: none;
   flex-direction: column;
+}
+
+.dropdown-menu form {
+  margin: 0;
+}
+
+.dropdown-menu .dropdown-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+}
+
+.admission-actions .dropdown-menu {
+  top: auto;
+  right: 0;
+  z-index: 1100;
+  bottom: calc(100% + 0.5rem);
+  min-width: 172px;
+  padding: 0.35rem;
+  border-color: #dbe3ef;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(15, 39, 68, 0.16);
+}
+
+.admission-actions .dropdown-item {
+  min-height: 2.25rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.admission-actions .dropdown-item i {
+  width: 1rem;
+  color: #2563eb;
+  text-align: center;
+}
+
+.admission-actions .dropdown-item.danger-item,
+.admission-actions .dropdown-item.danger-item i {
+  color: #dc2626;
 }
 
 .dropdown.show .dropdown-menu {

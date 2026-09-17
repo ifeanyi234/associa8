@@ -89,15 +89,15 @@ require_once "inc/auth.php";
             </p>
 
             <div class="banner-actions">
-              <button class="btn-banner-action">
+              <a href="cbt-applicants.php" style="text-decoration: none;" class="btn-banner-action">
                 <i class="fa-solid fa-graduation-cap"></i> Review Applications
-              </button>
-              <button class="btn-banner-action">
+              </a>
+              <a href="financial.php" style="text-decoration: none;" class="btn-banner-action">
                 <i class="fa-solid fa-wallet"></i> View Financials
-              </button>
-              <button class="btn-banner-action">
+              </a>
+              <a href="attendance.php" style="text-decoration: none;" class="btn-banner-action">
                 <i class="fa-regular fa-calendar-days"></i> Attendance Reports
-              </button>
+              </a>
             </div>
           </section>
 

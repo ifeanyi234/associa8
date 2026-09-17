@@ -4,7 +4,7 @@ require_once "../inc/db.php";
 $admissionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM admissions GROUP BY status");
 $admissionStats = ['pending' => 0, 'under_review' => 0, 'approved' => 0, 'rejected' => 0];
 if ($admissionStatsResult) { while ($stat = mysqli_fetch_assoc($admissionStatsResult)) { $admissionStats[$stat['status']] = (int) $stat['total']; } }
-$admissionsResult = mysqli_query($conn, "SELECT application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions ORDER BY applied_at DESC");
+$admissionsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions ORDER BY applied_at DESC");
 $admissions = [];
 if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResult)) { $admissions[] = $admission; } }
 ?>
@@ -99,26 +99,25 @@ if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResul
 
           <!-- Summary Stat Cards Grid -->
           <section class="stats-grid mb-4">
-  <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo $admissionStats['pending'] + $admissionStats['under_review']; ?></div>
-    <div class="suspension-stat-label">Application Review</div>
-  </div>
-  <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo $admissionStats['under_review']; ?></div>
-    <div class="suspension-stat-label">CBT Review</div>
-  </div>
-  <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo $admissionStats['pending']; ?></div>
-    <div class="suspension-stat-label">Onboarding</div>
-  </div>
-  <div class="suspension-stat-card">
-    <div class="suspension-stat-value text-primary"><?php echo $admissionStats['approved']; ?></div>
-    <div class="suspension-stat-label">Approved</div>
-  </div>
-</section>
-
+            <div class="suspension-stat-card">
+              <div class="suspension-stat-value"><?php echo $admissionStats['pending'] + $admissionStats['under_review']; ?></div>
+              <div class="suspension-stat-label">Application Review</div>
+            </div>
+            <div class="suspension-stat-card">
+              <div class="suspension-stat-value"><?php echo $admissionStats['under_review']; ?></div>
+              <div class="suspension-stat-label">CBT Review</div>
+            </div>
+            <div class="suspension-stat-card">
+              <div class="suspension-stat-value"><?php echo $admissionStats['pending']; ?></div>
+              <div class="suspension-stat-label">Onboarding</div>
+            </div>
+            <div class="suspension-stat-card">
+              <div class="suspension-stat-value text-primary"><?php echo $admissionStats['approved']; ?></div>
+              <div class="suspension-stat-label">Approved</div>
+            </div>
+          </section>
           <!-- Data Table Card -->
-          <div class="table-responsive-card">
+          <div class="table-responsive-card admission-table-card">
             <table class="admin-table">
               <thead>
                 <tr>
@@ -134,7 +133,65 @@ if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResul
                 <?php if ($admissions): ?>
                   <?php foreach ($admissions as $admission): ?>
                     <?php $statusClass = $admission['status'] === 'approved' ? 'status-active' : ($admission['status'] === 'rejected' ? 'status-inactive' : 'status-under-review'); ?>
-                    <tr><td><div class="member-cell"><div class="member-avatar"><?php echo htmlspecialchars(strtoupper(substr($admission['applicant_name'], 0, 2))); ?></div><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($admission['applicant_name']); ?></span><span class="member-email"><?php echo htmlspecialchars($admission['email']); ?></span></div></div></td><td><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($admission['guarantor_name'] ?: 'Not provided'); ?></span><span class="member-email"><?php echo htmlspecialchars($admission['guarantor_relationship'] ?: ''); ?></span></div></td><td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucwords(str_replace('_', ' ', $admission['status'])); ?></span></td><td><?php echo htmlspecialchars($admission['applied_at']); ?></td><td><span class="badge-pill dues-arrears">Pending</span></td><td><button class="btn-action-trigger" type="button" aria-label="Options"><i class="fa-solid fa-ellipsis"></i></button></td></tr>
+                    <tr>
+                      <td>
+                        <div class="member-cell">
+                          <div class="member-avatar">
+                            <?php echo htmlspecialchars(strtoupper(substr($admission['applicant_name'], 0, 2))); ?>
+                          </div>
+                          <div class="member-info">
+                            <span class="member-name"><?php echo htmlspecialchars($admission['applicant_name']); ?></span>
+                            <span class="member-email"><?php echo htmlspecialchars($admission['email']); ?></span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="member-info">
+                          <span class="member-name"><?php echo htmlspecialchars($admission['guarantor_name'] ?: 'Not provided'); ?></span>
+                          <span class="member-email"><?php echo htmlspecialchars($admission['guarantor_relationship'] ?: ''); ?></span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge-pill <?php echo $statusClass; ?>">
+                          <?php echo ucwords(str_replace('_', ' ', $admission['status'])); ?>
+                        </span>
+                      </td>
+                      <td><?php echo htmlspecialchars($admission['applied_at']); ?></td>
+                      <td>
+                        <span class="badge-pill dues-arrears">Pending</span>
+                      </td>
+                      <td>
+                        <?php if (in_array($admission['status'], ['pending', 'under_review'], true)): ?>
+                          <div class="dropdown admission-actions">
+                            <button class="btn-action-trigger" type="button" aria-label="Admission actions" aria-expanded="false">
+                              <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                              <?php if ($admission['status'] === 'pending'): ?>
+                                <form action="proc-update-admission-status.php" method="POST">
+                                  <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
+                                  <input type="hidden" name="status" value="under_review" />
+                                  <button class="dropdown-item" type="submit"><i class="fa-solid fa-forward"></i> Move to CBT</button>
+                                </form>
+                              <?php else: ?>
+                                <form action="proc-update-admission-status.php" method="POST">
+                                  <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
+                                  <input type="hidden" name="status" value="approved" />
+                                  <button class="dropdown-item" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
+                                </form>
+                                <form action="proc-update-admission-status.php" method="POST">
+                                  <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
+                                  <input type="hidden" name="status" value="rejected" />
+                                  <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                </form>
+                              <?php endif; ?>
+                            </div>
+                          </div>
+                        <?php else: ?>
+                          <span class="badge-pill <?php echo $statusClass; ?>">Final</span>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
                 <!-- Row 1 -->
@@ -270,6 +327,22 @@ if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResul
     <script>
       window.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        if (!status || !window.AppModal) return;
+
+        const success = status === "success";
+        window.AppModal.open({
+          type: success ? "success" : "error",
+          heading: success ? "Admission status updated" : "Admission status not updated",
+          body: params.get("msg") || "Please try again.",
+          detail: success ? "The applicant will now appear in the dashboard stage that matches the new status." : "No admission status was changed.",
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
         if (!params.get("status") || !window.AppModal) return;
         const success = params.get("status") === "success";
         window.AppModal.open({
@@ -283,6 +356,29 @@ if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResul
     </script>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
+      document.querySelectorAll(".admission-actions").forEach((dropdown) => {
+        const trigger = dropdown.querySelector(".btn-action-trigger");
+
+        trigger.addEventListener("click", (event) => {
+          event.stopPropagation();
+          document.querySelectorAll(".admission-actions.show").forEach((openDropdown) => {
+            if (openDropdown !== dropdown) {
+              openDropdown.classList.remove("show");
+              openDropdown.querySelector(".btn-action-trigger").setAttribute("aria-expanded", "false");
+            }
+          });
+          const isOpen = dropdown.classList.toggle("show");
+          trigger.setAttribute("aria-expanded", String(isOpen));
+        });
+      });
+
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".admission-actions.show").forEach((dropdown) => {
+          dropdown.classList.remove("show");
+          dropdown.querySelector(".btn-action-trigger").setAttribute("aria-expanded", "false");
+        });
+      });
+
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
 
       dropdownItems.forEach((item) => {
