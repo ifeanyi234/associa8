@@ -2,10 +2,39 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$documentCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM documents");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$adminZoneId = isset($_SESSION['admin_zone_id']) && $_SESSION['admin_zone_id'] !== null ? (int) $_SESSION['admin_zone_id'] : null;
+$adminSubzoneId = isset($_SESSION['admin_subzone_id']) && $_SESSION['admin_subzone_id'] !== null ? (int) $_SESSION['admin_subzone_id'] : null;
+$shouldScopeAdmin = $adminRole !== 'super_admin' && $adminZoneId !== null;
+
+$documentCountSql = "SELECT COUNT(*) AS total FROM documents";
+$documentsSql = "SELECT d.id, d.title, d.file_path, d.file_type, d.file_size, d.category, d.uploaded_by, d.zone_id, d.subzone_id, d.created_at, z.name AS zone_name, sz.name AS subzone_name FROM documents d LEFT JOIN zones z ON z.id = d.zone_id LEFT JOIN subzones sz ON sz.id = d.subzone_id";
+
+if ($shouldScopeAdmin) {
+  $documentsSql .= " WHERE (d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?";
+  $documentCountSql .= " WHERE (zone_id IS NULL AND subzone_id IS NULL) OR zone_id = ? OR subzone_id = ?";
+}
+
+$documentsSql .= " ORDER BY d.created_at DESC";
+
+$documentCountResult = mysqli_query($conn, $documentCountSql . ($shouldScopeAdmin ? "" : ""));
+if ($shouldScopeAdmin) {
+  $documentCountStmt = mysqli_prepare($conn, $documentCountSql);
+  mysqli_stmt_bind_param($documentCountStmt, 'ii', $adminZoneId, $adminSubzoneId);
+  mysqli_stmt_execute($documentCountStmt);
+  $documentCountResult = mysqli_stmt_get_result($documentCountStmt);
+}
 $documentCount = $documentCountResult ? (int) mysqli_fetch_assoc($documentCountResult)['total'] : 0;
 
-$documentsResult = mysqli_query($conn, "SELECT id, title, owner_name, file_path, file_type, file_size, category, created_at FROM documents ORDER BY created_at DESC");
+$documentsResult = null;
+if ($shouldScopeAdmin) {
+  $documentsStmt = mysqli_prepare($conn, $documentsSql);
+  mysqli_stmt_bind_param($documentsStmt, 'ii', $adminZoneId, $adminSubzoneId);
+  mysqli_stmt_execute($documentsStmt);
+  $documentsResult = mysqli_stmt_get_result($documentsStmt);
+} else {
+  $documentsResult = mysqli_query($conn, $documentsSql);
+}
 $documents = [];
 if ($documentsResult) {
   while ($document = mysqli_fetch_assoc($documentsResult)) {
@@ -130,19 +159,27 @@ if ($documentsResult) {
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Owner</th>
+                  <th>Visibility</th>
                   <th>File Type</th>
                   <th>File Path</th>
-                  <th>Author ID</th>
+                  <th>Category</th>
                   <th style="text-align: center;">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <?php if ($documents): ?>
                   <?php foreach ($documents as $document): ?>
+                    <?php
+                      $visibilityLabel = 'Organization-wide';
+                      if ($document['subzone_name']) {
+                        $visibilityLabel = $document['zone_name'] . ' / ' . $document['subzone_name'];
+                      } elseif ($document['zone_name']) {
+                        $visibilityLabel = $document['zone_name'];
+                      }
+                    ?>
                     <tr>
                       <td class="fw-semibold"><?php echo htmlspecialchars($document['title']); ?></td>
-                      <td><?php echo htmlspecialchars($document['owner_name'] ?: 'Not provided'); ?></td>
+                      <td><?php echo htmlspecialchars($visibilityLabel); ?></td>
                       <td><?php echo htmlspecialchars($document['file_type'] ?: 'Not set'); ?></td>
                       <td><a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
                       <td><?php echo htmlspecialchars($document['category'] ?: 'General'); ?></td>

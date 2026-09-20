@@ -1,4 +1,18 @@
-<?php require_once "inc/auth.php"; ?>
+<?php
+require_once "inc/auth.php";
+require_once "../inc/db.php";
+$zoneOptions = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
+$subzonesByZone = [];
+$subzonesResult = mysqli_query($conn, "SELECT id, zone_id, name FROM subzones ORDER BY name");
+if ($subzonesResult) {
+  while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
+    $subzonesByZone[(int) $subzone['zone_id']][] = [
+      'id' => (int) $subzone['id'],
+      'name' => $subzone['name'],
+    ];
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -114,6 +128,51 @@
                 />
               </div>
 
+              <!-- Visibility -->
+              <div style="margin-bottom: 1.75rem;">
+                <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
+                  Visibility
+                </label>
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+                  <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="visibility" value="org" checked />
+                    <span>Organization-wide</span>
+                  </label>
+                  <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="visibility" value="zone" />
+                    <span>Specific zone</span>
+                  </label>
+                  <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <input type="radio" name="visibility" value="subzone" />
+                    <span>Specific sub-zone</span>
+                  </label>
+                </div>
+                <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+                  <input type="checkbox" name="organization_wide" value="1" />
+                  <span>Also mark as organization-wide</span>
+                </label>
+              </div>
+
+              <div class="form-row-2col" style="margin-bottom: 1.75rem;">
+                <div class="form-group">
+                  <label for="documentZone" class="form-label">Zone</label>
+                  <select class="form-select" id="documentZone" name="zone_id">
+                    <option value="" selected disabled>Select zone</option>
+                    <?php if ($zoneOptions): ?>
+                      <?php while ($zone = mysqli_fetch_assoc($zoneOptions)): ?>
+                        <option value="<?php echo (int) $zone['id']; ?>"><?php echo htmlspecialchars($zone['name']); ?></option>
+                      <?php endwhile; ?>
+                    <?php endif; ?>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="documentSubzone" class="form-label">Sub-zone</label>
+                  <select class="form-select" id="documentSubzone" name="subzone_id" disabled>
+                    <option value="" selected disabled>Select sub-zone</option>
+                  </select>
+                </div>
+              </div>
+
               <!-- File Type -->
               <div style="margin-bottom: 1.75rem;">
                 <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
@@ -177,6 +236,62 @@
 
     <!-- Interactive Scripts -->
     <script>
+      const documentSubzones = <?php echo json_encode($subzonesByZone, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+
+      function populateDocumentSubzones(zoneId) {
+        const subzoneSelect = document.getElementById("documentSubzone");
+        const options = documentSubzones[Number(zoneId)] || [];
+
+        subzoneSelect.innerHTML = '<option value="" selected disabled>' + (options.length ? 'Select sub-zone' : 'No sub-zone available') + '</option>';
+        subzoneSelect.disabled = options.length === 0;
+
+        options.forEach((subzone) => {
+          const option = document.createElement("option");
+          option.value = subzone.id;
+          option.textContent = subzone.name;
+          subzoneSelect.appendChild(option);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const zoneSelect = document.getElementById("documentZone");
+        const subzoneSelect = document.getElementById("documentSubzone");
+        const visibilityRadios = document.querySelectorAll('input[name="visibility"]');
+        const orgWideToggle = document.querySelector('input[name="organization_wide"]');
+
+        function syncVisibilityState() {
+          const selectedVisibility = document.querySelector('input[name="visibility"]:checked')?.value || 'org';
+          const isOrgWide = orgWideToggle.checked;
+          const disableZone = isOrgWide || selectedVisibility === 'org';
+          const disableSubzone = isOrgWide || selectedVisibility !== 'subzone';
+
+          zoneSelect.disabled = disableZone;
+          subzoneSelect.disabled = disableSubzone || !zoneSelect.value || !documentSubzones[Number(zoneSelect.value)] || documentSubzones[Number(zoneSelect.value)].length === 0;
+
+          if (disableZone) {
+            zoneSelect.value = '';
+            subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
+            subzoneSelect.disabled = true;
+          }
+        }
+
+        zoneSelect.addEventListener("change", (event) => {
+          if (event.target.value) {
+            populateDocumentSubzones(event.target.value);
+          } else {
+            subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
+            subzoneSelect.disabled = true;
+          }
+        });
+
+        visibilityRadios.forEach((radio) => {
+          radio.addEventListener("change", syncVisibilityState);
+        });
+        orgWideToggle.addEventListener("change", syncVisibilityState);
+
+        syncVisibilityState();
+      });
+
       // Sidebar Accordion Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
       dropdownItems.forEach((item) => {

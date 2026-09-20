@@ -86,69 +86,40 @@
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th>Owner</th>
+                  <th>Visibility</th>
                   <th>File Type</th>
                   <th>File Path</th>
-                  <th>Author ID</th>
+                  <th>Category</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td><span class="file-path-tag">CBD Guide 1st Edition.pdf</span></td>
-                  <td>Admin</td>
-                  <td>
-                    <button class="btn-action-edit">Edit</button>
-                    <button class="btn-action-delete">Delete</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td><span class="file-path-tag">CBD Guide 1st Edition.pdf</span></td>
-                  <td>Admin</td>
-                  <td>
-                    <button class="btn-action-edit">Edit</button>
-                    <button class="btn-action-delete">Delete</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td><span class="file-path-tag">CBD Guide 1st Edition.pdf</span></td>
-                  <td>Admin</td>
-                  <td>
-                    <button class="btn-action-edit">Edit</button>
-                    <button class="btn-action-delete">Delete</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td><span class="file-path-tag">CBD Guide 1st Edition.pdf</span></td>
-                  <td>Admin</td>
-                  <td>
-                    <button class="btn-action-edit">Edit</button>
-                    <button class="btn-action-delete">Delete</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">CBD Study Guide vb.pdf</td>
-                  <td>Super Admin</td>
-                  <td>Document</td>
-                  <td><span class="file-path-tag">CBD Guide 1st Edition.pdf</span></td>
-                  <td>Admin</td>
-                  <td>
-                    <button class="btn-action-edit">Edit</button>
-                    <button class="btn-action-delete">Delete</button>
-                  </td>
-                </tr>
+                <?php if ($documents): ?>
+                  <?php foreach ($documents as $document): ?>
+                    <?php
+                      $visibilityText = 'Organization-wide';
+                      if ($document['subzone_name']) {
+                        $visibilityText = ($document['zone_name'] ?: 'Zone') . ' / ' . $document['subzone_name'];
+                      } elseif ($document['zone_name']) {
+                        $visibilityText = $document['zone_name'];
+                      }
+                    ?>
+                    <tr>
+                      <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($document['title']); ?></td>
+                      <td><?php echo htmlspecialchars($visibilityText); ?></td>
+                      <td><?php echo htmlspecialchars($document['file_type'] ?: 'Document'); ?></td>
+                      <td><a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
+                      <td><?php echo htmlspecialchars($document['category'] ?: 'General'); ?></td>
+                      <td>
+                        <a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="btn-action-edit" target="_blank">View</a>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="6" class="zone-empty-state">No documents are available for your zone or sub-zone yet.</td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </section>
