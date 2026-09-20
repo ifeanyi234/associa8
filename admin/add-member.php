@@ -3,6 +3,17 @@ require_once "inc/auth.php";
 require_once "../inc/db.php";
 $titlesResult = mysqli_query($conn, "SELECT id, title, level FROM titles ORDER BY level");
 $zonesResult = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
+$subzonesByZone = [];
+$subzonesResult = mysqli_query($conn, "SELECT id, zone_id, name FROM subzones ORDER BY name");
+if ($subzonesResult) {
+  while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
+    $zoneId = (int) $subzone['zone_id'];
+    $subzonesByZone[$zoneId][] = [
+      'id' => (int) $subzone['id'],
+      'name' => $subzone['name'],
+    ];
+  }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -135,6 +146,18 @@ $zonesResult = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
 </select>
 </div>
 </div>
+              <div class="form-row-2col">
+<div class="form-group">
+<label for="subzoneId" class="form-label">Sub-zone</label>
+<select class="form-select" id="subzoneId" name="subzone_id" disabled>
+<option value="" selected disabled>Select sub-zone</option>
+</select>
+</div>
+<div class="form-group">
+  <label class="form-label" for="subzoneHint">Assignment</label>
+  <div class="form-hint" id="subzoneHint">Choose a zone first to load available sub-zones.</div>
+</div>
+</div>
               <div class="structure-form-actions">
 <a href="member-directory.php" class="btn-action-dark-outline">Cancel</a>
 <button type="submit" class="btn-navy-filled">
@@ -150,16 +173,55 @@ $zonesResult = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
     <script src="../js/admin-sidebar.js">
 </script>
     <script>
+      const memberSubzones = <?php echo json_encode($subzonesByZone, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+
+      function populateSubzones(zoneId) {
+        const subzoneSelect = document.getElementById("subzoneId");
+        const hint = document.getElementById("subzoneHint");
+        const options = memberSubzones[Number(zoneId)] || [];
+
+        subzoneSelect.innerHTML = '<option value="" selected disabled>' + (options.length ? 'Select sub-zone' : 'No sub-zone available') + '</option>';
+        subzoneSelect.disabled = options.length === 0;
+
+        if (options.length === 0) {
+          hint.textContent = 'This zone does not have any sub-zones yet. You can still save the member under the zone.';
+        } else {
+          hint.textContent = 'Pick the sub-zone for this member inside the selected zone.';
+        }
+
+        options.forEach((subzone) => {
+          const option = document.createElement("option");
+          option.value = subzone.id;
+          option.textContent = subzone.name;
+          subzoneSelect.appendChild(option);
+        });
+      }
+
       window.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
         const status = params.get("status");
+        const zoneSelect = document.getElementById("zoneId");
+        const subzoneSelect = document.getElementById("subzoneId");
+
+        zoneSelect.addEventListener("change", (event) => {
+          populateSubzones(event.target.value);
+        });
+
+        if (zoneSelect.value) {
+          populateSubzones(zoneSelect.value);
+        } else {
+          subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
+          subzoneSelect.disabled = true;
+          document.getElementById("subzoneHint").textContent = 'Choose a zone first to load available sub-zones.';
+        }
+
         if (!status || !window.AppModal) return;
         const success = status === "success";
         window.AppModal.open({
           type: success ? "success" : "error",
           heading: success ? "Member added successfully" : "Member could not be added",
           body: params.get("msg") || (success ? "The member is now in the directory." : "Please review the member details and try again."),
-          detail: success ? "The selected title and zone are linked to this member." : "No member record was created.",
+          detail: success ? "The selected title, zone, and sub-zone are linked to this member." : "No member record was created.",
         });
         window.history.replaceState({}, document.title, window.location.pathname);
       });

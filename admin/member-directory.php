@@ -21,7 +21,7 @@ $filteredCount = $filteredCountResult ? (int) mysqli_fetch_assoc($filteredCountR
 $totalPages = max(1, (int) ceil($filteredCount / $itemsPerPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $itemsPerPage;
-$membersResult = mysqli_query($conn, "SELECT m.id, m.member_code, m.first_name, m.last_name, m.email, m.status, m.joined_date, t.title, z.name AS zone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
+$membersResult = mysqli_query($conn, "SELECT m.id, m.member_code, m.first_name, m.last_name, m.email, m.status, m.joined_date, t.title, z.name AS zone_name, sz.name AS subzone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id LEFT JOIN subzones sz ON sz.id = m.subzone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
 $members = [];
 if ($membersResult) {
   while ($member = mysqli_fetch_assoc($membersResult)) {
@@ -161,12 +161,21 @@ if ($membersResult) {
                       $fullName = $member['first_name'] . ' ' . $member['last_name'];
                       $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
                       $statusClass = $member['status'] === 'active' ? 'status-active' : ($member['status'] === 'suspended' ? 'status-suspension' : 'status-inactive');
+                      $zoneLabel = $member['zone_name'] ?: 'Unassigned';
+                      $subzoneLabel = $member['subzone_name'] ?: '';
                     ?>
                     <tr>
                       <td><div class="member-cell"><div class="member-avatar"><?php echo htmlspecialchars($initials); ?></div><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($fullName); ?></span><span class="member-email"><?php echo htmlspecialchars($member['email']); ?></span></div></div></td>
                       <td><?php echo htmlspecialchars($member['member_code']); ?></td>
                       <td><span class="cell-with-icon"><i class="fa-solid fa-shield-halved"></i> <?php echo htmlspecialchars($member['title'] ?: 'Unassigned'); ?></span></td>
-                      <td><span class="cell-with-icon"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($member['zone_name'] ?: 'Unassigned'); ?></span></td>
+                      <td>
+                        <div class="cell-stack">
+                          <span class="cell-with-icon"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($zoneLabel); ?></span>
+                          <?php if ($subzoneLabel): ?>
+                            <small class="cell-subtext"><?php echo htmlspecialchars($subzoneLabel); ?></small>
+                          <?php endif; ?>
+                        </div>
+                      </td>
                       <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucfirst($member['status']); ?></span></td>
                       <td><span class="badge-pill dues-current">Not available</span></td>
                       <td><?php echo htmlspecialchars($member['joined_date'] ?: 'Not provided'); ?></td>
