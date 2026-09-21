@@ -1,3 +1,20 @@
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberOrgId = isset($_SESSION['member_org_id']) && $_SESSION['member_org_id'] !== null ? (int) $_SESSION['member_org_id'] : null;
+$memberZoneId = isset($_SESSION['member_zone_id']) && $_SESSION['member_zone_id'] !== null ? (int) $_SESSION['member_zone_id'] : null;
+$memberSubzoneId = isset($_SESSION['member_subzone_id']) && $_SESSION['member_subzone_id'] !== null ? (int) $_SESSION['member_subzone_id'] : null;
+
+$documentsSql = "SELECT d.id, d.title, d.file_path, d.file_type, d.category, z.name AS zone_name, sz.name AS subzone_name FROM documents d LEFT JOIN zones z ON z.id = d.zone_id LEFT JOIN subzones sz ON sz.id = d.subzone_id WHERE d.org_id = " . (int) $memberOrgId . " AND ((d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = " . (int) $memberZoneId . " OR d.subzone_id = " . (int) $memberSubzoneId . ") ORDER BY d.created_at DESC";
+$documentsResult = $memberOrgId !== null ? mysqli_query($conn, $documentsSql) : false;
+$documents = [];
+if ($documentsResult) {
+  while ($document = mysqli_fetch_assoc($documentsResult)) {
+    $documents[] = $document;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>

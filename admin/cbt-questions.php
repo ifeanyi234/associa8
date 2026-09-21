@@ -2,7 +2,15 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$questionResult = mysqli_query($conn, "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id ORDER BY q.created_at DESC");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$questionsSql = "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $questionsSql .= " WHERE e.org_id = " . (int) $orgId;
+}
+$questionsSql .= " ORDER BY q.created_at DESC";
+$questionResult = mysqli_query($conn, $questionsSql);
 
 $questions = [];
 
@@ -12,7 +20,11 @@ if ($questionResult) {
   } 
 }
 
-$examCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM cbt_exams");
+$examCountSql = "SELECT COUNT(*) AS total FROM cbt_exams";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $examCountSql .= " WHERE org_id = " . (int) $orgId;
+}
+$examCountResult = mysqli_query($conn, $examCountSql);
 $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['total'] : 0;
 
 ?>

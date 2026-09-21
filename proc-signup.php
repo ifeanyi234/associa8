@@ -37,62 +37,68 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit;
     }
 
+    // Check duplicates before inserting anything
+    $orgEmail_check = "SELECT * FROM `org-info` WHERE email = '$orgEmail' LIMIT 1";
+    $result_org = mysqli_query($conn, $orgEmail_check);
+    if ($result_org && mysqli_num_rows($result_org) > 0) {
+        header("Location: signup.php?status=error&msg=" . urlencode("An Organization with this email already exists."));
+        exit;
+    }
+
+    $adminEmail_check = "SELECT * FROM `admin-info` WHERE email = '$adminEmail' LIMIT 1";
+    $result_admin = mysqli_query($conn, $adminEmail_check);
+    if ($result_admin && mysqli_num_rows($result_admin) > 0) {
+        header("Location: signup.php?status=error&msg=" . urlencode("An admin with this email already exists."));
+        exit;
+    }
+
+    $username_check = "SELECT * FROM `acc-info` WHERE username = '$accUsername' LIMIT 1";
+    $result_username = mysqli_query($conn, $username_check);
+    if ($result_username && mysqli_num_rows($result_username) > 0) {
+        header("Location: signup.php?status=error&msg=" . urlencode("Username already exists."));
+        exit;
+    }
+
     // Securely Hash Password
     $hashedPassword = password_hash($accPassword, PASSWORD_DEFAULT);
 
-    $orgEmail_check = "SELECT * FROM `org-info` WHERE email = '$orgEmail'";
-    $result_org = mysqli_query($conn, $orgEmail_check);
-
-    $adminEmail_check = "SELECT * FROM `admin-info` WHERE email = '$adminEmail'";
-    $result_admin = mysqli_query($conn, $adminEmail_check);
-
-    $username_check = "SELECT * FROM `acc-info` WHERE username = '$accUsername'";
-    $result_username = mysqli_query($conn, $username_check);
+    mysqli_begin_transaction($conn);
 
     // Insert into `org-info`
     $sql_org = "INSERT INTO `org-info` (`name`, `type`, `email`, `phone`, `country`, `state`, `pricing`, `total-members`) 
                 VALUES ('$orgName', '$orgType', '$orgEmail', '$orgPhone', '$orgCountry', '$orgState', '$orgPricing', '$orgMembers')";
-    
-    mysqli_begin_transaction($conn);
     $query_org = mysqli_query($conn, $sql_org);
-    $org_error = $query_org ? '' : mysqli_error($conn);
-
-    // Insert into `admin-info`
-    $sql_admin = "INSERT INTO `admin-info` (`first-name`, `last-name`, `email`, `phone`, `job-title`, `role`) 
-                  VALUES ('$adminFirstName', '$adminLastName', '$adminEmail', '$adminPhone', '$adminJobTitle', '$adminRole')";
-    
-    $query_admin = mysqli_query($conn, $sql_admin);
-    $admin_error = $query_admin ? '' : mysqli_error($conn);
+    if (!$query_org) {
+        mysqli_rollback($conn);
+        header("Location: signup.php?status=error&msg=" . urlencode("Something went wrong while creating your organization."));
+        exit;
+    }
+    $orgId = (int) mysqli_insert_id($conn);
 
     // Insert into `acc-info`
-    $sql_acc = "INSERT INTO `acc-info` (`username`, `password`, `otp`) 
-                VALUES ('$accUsername', '$hashedPassword', '$accOtp')";
-    
+    $sql_acc = "INSERT INTO `acc-info` (`org_id`, `username`, `password`, `otp`) 
+                VALUES ('$orgId', '$accUsername', '$hashedPassword', '$accOtp')";
     $query_acc = mysqli_query($conn, $sql_acc);
-    $acc_error = $query_acc ? '' : mysqli_error($conn);
+    if (!$query_acc) {
+        mysqli_rollback($conn);
+        header("Location: signup.php?status=error&msg=" . urlencode("Something went wrong while creating your account."));
+        exit;
+    }
+    $accId = (int) mysqli_insert_id($conn);
 
-    // Checks overall success
-    if ($query_org && $query_admin && $query_acc) {
+    // Insert into `admin-info`
+    $sql_admin = "INSERT INTO `admin-info` (`org_id`, `acc_id`, `first-name`, `last-name`, `email`, `phone`, `job-title`, `role`) 
+                  VALUES ('$orgId', '$accId', '$adminFirstName', '$adminLastName', '$adminEmail', '$adminPhone', '$adminJobTitle', '$adminRole')";
+    $query_admin = mysqli_query($conn, $sql_admin);
+
+    if ($query_admin) {
         mysqli_commit($conn);
         header("Location: signup.php?status=success");
         exit;
-    }elseif(mysqli_num_rows($result_org) > 0) {
-        mysqli_rollback($conn);
-        error_log(implode('; ', array_filter([$org_error, $admin_error, $acc_error])));
-        header("Location: signup.php?status=error&msg=" . urlencode("An Organization with this email already exists."));
-    }elseif(mysqli_num_rows($result_admin) > 0) {
-        mysqli_rollback($conn);
-        error_log(implode('; ', array_filter([$org_error, $admin_error, $acc_error])));
-        header("Location: signup.php?status=error&msg=" . urlencode("An admin with this email already exists."));
-    }elseif(mysqli_num_rows($result_username) > 0) {
-        mysqli_rollback($conn);
-        error_log(implode('; ', array_filter([$org_error, $admin_error, $acc_error])));
-        header("Location: signup.php?status=error&msg=" . urlencode("Username already exists."));
-    } else {
-        mysqli_rollback($conn);
-        error_log(implode('; ', array_filter([$org_error, $admin_error, $acc_error])));
-        header("Location: signup.php?status=error&msg=" . urlencode("Something went wrong. Please try again."));
-        exit;
     }
+
+    mysqli_rollback($conn);
+    header("Location: signup.php?status=error&msg=" . urlencode("Something went wrong. Please try again."));
+    exit;
 }
 ?>

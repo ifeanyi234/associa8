@@ -2,7 +2,15 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$applicantsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status = 'under_review' ORDER BY applied_at DESC");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$applicantsSql = "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status = 'under_review'";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $applicantsSql .= " AND org_id = " . (int) $orgId;
+}
+$applicantsSql .= " ORDER BY applied_at DESC";
+$applicantsResult = mysqli_query($conn, $applicantsSql);
 
 $applicants = [];
 if ($applicantsResult) { 

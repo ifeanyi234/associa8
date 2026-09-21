@@ -2,9 +2,22 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$titleCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM titles");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$titleCountSql = "SELECT COUNT(*) AS total FROM titles";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $titleCountSql .= " WHERE org_id = " . (int) $orgId;
+}
+$titleCountResult = mysqli_query($conn, $titleCountSql);
 $titleCount = $titleCountResult ? (int) mysqli_fetch_assoc($titleCountResult)['total'] : 0;
-$titlesResult = mysqli_query($conn, "SELECT t.id, t.title, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id GROUP BY t.id, t.title, t.level, t.description ORDER BY t.level ASC");
+
+$titlesSql = "SELECT t.id, t.title, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $titlesSql .= " WHERE t.org_id = " . (int) $orgId;
+}
+$titlesSql .= " GROUP BY t.id, t.title, t.level, t.description ORDER BY t.level ASC";
+$titlesResult = mysqli_query($conn, $titlesSql);
 $titles = [];
 
 if ($titlesResult) {

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 20, 2026 at 10:37 PM
+-- Generation Time: Sep 21, 2026 at 01:49 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -29,6 +29,7 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `acc-info` (
   `id` int(30) NOT NULL,
+  `org_id` int(15) NOT NULL,
   `username` varchar(100) NOT NULL,
   `password` varchar(150) NOT NULL,
   `otp` varchar(10) NOT NULL
@@ -38,8 +39,8 @@ CREATE TABLE `acc-info` (
 -- Dumping data for table `acc-info`
 --
 
-INSERT INTO `acc-info` (`id`, `username`, `password`, `otp`) VALUES
-(1, 'ifeanyi', '$2y$10$y13pYMPQX9gxSV6Bi/e4.uE6FfVLZUjuzKicqwdO1G.ROkRLU99nS', '888888');
+INSERT INTO `acc-info` (`id`, `org_id`, `username`, `password`, `otp`) VALUES
+(1, 1, 'ifeanyi', '$2y$10$y13pYMPQX9gxSV6Bi/e4.uE6FfVLZUjuzKicqwdO1G.ROkRLU99nS', '888888');
 
 -- --------------------------------------------------------
 
@@ -63,6 +64,8 @@ CREATE TABLE `activity_log` (
 
 CREATE TABLE `admin-info` (
   `id` int(30) NOT NULL,
+  `org_id` int(15) NOT NULL,
+  `acc_id` int(30) DEFAULT NULL,
   `first-name` varchar(100) NOT NULL,
   `last-name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
@@ -77,18 +80,18 @@ CREATE TABLE `admin-info` (
 -- Dumping data for table `admin-info`
 --
 
-INSERT INTO `admin-info` (`id`, `first-name`, `last-name`, `email`, `phone`, `job-title`, `role`, `zone_id`, `subzone_id`) VALUES
-(1, '23kj23kj2', 'k3j4jk3434', 'heekwe@sfkdfmd', 232443434, 'eerrtrt', 'super_admin', NULL, NULL),
-(2, '23kj23kj2', 'k3j4jk3434', 'heekwe@rad', 232443434, 'eerrtrt', 'super_admin', NULL, NULL),
-(3, 'ghhhhhh', 'hdfdkhf', 'eiojerk@keruier', 2147483647, 'eerrtrt', 'super_admin', NULL, NULL),
-(4, 'Ifeanyi', 'whejwje', 'eowoiwe@djksdl', 903232434, 'title', 'super_admin', NULL, NULL),
-(5, 'Ifeanyi', 'Ezeh', 'ei711283@gmail.com', 2147483647, 'doctor', 'manager', NULL, NULL),
-(9, 'Ifeanyi', 'Ezeh', 'eifeanyi320@gmail.com', 2147483647, 'doctor', 'admin', NULL, NULL),
-(14, 'Ifeanyi', 'eze', 'ifevnyi@yahoo.com', 777777777, 'gamer', 'admin', NULL, NULL),
-(16, 'uiewiwe', 'Ezeh', 'kshdfdkf@gmail.com', 2147483647, '4304dkjdfdkf', 'admin', NULL, NULL),
-(20, 'Ifeanyi', 'Ezeh', 'ggggg@yahoo.com', 2147483647, 'doctor', 'admin', NULL, NULL),
-(23, 'ffffffff', 'Ezeh', 'qqqqqqqqqqq@dsds', 2147483647, 'doctor', 'manager', NULL, NULL),
-(24, 'Ifeanyi', 'k3j4jk3434', 'luobikay@yahoo.com', 2147483647, 'ddddddddd', 'super_admin', NULL, NULL);
+INSERT INTO `admin-info` (`id`, `org_id`, `acc_id`, `first-name`, `last-name`, `email`, `phone`, `job-title`, `role`, `zone_id`, `subzone_id`) VALUES
+(1, 1, 1, '23kj23kj2', 'k3j4jk3434', 'heekwe@sfkdfmd', 232443434, 'eerrtrt', 'super_admin', NULL, NULL),
+(2, 1, NULL, '23kj23kj2', 'k3j4jk3434', 'heekwe@rad', 232443434, 'eerrtrt', 'super_admin', NULL, NULL),
+(3, 1, NULL, 'ghhhhhh', 'hdfdkhf', 'eiojerk@keruier', 2147483647, 'eerrtrt', 'super_admin', NULL, NULL),
+(4, 1, NULL, 'Ifeanyi', 'whejwje', 'eowoiwe@djksdl', 903232434, 'title', 'super_admin', NULL, NULL),
+(5, 1, NULL, 'Ifeanyi', 'Ezeh', 'ei711283@gmail.com', 2147483647, 'doctor', 'manager', NULL, NULL),
+(9, 1, NULL, 'Ifeanyi', 'Ezeh', 'eifeanyi320@gmail.com', 2147483647, 'doctor', 'admin', NULL, NULL),
+(14, 1, NULL, 'Ifeanyi', 'eze', 'ifevnyi@yahoo.com', 777777777, 'gamer', 'admin', NULL, NULL),
+(16, 1, NULL, 'uiewiwe', 'Ezeh', 'kshdfdkf@gmail.com', 2147483647, '4304dkjdfdkf', 'admin', NULL, NULL),
+(20, 1, NULL, 'Ifeanyi', 'Ezeh', 'ggggg@yahoo.com', 2147483647, 'doctor', 'admin', NULL, NULL),
+(23, 1, NULL, 'ffffffff', 'Ezeh', 'qqqqqqqqqqq@dsds', 2147483647, 'doctor', 'manager', NULL, NULL),
+(24, 1, NULL, 'Ifeanyi', 'k3j4jk3434', 'luobikay@yahoo.com', 2147483647, 'ddddddddd', 'super_admin', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -98,6 +101,7 @@ INSERT INTO `admin-info` (`id`, `first-name`, `last-name`, `email`, `phone`, `jo
 
 CREATE TABLE `admissions` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `application_number` varchar(30) NOT NULL,
   `applicant_name` varchar(100) NOT NULL,
   `email` varchar(100) NOT NULL,
@@ -115,18 +119,18 @@ CREATE TABLE `admissions` (
 -- Dumping data for table `admissions`
 --
 
-INSERT INTO `admissions` (`id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `reviewed_by`, `applied_at`) VALUES
-(1, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, '2026-09-06 18:58:00'),
-(2, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-14 09:53:54'),
-(3, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, '2026-09-14 09:56:27'),
-(4, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-14 13:20:54'),
-(5, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:43:11'),
-(6, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-15 14:45:15'),
-(7, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:50:27'),
-(9, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-17 10:55:18'),
-(10, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-17 11:51:47'),
-(11, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-20 20:56:18'),
-(12, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-20 20:58:45');
+INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `reviewed_by`, `applied_at`) VALUES
+(1, NULL, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, '2026-09-06 18:58:00'),
+(2, NULL, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-14 09:53:54'),
+(3, NULL, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, '2026-09-14 09:56:27'),
+(4, NULL, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-14 13:20:54'),
+(5, NULL, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:43:11'),
+(6, NULL, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-15 14:45:15'),
+(7, NULL, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:50:27'),
+(9, NULL, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-17 10:55:18'),
+(10, NULL, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-17 11:51:47'),
+(11, NULL, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-20 20:56:18'),
+(12, NULL, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-20 20:58:45');
 
 -- --------------------------------------------------------
 
@@ -154,6 +158,7 @@ CREATE TABLE `attendance_logs` (
 
 CREATE TABLE `cbt_exams` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `title` varchar(150) NOT NULL,
   `duration_minutes` int(11) NOT NULL DEFAULT 60,
   `pass_mark` int(11) NOT NULL DEFAULT 50,
@@ -165,9 +170,9 @@ CREATE TABLE `cbt_exams` (
 -- Dumping data for table `cbt_exams`
 --
 
-INSERT INTO `cbt_exams` (`id`, `title`, `duration_minutes`, `pass_mark`, `status`, `created_at`) VALUES
-(1, 'Roll up', 60, 50, 'active', '2026-09-09 23:52:04'),
-(2, 'rew', 60, 50, 'draft', '2026-09-15 17:19:50');
+INSERT INTO `cbt_exams` (`id`, `org_id`, `title`, `duration_minutes`, `pass_mark`, `status`, `created_at`) VALUES
+(1, NULL, 'Roll up', 60, 50, 'active', '2026-09-09 23:52:04'),
+(2, NULL, 'rew', 60, 50, 'draft', '2026-09-15 17:19:50');
 
 -- --------------------------------------------------------
 
@@ -203,6 +208,7 @@ INSERT INTO `cbt_questions` (`id`, `exam_id`, `question_text`, `option_a`, `opti
 
 CREATE TABLE `cbt_results` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `exam_id` int(10) UNSIGNED NOT NULL,
   `member_id` int(10) UNSIGNED NOT NULL,
   `score` int(11) NOT NULL DEFAULT 0,
@@ -218,6 +224,7 @@ CREATE TABLE `cbt_results` (
 
 CREATE TABLE `documents` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `title` varchar(150) NOT NULL,
   `owner_name` varchar(150) DEFAULT NULL,
   `file_path` varchar(255) NOT NULL,
@@ -234,10 +241,11 @@ CREATE TABLE `documents` (
 -- Dumping data for table `documents`
 --
 
-INSERT INTO `documents` (`id`, `title`, `owner_name`, `file_path`, `file_type`, `file_size`, `category`, `uploaded_by`, `zone_id`, `subzone_id`, `created_at`) VALUES
-(1, 'yktv', 'ifeanyi', 'uploads/documents/doc_6aa55a93649e06.36685700.png', 'PNG', '296 KB', 'General', NULL, NULL, NULL, '2026-09-12 14:58:43'),
-(2, 'skeletu', 'Lu', 'uploads/documents/doc_6aa6810c7be5a1.25143418.pdf', 'PDF', '226 KB', 'General', NULL, NULL, NULL, '2026-09-13 11:55:08'),
-(5, 'sumgba', 'john doe', 'uploads/documents/doc_6aa68c0e84b403.61473684.png', 'PNG', '299 KB', 'General', NULL, NULL, NULL, '2026-09-13 12:42:06');
+INSERT INTO `documents` (`id`, `org_id`, `title`, `owner_name`, `file_path`, `file_type`, `file_size`, `category`, `uploaded_by`, `zone_id`, `subzone_id`, `created_at`) VALUES
+(1, 1, 'yktv', 'ifeanyi', 'uploads/documents/doc_6aa55a93649e06.36685700.png', 'PNG', '296 KB', 'General', NULL, NULL, NULL, '2026-09-12 14:58:43'),
+(2, 1, 'skeletu', 'Lu', 'uploads/documents/doc_6aa6810c7be5a1.25143418.pdf', 'PDF', '226 KB', 'General', NULL, NULL, NULL, '2026-09-13 11:55:08'),
+(5, 1, 'sumgba', 'john doe', 'uploads/documents/doc_6aa68c0e84b403.61473684.png', 'PNG', '299 KB', 'General', NULL, NULL, NULL, '2026-09-13 12:42:06'),
+(8, 1, 'new', NULL, 'uploads/documents/doc_6ab04746a0f107.07973435.pdf', 'PDF', '231 KB', 'General', NULL, 2, NULL, '2026-09-20 21:51:18');
 
 -- --------------------------------------------------------
 
@@ -310,6 +318,7 @@ CREATE TABLE `finance_transactions` (
 
 CREATE TABLE `members` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
   `member_code` varchar(30) NOT NULL,
   `first_name` varchar(50) NOT NULL,
   `last_name` varchar(50) NOT NULL,
@@ -344,10 +353,10 @@ CREATE TABLE `members` (
 -- Dumping data for table `members`
 --
 
-INSERT INTO `members` (`id`, `member_code`, `first_name`, `last_name`, `email`, `password`, `phone`, `code`, `zone_id`, `subzone_id`, `date_of_birth`, `occupation`, `state_of_origin`, `home_address`, `profile_photo_path`, `tier`, `membership_valid_until`, `emergency_contact_name`, `emergency_contact_phone`, `two_factor_enabled`, `language`, `timezone`, `date_format`, `currency_display`, `status`, `joined_date`, `created_at`, `updated_at`, `title_id`) VALUES
-(1, 'ASC-001', 'Ezeh', 'Ifeanyi', 'ei711283@gmail.com', NULL, '07043277337', 'ASC-001', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'suspended', '2026-09-06', '2026-09-06 18:08:33', '2026-09-17 11:47:16', 1),
-(2, 'ASC-002', 'Daniel', 'Solomon', 'danielsolomon@gmail.com', NULL, '08099999999', 'ASC-002', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-06', '2026-09-06 18:40:56', '2026-09-17 16:45:58', 2),
-(3, 'ASC-003', 'Fola', 'Shomolu', 'folasho@gmail.com', NULL, '07043277337', 'ASC-003', 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-20', '2026-09-20 20:37:29', '2026-09-20 20:37:29', 2);
+INSERT INTO `members` (`id`, `org_id`, `member_code`, `first_name`, `last_name`, `email`, `password`, `phone`, `code`, `zone_id`, `subzone_id`, `date_of_birth`, `occupation`, `state_of_origin`, `home_address`, `profile_photo_path`, `tier`, `membership_valid_until`, `emergency_contact_name`, `emergency_contact_phone`, `two_factor_enabled`, `language`, `timezone`, `date_format`, `currency_display`, `status`, `joined_date`, `created_at`, `updated_at`, `title_id`) VALUES
+(1, 1, 'ASC-001', 'Ezeh', 'Ifeanyi', 'ei711283@gmail.com', NULL, '07043277337', 'ASC-001', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'suspended', '2026-09-06', '2026-09-06 18:08:33', '2026-09-21 12:38:54', 1),
+(2, 1, 'ASC-002', 'Daniel', 'Solomon', 'danielsolomon@gmail.com', NULL, '08099999999', 'ASC-002', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-06', '2026-09-06 18:40:56', '2026-09-21 12:38:54', 2),
+(3, 1, 'ASC-003', 'Fola', 'Shomolu', 'folasho@gmail.com', NULL, '07043277337', 'ASC-003', 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-20', '2026-09-20 20:37:29', '2026-09-21 12:38:54', 2);
 
 -- --------------------------------------------------------
 
@@ -469,6 +478,7 @@ INSERT INTO `org-info` (`id`, `name`, `type`, `email`, `phone`, `country`, `stat
 
 CREATE TABLE `portal_settings` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `portal_key` varchar(30) NOT NULL,
   `start_at` datetime DEFAULT NULL,
   `end_at` datetime DEFAULT NULL,
@@ -479,9 +489,9 @@ CREATE TABLE `portal_settings` (
 -- Dumping data for table `portal_settings`
 --
 
-INSERT INTO `portal_settings` (`id`, `portal_key`, `start_at`, `end_at`, `updated_at`) VALUES
-(1, 'admission', '2026-09-30 19:49:00', '2026-10-28 19:49:00', '2026-09-15 12:37:21'),
-(2, 'cbt', NULL, NULL, '2026-09-06 19:48:50');
+INSERT INTO `portal_settings` (`id`, `org_id`, `portal_key`, `start_at`, `end_at`, `updated_at`) VALUES
+(1, NULL, 'admission', '2026-09-30 19:49:00', '2026-10-28 19:49:00', '2026-09-15 12:37:21'),
+(2, NULL, 'cbt', NULL, NULL, '2026-09-06 19:48:50');
 
 -- --------------------------------------------------------
 
@@ -516,6 +526,7 @@ INSERT INTO `subzones` (`id`, `zone_id`, `name`, `coordinator_name`, `created_at
 
 CREATE TABLE `suspensions` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) DEFAULT NULL,
   `member_id` int(10) UNSIGNED NOT NULL,
   `reason` varchar(255) NOT NULL,
   `action_type` enum('suspension','reinstatement') NOT NULL DEFAULT 'suspension',
@@ -528,13 +539,13 @@ CREATE TABLE `suspensions` (
 -- Dumping data for table `suspensions`
 --
 
-INSERT INTO `suspensions` (`id`, `member_id`, `reason`, `action_type`, `status`, `action_date`, `created_at`) VALUES
-(1, 1, 'yowa', 'suspension', 'active', '2026-09-06', '2026-09-06 18:25:19'),
-(2, 2, 'gdgdh', 'suspension', 'under_review', '2026-09-15', '2026-09-15 17:14:45'),
-(3, 1, 'ghfr', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 11:09:59'),
-(4, 1, 'sdksdsd', 'suspension', 'active', '2026-09-17', '2026-09-17 11:47:16'),
-(5, 2, 'sdsssss', 'suspension', 'active', '2026-09-17', '2026-09-17 11:48:36'),
-(6, 2, 'this', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 16:45:59');
+INSERT INTO `suspensions` (`id`, `org_id`, `member_id`, `reason`, `action_type`, `status`, `action_date`, `created_at`) VALUES
+(1, NULL, 1, 'yowa', 'suspension', 'active', '2026-09-06', '2026-09-06 18:25:19'),
+(2, NULL, 2, 'gdgdh', 'suspension', 'under_review', '2026-09-15', '2026-09-15 17:14:45'),
+(3, NULL, 1, 'ghfr', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 11:09:59'),
+(4, NULL, 1, 'sdksdsd', 'suspension', 'active', '2026-09-17', '2026-09-17 11:47:16'),
+(5, NULL, 2, 'sdsssss', 'suspension', 'active', '2026-09-17', '2026-09-17 11:48:36'),
+(6, NULL, 2, 'this', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 16:45:59');
 
 -- --------------------------------------------------------
 
@@ -544,6 +555,7 @@ INSERT INTO `suspensions` (`id`, `member_id`, `reason`, `action_type`, `status`,
 
 CREATE TABLE `titles` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
   `title` varchar(100) NOT NULL,
   `level` tinyint(3) UNSIGNED NOT NULL,
   `description` varchar(255) DEFAULT NULL,
@@ -554,9 +566,9 @@ CREATE TABLE `titles` (
 -- Dumping data for table `titles`
 --
 
-INSERT INTO `titles` (`id`, `title`, `level`, `description`, `created_at`) VALUES
-(1, 'Odogwu', 1, 'LOL', '2026-09-03 12:26:42'),
-(2, 'Scorpion', 2, 'number 2 in command, number 1 assassinator', '2026-09-03 12:42:37');
+INSERT INTO `titles` (`id`, `org_id`, `title`, `level`, `description`, `created_at`) VALUES
+(1, 1, 'Odogwu', 1, 'LOL', '2026-09-03 12:26:42'),
+(2, 1, 'Scorpion', 2, 'number 2 in command, number 1 assassinator', '2026-09-03 12:42:37');
 
 -- --------------------------------------------------------
 
@@ -596,6 +608,7 @@ CREATE TABLE `user_module_permissions` (
 
 CREATE TABLE `zones` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
   `name` varchar(100) NOT NULL,
   `coordinator_name` varchar(150) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
@@ -605,9 +618,9 @@ CREATE TABLE `zones` (
 -- Dumping data for table `zones`
 --
 
-INSERT INTO `zones` (`id`, `name`, `coordinator_name`, `created_at`) VALUES
-(1, 'U.S.A', 'Ezeh Ifeanyi', '2026-09-06 10:06:47'),
-(2, 'England', 'Peter Parker', '2026-09-14 13:57:42');
+INSERT INTO `zones` (`id`, `org_id`, `name`, `coordinator_name`, `created_at`) VALUES
+(1, 1, 'U.S.A', 'Ezeh Ifeanyi', '2026-09-06 10:06:47'),
+(2, 1, 'England', 'Peter Parker', '2026-09-14 13:57:42');
 
 --
 -- Indexes for dumped tables
@@ -618,7 +631,8 @@ INSERT INTO `zones` (`id`, `name`, `coordinator_name`, `created_at`) VALUES
 --
 ALTER TABLE `acc-info`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uniq_username` (`username`);
+  ADD UNIQUE KEY `uniq_username` (`username`),
+  ADD KEY `acc_info_org_fk` (`org_id`);
 
 --
 -- Indexes for table `activity_log`
@@ -632,7 +646,9 @@ ALTER TABLE `activity_log`
 --
 ALTER TABLE `admin-info`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD KEY `admin_info_org_fk` (`org_id`),
+  ADD KEY `admin_info_acc_fk` (`acc_id`);
 
 --
 -- Indexes for table `admissions`
@@ -640,7 +656,8 @@ ALTER TABLE `admin-info`
 ALTER TABLE `admissions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `application_number` (`application_number`),
-  ADD KEY `reviewed_by` (`reviewed_by`);
+  ADD KEY `reviewed_by` (`reviewed_by`),
+  ADD KEY `admissions_org_fk` (`org_id`);
 
 --
 -- Indexes for table `attendance_logs`
@@ -654,7 +671,8 @@ ALTER TABLE `attendance_logs`
 -- Indexes for table `cbt_exams`
 --
 ALTER TABLE `cbt_exams`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cbt_exams_org_fk` (`org_id`);
 
 --
 -- Indexes for table `cbt_questions`
@@ -669,14 +687,16 @@ ALTER TABLE `cbt_questions`
 ALTER TABLE `cbt_results`
   ADD PRIMARY KEY (`id`),
   ADD KEY `exam_id` (`exam_id`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `cbt_results_org_fk` (`org_id`);
 
 --
 -- Indexes for table `documents`
 --
 ALTER TABLE `documents`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `uploaded_by` (`uploaded_by`);
+  ADD KEY `uploaded_by` (`uploaded_by`),
+  ADD KEY `documents_org_fk` (`org_id`);
 
 --
 -- Indexes for table `events`
@@ -718,7 +738,8 @@ ALTER TABLE `members`
   ADD UNIQUE KEY `member_code` (`member_code`),
   ADD UNIQUE KEY `email` (`email`),
   ADD KEY `members_ibfk_zone` (`zone_id`),
-  ADD KEY `title_id` (`title_id`);
+  ADD KEY `title_id` (`title_id`),
+  ADD KEY `members_org_fk` (`org_id`);
 
 --
 -- Indexes for table `member_notification_preferences`
@@ -767,7 +788,8 @@ ALTER TABLE `org-info`
 --
 ALTER TABLE `portal_settings`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `portal_key` (`portal_key`);
+  ADD UNIQUE KEY `portal_key` (`portal_key`),
+  ADD KEY `portal_settings_org_fk` (`org_id`);
 
 --
 -- Indexes for table `subzones`
@@ -783,14 +805,15 @@ ALTER TABLE `subzones`
 ALTER TABLE `suspensions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `member_id` (`member_id`),
-  ADD KEY `status` (`status`);
+  ADD KEY `status` (`status`),
+  ADD KEY `suspensions_org_fk` (`org_id`);
 
 --
 -- Indexes for table `titles`
 --
 ALTER TABLE `titles`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `level` (`level`);
+  ADD UNIQUE KEY `org_level_unique` (`org_id`,`level`);
 
 --
 -- Indexes for table `users`
@@ -811,7 +834,7 @@ ALTER TABLE `user_module_permissions`
 --
 ALTER TABLE `zones`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `name` (`name`);
+  ADD UNIQUE KEY `org_name_unique` (`org_id`,`name`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -869,7 +892,7 @@ ALTER TABLE `cbt_results`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `events`
@@ -978,16 +1001,30 @@ ALTER TABLE `zones`
 --
 
 --
+-- Constraints for table `acc-info`
+--
+ALTER TABLE `acc-info`
+  ADD CONSTRAINT `acc_info_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `activity_log`
 --
 ALTER TABLE `activity_log`
   ADD CONSTRAINT `activity_log_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `admin-info`
+--
+ALTER TABLE `admin-info`
+  ADD CONSTRAINT `admin_info_acc_fk` FOREIGN KEY (`acc_id`) REFERENCES `acc-info` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `admin_info_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `admissions`
 --
 ALTER TABLE `admissions`
-  ADD CONSTRAINT `admissions_ibfk_1` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `admissions_ibfk_1` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `admissions_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `attendance_logs`
@@ -995,6 +1032,12 @@ ALTER TABLE `admissions`
 ALTER TABLE `attendance_logs`
   ADD CONSTRAINT `attendance_logs_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `attendance_logs_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cbt_exams`
+--
+ALTER TABLE `cbt_exams`
+  ADD CONSTRAINT `cbt_exams_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `cbt_questions`
@@ -1007,13 +1050,15 @@ ALTER TABLE `cbt_questions`
 --
 ALTER TABLE `cbt_results`
   ADD CONSTRAINT `cbt_results_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `cbt_exams` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `cbt_results_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `cbt_results_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cbt_results_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `documents`
 --
 ALTER TABLE `documents`
-  ADD CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`uploaded_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `documents_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `event_attendance`
@@ -1040,7 +1085,8 @@ ALTER TABLE `finance_transactions`
 --
 ALTER TABLE `members`
   ADD CONSTRAINT `members_ibfk_title` FOREIGN KEY (`title_id`) REFERENCES `titles` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `members_ibfk_zone` FOREIGN KEY (`zone_id`) REFERENCES `zones` (`id`);
+  ADD CONSTRAINT `members_ibfk_zone` FOREIGN KEY (`zone_id`) REFERENCES `zones` (`id`),
+  ADD CONSTRAINT `members_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `member_notification_preferences`
@@ -1074,6 +1120,12 @@ ALTER TABLE `notifications`
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `portal_settings`
+--
+ALTER TABLE `portal_settings`
+  ADD CONSTRAINT `portal_settings_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `subzones`
 --
 ALTER TABLE `subzones`
@@ -1083,13 +1135,26 @@ ALTER TABLE `subzones`
 -- Constraints for table `suspensions`
 --
 ALTER TABLE `suspensions`
-  ADD CONSTRAINT `suspensions_ibfk_member` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `suspensions_ibfk_member` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `suspensions_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `titles`
+--
+ALTER TABLE `titles`
+  ADD CONSTRAINT `titles_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_module_permissions`
 --
 ALTER TABLE `user_module_permissions`
   ADD CONSTRAINT `user_module_permissions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `zones`
+--
+ALTER TABLE `zones`
+  ADD CONSTRAINT `zones_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

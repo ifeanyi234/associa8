@@ -1,3 +1,15 @@
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+$memberResult = mysqli_query($conn, "SELECT m.*, t.title AS title_name FROM members m LEFT JOIN titles t ON t.id = m.title_id WHERE m.id = $memberId LIMIT 1");
+$member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
+$memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
+$memberCode = $member['member_code'] ?? 'N/A';
+$fullAddress = trim(($member['home_address'] ?? '') ?: 'Address not available');
+$memberStatus = ucfirst($member['status'] ?? 'active');
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -68,8 +80,8 @@
               <div class="profile-photo-placeholder">
                 <i class="fa-solid fa-user"></i>
               </div>
-              <div class="profile-photo-name">Joseph Raymond</div>
-              <div class="profile-photo-id">ID - ASC -2026-001</div>
+              <div class="profile-photo-name"><?php echo htmlspecialchars($memberName); ?></div>
+              <div class="profile-photo-id">ID - <?php echo htmlspecialchars($memberCode); ?></div>
               <button class="btn-summary-action">Upload Photo</button>
             </div>
 
@@ -87,42 +99,42 @@
                   <i class="fa-solid fa-user"></i>
                   <div>
                     <div class="info-row-label">Full Name</div>
-                    <div class="info-row-value">Joseph Raymond</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars($memberName); ?></div>
                   </div>
                 </div>
                 <div class="info-row">
                   <i class="fa-regular fa-envelope"></i>
                   <div>
                     <div class="info-row-label">Email</div>
-                    <div class="info-row-value">Jraymond@gmail.com</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars($member['email'] ?? 'Not provided'); ?></div>
                   </div>
                 </div>
                 <div class="info-row">
                   <i class="fa-solid fa-phone"></i>
                   <div>
                     <div class="info-row-label">Phone Number</div>
-                    <div class="info-row-value">+234-80123456789</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars($member['phone'] ?? 'Not provided'); ?></div>
                   </div>
                 </div>
                 <div class="info-row">
                   <i class="fa-solid fa-location-dot"></i>
                   <div>
                     <div class="info-row-label">Address</div>
-                    <div class="info-row-value">12, Okota Road Isolo Lagos Nigeria</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars($fullAddress); ?></div>
                   </div>
                 </div>
                 <div class="info-row">
                   <i class="fa-regular fa-calendar"></i>
                   <div>
                     <div class="info-row-label">Date Of Birth</div>
-                    <div class="info-row-value">March 14, 1986</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars(($member['date_of_birth'] ?? 'Not provided') !== 'Not provided' ? date('F j, Y', strtotime($member['date_of_birth'])) : 'Not provided'); ?></div>
                   </div>
                 </div>
                 <div class="info-row">
                   <i class="fa-solid fa-user-tie"></i>
                   <div>
                     <div class="info-row-label">Occupation</div>
-                    <div class="info-row-value">Civil Engineering</div>
+                    <div class="info-row-value"><?php echo htmlspecialchars($member['occupation'] ?? 'Not provided'); ?></div>
                   </div>
                 </div>
               </div>
@@ -142,19 +154,19 @@
               <div class="detail-list">
                 <div class="detail-list-row">
                   <span class="detail-list-label">Tier</span>
-                  <span class="detail-list-value">Senior Fellow</span>
+                  <span class="detail-list-value"><?php echo htmlspecialchars($member['title_name'] ?? $member['tier'] ?? 'Unassigned'); ?></span>
                 </div>
                 <div class="detail-list-row">
                   <span class="detail-list-label">Member Since</span>
-                  <span class="detail-list-value">January 2024</span>
+                  <span class="detail-list-value"><?php echo htmlspecialchars($member['joined_date'] ? date('F Y', strtotime($member['joined_date'])) : 'Not provided'); ?></span>
                 </div>
                 <div class="detail-list-row">
                   <span class="detail-list-label">Valid Until</span>
-                  <span class="detail-list-value">December 2030</span>
+                  <span class="detail-list-value"><?php echo htmlspecialchars($member['membership_valid_until'] ? date('F j, Y', strtotime($member['membership_valid_until'])) : 'Not set'); ?></span>
                 </div>
                 <div class="detail-list-row">
                   <span class="detail-list-label">Status</span>
-                  <span class="detail-list-value link-blue">Active</span>
+                  <span class="detail-list-value link-blue"><?php echo htmlspecialchars($memberStatus); ?></span>
                 </div>
               </div>
             </div>

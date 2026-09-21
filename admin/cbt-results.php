@@ -2,7 +2,15 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$resultsResult = mysqli_query($conn, "SELECT r.id, r.score, r.status, r.taken_at, m.first_name, m.last_name, m.email, m.phone, e.title AS exam_title FROM cbt_results r INNER JOIN members m ON m.id = r.member_id INNER JOIN cbt_exams e ON e.id = r.exam_id ORDER BY r.taken_at DESC");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$resultsSql = "SELECT r.id, r.score, r.status, r.taken_at, m.first_name, m.last_name, m.email, m.phone, e.title AS exam_title FROM cbt_results r INNER JOIN members m ON m.id = r.member_id INNER JOIN cbt_exams e ON e.id = r.exam_id";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $resultsSql .= " WHERE r.org_id = " . (int) $orgId . " AND m.org_id = " . (int) $orgId . " AND e.org_id = " . (int) $orgId;
+}
+$resultsSql .= " ORDER BY r.taken_at DESC";
+$resultsResult = mysqli_query($conn, $resultsSql);
 
 $results = [];
 if ($resultsResult) { 

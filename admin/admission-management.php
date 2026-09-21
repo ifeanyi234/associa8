@@ -2,7 +2,15 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$admissionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM admissions GROUP BY status");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$admissionStatsSql = "SELECT status, COUNT(*) AS total FROM admissions";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $admissionStatsSql .= " WHERE org_id = " . (int) $orgId;
+}
+$admissionStatsSql .= " GROUP BY status";
+$admissionStatsResult = mysqli_query($conn, $admissionStatsSql);
 $admissionStats = ['pending' => 0, 'under_review' => 0, 'approved' => 0, 'rejected' => 0];
 
 if ($admissionStatsResult) { 
@@ -11,7 +19,12 @@ if ($admissionStatsResult) {
   } 
 }
 
-$admissionsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions ORDER BY applied_at DESC");
+$admissionsSql = "SELECT id, application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $admissionsSql .= " WHERE org_id = " . (int) $orgId;
+}
+$admissionsSql .= " ORDER BY applied_at DESC";
+$admissionsResult = mysqli_query($conn, $admissionsSql);
 
 $admissions = [];
 if ($admissionsResult) { 

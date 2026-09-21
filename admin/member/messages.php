@@ -1,3 +1,4 @@
+<?php require_once 'inc/auth.php'; ?>
 <!doctype html>
 <html lang="en">
   <head>

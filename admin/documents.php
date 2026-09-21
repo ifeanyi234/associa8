@@ -3,21 +3,27 @@ require_once "inc/auth.php";
 require_once "../inc/db.php";
 
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 $adminZoneId = isset($_SESSION['admin_zone_id']) && $_SESSION['admin_zone_id'] !== null ? (int) $_SESSION['admin_zone_id'] : null;
 $adminSubzoneId = isset($_SESSION['admin_subzone_id']) && $_SESSION['admin_subzone_id'] !== null ? (int) $_SESSION['admin_subzone_id'] : null;
 $shouldScopeAdmin = $adminRole !== 'super_admin' && $adminZoneId !== null;
 
-$documentCountSql = "SELECT COUNT(*) AS total FROM documents";
+$documentCountSql = "SELECT COUNT(*) AS total FROM documents d";
 $documentsSql = "SELECT d.id, d.title, d.file_path, d.file_type, d.file_size, d.category, d.uploaded_by, d.zone_id, d.subzone_id, d.created_at, z.name AS zone_name, sz.name AS subzone_name FROM documents d LEFT JOIN zones z ON z.id = d.zone_id LEFT JOIN subzones sz ON sz.id = d.subzone_id";
 
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $documentCountSql .= " WHERE d.org_id = " . (int) $orgId;
+  $documentsSql .= " WHERE d.org_id = " . (int) $orgId;
+}
+
 if ($shouldScopeAdmin) {
-  $documentsSql .= " WHERE (d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?";
-  $documentCountSql .= " WHERE (zone_id IS NULL AND subzone_id IS NULL) OR zone_id = ? OR subzone_id = ?";
+  $documentsSql .= " AND ((d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?)";
+  $documentCountSql .= " AND ((d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?)";
 }
 
 $documentsSql .= " ORDER BY d.created_at DESC";
 
-$documentCountResult = mysqli_query($conn, $documentCountSql . ($shouldScopeAdmin ? "" : ""));
+$documentCountResult = mysqli_query($conn, $documentCountSql);
 if ($shouldScopeAdmin) {
   $documentCountStmt = mysqli_prepare($conn, $documentCountSql);
   mysqli_stmt_bind_param($documentCountStmt, 'ii', $adminZoneId, $adminSubzoneId);

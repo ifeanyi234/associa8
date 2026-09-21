@@ -1,6 +1,6 @@
 # Associa8 — Fix TODO (work top to bottom, each step is a standalone PR/commit)
 
-## Phase 1 — Schema foundation (do this first, nothing else works without it)
+## Phase 1 — Schema foundation (do this first, nothing else works without it) ✅
 
 1. [ ] Add `org_id INT UNSIGNED NOT NULL` column to: `admin-info`, `acc-info`, `members`, `zones`, `titles`.
 2. [ ] Add `org_id INT UNSIGNED NULL` column to: `documents`, `admissions`, `cbt_exams`, `cbt_results`, `suspensions`, `portal_settings` (nullable only where you decide org-wide defaults still make sense — otherwise NOT NULL).
@@ -9,7 +9,7 @@
 5. [ ] Add `acc_id INT UNSIGNED` (FK → `acc-info.id`) column to `admin-info`, so login can join them properly instead of assuming matching IDs.
 6. [ ] Backfill existing seed data with a single placeholder `org_id` so old rows don't break, or truncate test data and start fresh — your call.
 
-## Phase 2 — Fix signup to actually link the three inserts
+## Phase 2 — Fix signup to actually link the three inserts ✅
 
 7. [ ] In `proc-signup.php`, capture `mysqli_insert_id($conn)` right after the `org-info` insert.
 8. [ ] Pass that org id into the `admin-info` insert (`org_id` column) and the `acc-info` insert is fine as-is, but capture its insert id too.
@@ -17,13 +17,13 @@
 10. [ ] Move the duplicate-email/duplicate-username `SELECT` checks to _before_ any `INSERT` runs, not after.
 11. [ ] Either wire up `admin/signup.php`'s form to a real backend, or delete it if `signup.php` (public) is the only intended entry point.
 
-## Phase 3 — Fix login to use the real link
+## Phase 3 — Fix login to use the real link ✅
 
 12. [ ] In `proc-login.php`, after verifying `acc-info`, look up `admin-info` by `acc_id = acc-info.id` (not `admin-info.id = acc-info.id`).
 13. [ ] Store `$_SESSION['org_id']` from that `admin-info` row — this becomes the scoping key for every page from here on.
 14. [ ] Fix `admin/logout.php` to redirect to `admin/index.php`, not the public homepage.
 
-## Phase 4 — Scope every existing admin query by org_id
+## Phase 4 — Scope every existing admin query by org_id ✅
 
 15. [ ] `admin/dashboard.php`, `member-directory.php`, `zones.php`, `titles-hierarchy.php`, `suspension.php`, `admission-management.php`, `cbt-*.php`, `financial.php`, `documents.php`, `attendance.php`, `user-controls.php` — add `WHERE org_id = $_SESSION['org_id']` (or `AND org_id = ...` alongside existing zone filters) to every query, **except** when `admin_role === 'super_admin'`, where org filtering is bypassed intentionally.
 16. [ ] Same for every `proc-*.php` write handler — every `INSERT` into an org-scoped table must include `org_id` from session.

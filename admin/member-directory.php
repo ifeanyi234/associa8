@@ -1,16 +1,28 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
-$memberCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM members");
+
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
+$memberCountSql = "SELECT COUNT(*) AS total FROM members";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $memberCountSql .= " WHERE org_id = " . (int) $orgId;
+}
+$memberCountResult = mysqli_query($conn, $memberCountSql);
 $memberCount = $memberCountResult ? (int) mysqli_fetch_assoc($memberCountResult)['total'] : 0;
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $itemsPerPage = 10;
 $search = trim($_GET['q'] ?? '');
 $statusFilter = $_GET['status'] ?? '';
 $where = '';
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $where .= " WHERE m.org_id = " . (int) $orgId;
+}
 if ($search !== '') {
   $safeSearch = mysqli_real_escape_string($conn, $search);
-  $where .= " WHERE (CONCAT(m.first_name, ' ', m.last_name) LIKE '%$safeSearch%' OR m.member_code LIKE '%$safeSearch%' OR m.email LIKE '%$safeSearch%')";
+  $where .= $where === '' ? ' WHERE ' : ' AND ';
+  $where .= "(CONCAT(m.first_name, ' ', m.last_name) LIKE '%$safeSearch%' OR m.member_code LIKE '%$safeSearch%' OR m.email LIKE '%$safeSearch%')";
 }
 if (in_array($statusFilter, ['active', 'pending', 'suspended'], true)) {
   $where .= $where === '' ? ' WHERE ' : ' AND ';

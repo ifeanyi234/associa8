@@ -17,9 +17,16 @@ if ($name === '') {
     exit;
 }
 
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($adminRole !== 'super_admin' && $orgId === null) {
+    header('Location: add-zone.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
+    exit;
+}
+
 if ($type === 'zone') {
-    $statement = mysqli_prepare($conn, 'INSERT INTO zones (name, coordinator_name) VALUES (?, ?)');
-    mysqli_stmt_bind_param($statement, 'ss', $name, $coordinator);
+    $statement = mysqli_prepare($conn, 'INSERT INTO zones (org_id, name, coordinator_name) VALUES (?, ?, ?)');
+    mysqli_stmt_bind_param($statement, 'iss', $orgId, $name, $coordinator);
 } elseif ($type === 'subzone' && $zoneId > 0) {
     $statement = mysqli_prepare($conn, 'INSERT INTO subzones (zone_id, name, coordinator_name) VALUES (?, ?, ?)');
     mysqli_stmt_bind_param($statement, 'iss', $zoneId, $name, $coordinator);

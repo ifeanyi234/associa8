@@ -1,21 +1,39 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $itemsPerPage = 10;
-$suspensionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM suspensions GROUP BY status");
+$suspensionStatsSql = "SELECT status, COUNT(*) AS total FROM suspensions";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $suspensionStatsSql .= " WHERE org_id = " . (int) $orgId;
+}
+$suspensionStatsSql .= " GROUP BY status";
+$suspensionStatsResult = mysqli_query($conn, $suspensionStatsSql);
 $suspensionStats = ['active' => 0, 'under_review' => 0, 'completed' => 0];
 if ($suspensionStatsResult) {
   while ($stat = mysqli_fetch_assoc($suspensionStatsResult)) {
     $suspensionStats[$stat['status']] = (int) $stat['total'];
   }
 }
-$recordCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM suspensions");
+$recordCountSql = "SELECT COUNT(*) AS total FROM suspensions";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $recordCountSql .= " WHERE org_id = " . (int) $orgId;
+}
+$recordCountResult = mysqli_query($conn, $recordCountSql);
 $recordCount = $recordCountResult ? (int) mysqli_fetch_assoc($recordCountResult)['total'] : 0;
 $totalPages = max(1, (int) ceil($recordCount / $itemsPerPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $itemsPerPage;
-$recordsResult = mysqli_query($conn, "SELECT s.id, s.reason, s.action_type, s.status, s.action_date, m.first_name, m.last_name, m.member_code FROM suspensions s INNER JOIN members m ON m.id = s.member_id ORDER BY s.action_date DESC, s.id DESC LIMIT $itemsPerPage OFFSET $offset");
+$recordsSql = "SELECT s.id, s.reason, s.action_type, s.status, s.action_date, m.first_name, m.last_name, m.member_code FROM suspensions s INNER JOIN members m ON m.id = s.member_id";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $recordsSql .= " WHERE s.org_id = " . (int) $orgId . " AND m.org_id = " . (int) $orgId;
+}
+$recordsSql .= " ORDER BY s.action_date DESC, s.id DESC LIMIT $itemsPerPage OFFSET $offset";
+$recordsResult = mysqli_query($conn, $recordsSql);
 $suspensionRecords = [];
 if ($recordsResult) {
   while ($record = mysqli_fetch_assoc($recordsResult)) {

@@ -1,3 +1,14 @@
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+$memberResult = mysqli_query($conn, "SELECT id, org_id, member_code, first_name, last_name, email, phone, status, joined_date, title_id, zone_id, subzone_id FROM members WHERE id = $memberId LIMIT 1");
+$member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
+$memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
+$memberCode = $member['member_code'] ?? 'N/A';
+$memberStatus = ucfirst($member['status'] ?? 'Active');
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -64,21 +75,21 @@
         <div class="dashboard-content">
           <!-- Welcome Banner -->
           <section class="welcome-banner">
-            <h2 class="welcome-title">Good morning, Joseph 👋</h2>
+            <h2 class="welcome-title">Good morning, <?php echo htmlspecialchars($memberName); ?> 👋</h2>
             <p class="welcome-subtitle">
               Here's what's happening in the organization today..
             </p>
 
             <div class="banner-actions">
-              <button class="btn-banner-ghost">
+              <a href="profile.php" style="text-decoration: none;" class="btn-banner-ghost">
                 <i class="fa-solid fa-user"></i> Profile
-              </button>
-              <button class="btn-banner-ghost">
+              </a>
+              <a href="attendance.php" style="text-decoration: none;" class="btn-banner-ghost">
                 <i class="fa-solid fa-user-check"></i> Attendance
-              </button>
-              <button class="btn-banner-ghost">
+              </a>
+              <a href="messages.php" style="text-decoration: none;" class="btn-banner-ghost">
                 <i class="fa-regular fa-comment"></i> Messages
-              </button>
+              </a>
             </div>
           </section>
 

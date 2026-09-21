@@ -2,13 +2,22 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 
-$zoneStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_zones FROM zones");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+$orgZoneClause = ($adminRole === 'super_admin' || $orgId === null) ? '' : ' WHERE z.org_id = ' . (int) $orgId;
+$zoneStatsSql = "SELECT COUNT(*) AS total_zones FROM zones z" . $orgZoneClause;
+$zoneStatsResult = mysqli_query($conn, $zoneStatsSql);
 $zoneStats = $zoneStatsResult ? mysqli_fetch_assoc($zoneStatsResult) : ['total_zones' => 0];
-$subzoneStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_subzones FROM subzones");
+$subzoneStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_subzones FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id" . ($adminRole === 'super_admin' || $orgId === null ? '' : ' WHERE z.org_id = ' . (int) $orgId));
 $subzoneStats = $subzoneStatsResult ? mysqli_fetch_assoc($subzoneStatsResult) : ['total_subzones' => 0];
-$memberStatsResult = mysqli_query($conn, "SELECT COUNT(*) AS total_members FROM members");
+$memberStatsSql = "SELECT COUNT(*) AS total_members FROM members";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $memberStatsSql .= " WHERE org_id = " . (int) $orgId;
+}
+$memberStatsResult = mysqli_query($conn, $memberStatsSql);
 $memberStats = $memberStatsResult ? mysqli_fetch_assoc($memberStatsResult) : ['total_members' => 0];
-$zonesResult = mysqli_query($conn, "SELECT z.id, z.name, z.coordinator_name, (SELECT COUNT(*) FROM members m WHERE m.zone_id = z.id) AS member_count, (SELECT COUNT(*) FROM subzones sz WHERE sz.zone_id = z.id) AS subzone_count FROM zones z ORDER BY z.name");
+$zonesSql = "SELECT z.id, z.name, z.coordinator_name, (SELECT COUNT(*) FROM members m WHERE m.zone_id = z.id" . ($adminRole !== 'super_admin' && $orgId !== null ? " AND m.org_id = " . (int) $orgId : "") . ") AS member_count, (SELECT COUNT(*) FROM subzones sz WHERE sz.zone_id = z.id) AS subzone_count FROM zones z" . $orgZoneClause . " ORDER BY z.name";
+$zonesResult = mysqli_query($conn, $zonesSql);
 $zones = [];
 if ($zonesResult) {
   while ($zone = mysqli_fetch_assoc($zonesResult)) {

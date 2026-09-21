@@ -2756,6 +2756,7 @@ iconify-icon[icon="lucide:shrink"] {
 }
 
 .auth-form input[type="text"],
+.auth-form input[type="email"],
 .auth-form input[type="password"] {
   width: 100%;
   background: #050d1a;
@@ -2772,14 +2773,27 @@ iconify-icon[icon="lucide:shrink"] {
 }
 
 .auth-form input[type="text"]:focus,
+.auth-form input[type="email"]:focus,
 .auth-form input[type="password"]:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
+.auth-form input[type="email"]::placeholder,
+.auth-form input[type="text"]::placeholder,
+.auth-form input[type="password"]::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
 .auth-form input::placeholder {
   color: rgba(255, 255, 255, 0.35);
+}
+
+.auth-form .form-group input,
+.auth-form .form-group input:focus {
+  background: #050d1a;
+  color: #ffffff;
 }
 
 .password-field-wrapper {

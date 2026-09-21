@@ -16,8 +16,15 @@ if ($name === '' || $level < 1 || $level > 99) {
     exit;
 }
 
-$statement = mysqli_prepare($conn, 'INSERT INTO titles (title, level, description) VALUES (?, ?, ?)');
-mysqli_stmt_bind_param($statement, 'sis', $name, $level, $description);
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($adminRole !== 'super_admin' && $orgId === null) {
+    header('Location: add-title.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
+    exit;
+}
+
+$statement = mysqli_prepare($conn, 'INSERT INTO titles (org_id, title, level, description) VALUES (?, ?, ?, ?)');
+mysqli_stmt_bind_param($statement, 'isis', $orgId, $name, $level, $description);
 $success = mysqli_stmt_execute($statement);
 $message = $success ? 'Title created successfully.' : 'Could not save this title. The level may already exist.';
 

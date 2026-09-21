@@ -30,6 +30,13 @@ if ($subzoneId > 0) {
     }
 }
 
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($adminRole !== 'super_admin' && $orgId === null) {
+    header('Location: add-member.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
+    exit;
+}
+
 $subzoneColumnExists = mysqli_query($conn, "SHOW COLUMNS FROM members LIKE 'subzone_id'");
 $hasSubzoneColumn = $subzoneColumnExists && mysqli_num_rows($subzoneColumnExists) > 0;
 if (!$hasSubzoneColumn) {
@@ -38,11 +45,11 @@ if (!$hasSubzoneColumn) {
 }
 
 if ($hasSubzoneColumn) {
-    $statement = mysqli_prepare($conn, 'INSERT INTO members (member_code, first_name, last_name, email, phone, code, zone_id, subzone_id, title_id, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    mysqli_stmt_bind_param($statement, 'ssssssiiis', $memberCode, $firstName, $lastName, $email, $phone, $memberCode, $zoneId, $subzoneId, $titleId, $joinedDate);
+    $statement = mysqli_prepare($conn, 'INSERT INTO members (org_id, member_code, first_name, last_name, email, phone, code, zone_id, subzone_id, title_id, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    mysqli_stmt_bind_param($statement, 'issssssiiis', $orgId, $memberCode, $firstName, $lastName, $email, $phone, $memberCode, $zoneId, $subzoneId, $titleId, $joinedDate);
 } else {
-    $statement = mysqli_prepare($conn, 'INSERT INTO members (member_code, first_name, last_name, email, phone, code, zone_id, title_id, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    mysqli_stmt_bind_param($statement, 'ssssssiis', $memberCode, $firstName, $lastName, $email, $phone, $memberCode, $zoneId, $titleId, $joinedDate);
+    $statement = mysqli_prepare($conn, 'INSERT INTO members (org_id, member_code, first_name, last_name, email, phone, code, zone_id, title_id, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    mysqli_stmt_bind_param($statement, 'issssssiis', $orgId, $memberCode, $firstName, $lastName, $email, $phone, $memberCode, $zoneId, $titleId, $joinedDate);
 }
 $success = mysqli_stmt_execute($statement);
 $message = $success ? 'Member added successfully.' : 'Could not save this member. The email or member code may already exist.';
