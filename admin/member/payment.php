@@ -1,4 +1,31 @@
-<?php require_once 'inc/auth.php'; ?>
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+
+$transactions = [];
+$transactionsResult = mysqli_query($conn, "SELECT id, reference, amount, type, status, paid_at, created_at FROM finance_transactions WHERE member_id = $memberId ORDER BY paid_at DESC, created_at DESC");
+if ($transactionsResult) {
+  while ($row = mysqli_fetch_assoc($transactionsResult)) {
+    $transactions[] = $row;
+  }
+}
+
+$paidThisYear = 0;
+$paidThisYearResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'successful' AND YEAR(paid_at) = YEAR(CURDATE())");
+if ($paidThisYearResult) {
+  $paidRow = mysqli_fetch_assoc($paidThisYearResult);
+  $paidThisYear = (float) ($paidRow['total'] ?? 0);
+}
+
+$outstanding = 0;
+$outstandingResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'pending'");
+if ($outstandingResult) {
+  $outstandingRow = mysqli_fetch_assoc($outstandingResult);
+  $outstanding = (float) ($outstandingRow['total'] ?? 0);
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,7 +83,7 @@
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
+              <div class="avatar-badge"><?php echo htmlspecialchars(substr($_SESSION['member_id'] ?? 'M', 0, 2)); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>
@@ -72,8 +99,8 @@
                   <i class="fa-solid fa-circle-info"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;10,000</div>
-              <div class="summary-sublabel">Due date by 1 August 2026</div>
+              <div class="summary-value">&#8358;<?php echo number_format($outstanding, 0); ?></div>
+              <div class="summary-sublabel"><?php echo $outstanding > 0 ? 'Payment still due' : 'No pending dues'; ?></div>
               <button class="btn-summary-action">Pay up</button>
             </div>
 
@@ -84,8 +111,8 @@
                   <i class="fa-solid fa-check"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;20,000</div>
-              <div class="summary-sublabel">2 transactions in 2026</div>
+              <div class="summary-value">&#8358;<?php echo number_format($paidThisYear, 0); ?></div>
+              <div class="summary-sublabel"><?php echo count($transactions) > 0 ? count($transactions) . ' transactions recorded' : 'No recorded payments'; ?></div>
             </div>
 
             <div class="summary-card">
@@ -95,8 +122,8 @@
                   <i class="fa-regular fa-credit-card"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;35,500</div>
-              <div class="summary-sublabel">Since January 2020</div>
+              <div class="summary-value">&#8358;<?php echo number_format(array_reduce($transactions, fn($carry, $item) => $carry + (float) ($item['amount'] ?? 0), 0), 0); ?></div>
+              <div class="summary-sublabel">Since first transaction</div>
             </div>
           </section>
 
@@ -126,66 +153,31 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Feb 10, 2026</td>
-                  <td>Partial Dues Payment</td>
-                  <td><span class="tx-ref-code">Txn- 880</span></td>
-                  <td style="font-weight: 600; color: var(--text-primary);">&#8358;5,000</td>
-                  <td><span class="status-text-attended">Completed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Jan 10, 2026</td>
-                  <td>Annual Membership Renewal</td>
-                  <td><span class="tx-ref-code">Txn- 681</span></td>
-                  <td style="font-weight: 600; color: var(--text-primary);">&#8358;15,000</td>
-                  <td><span class="status-text-attended">Completed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Dec 5, 2025</td>
-                  <td>Event Registration -Gala nite</td>
-                  <td><span class="tx-ref-code">Txn-848</span></td>
-                  <td style="font-weight: 600; color: var(--text-primary);">&#8358;2,500</td>
-                  <td><span class="status-text-attended">Completed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Feb 10, 2025</td>
-                  <td>Mid- Year Dues</td>
-                  <td><span class="tx-ref-code">Txn-580</span></td>
-                  <td style="font-weight: 600; color: var(--text-primary);">&#8358;10,000</td>
-                  <td><span class="status-text-attended">Completed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Feb 10, 2026</td>
-                  <td>Workshop Registration</td>
-                  <td><span class="tx-ref-code">Txn-988</span></td>
-                  <td style="font-weight: 600; color: var(--text-primary);">&#8358;3,500</td>
-                  <td><span class="status-text-refunded">Refunded</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
+                <?php if ($transactions): ?>
+                  <?php foreach ($transactions as $transaction): ?>
+                    <?php
+                      $date = $transaction['paid_at'] ?: $transaction['created_at'];
+                      $status = ucfirst($transaction['status'] ?? 'pending');
+                      $statusClass = $transaction['status'] === 'successful' ? 'status-text-attended' : ($transaction['status'] === 'pending' ? 'status-text-pending' : 'status-text-refunded');
+                    ?>
+                    <tr>
+                      <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars(date('M j, Y', strtotime($date))); ?></td>
+                      <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $transaction['type'] ?? 'other'))); ?></td>
+                      <td><span class="tx-ref-code"><?php echo htmlspecialchars($transaction['reference'] ?? 'N/A'); ?></span></td>
+                      <td style="font-weight: 600; color: var(--text-primary);">&#8358;<?php echo number_format((float) ($transaction['amount'] ?? 0), 0); ?></td>
+                      <td><span class="<?php echo $statusClass; ?>"><?php echo htmlspecialchars($status); ?></span></td>
+                      <td style="text-align: right;">
+                        <button class="btn-action-trigger" aria-label="Options">
+                          <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="6" class="zone-empty-state">No financial transactions have been recorded for this member yet.</td>
+                  </tr>
+                <?php endif; ?>
               </tbody>
             </table>
           </section>

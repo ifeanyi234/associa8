@@ -1,4 +1,28 @@
-<?php require_once 'inc/auth.php'; ?>
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+
+$threads = [];
+$threadsResult = mysqli_query($conn, "SELECT * FROM message_threads WHERE member_id = $memberId ORDER BY sent_at DESC");
+if ($threadsResult) {
+  while ($thread = mysqli_fetch_assoc($threadsResult)) {
+    $threads[] = $thread;
+  }
+}
+
+$selectedThread = $threads[0] ?? null;
+if ($selectedThread) {
+  $replies = [];
+  $replyResult = mysqli_query($conn, "SELECT * FROM message_replies WHERE thread_id = " . (int) $selectedThread['id'] . " ORDER BY sent_at ASC");
+  if ($replyResult) {
+    while ($reply = mysqli_fetch_assoc($replyResult)) {
+      $replies[] = $reply;
+    }
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,7 +80,7 @@
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
+              <div class="avatar-badge"><?php echo htmlspecialchars(substr($_SESSION['member_id'] ?? 'M', 0, 2)); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>
@@ -64,11 +88,10 @@
 
         <div class="dashboard-content">
           <div class="section-label" style="margin-bottom: 0.25rem;">
-            Unread (<span class="count-highlight">3</span>)
+            Unread (<span class="count-highlight"><?php echo count($threads); ?></span>)
           </div>
 
           <section class="messages-layout">
-            <!-- Message List -->
             <div class="message-list-panel">
               <div class="list-card-dark-header">
                 <div class="list-card-dark-header-left">
@@ -79,78 +102,50 @@
                 </div>
               </div>
 
-              <div class="message-list-item active">
-                <div class="message-list-item-left">
-                  <div class="message-avatar-initials">SC</div>
-                  <div>
-                    <div class="message-sender-name">Secretariat</div>
-                    <div class="message-preview-text">Annual General Meeting - 12 May 2026</div>
+              <?php if ($threads): ?>
+                <?php foreach ($threads as $thread): ?>
+                  <div class="message-list-item <?php echo $thread['id'] === ($selectedThread['id'] ?? null) ? 'active' : ''; ?>">
+                    <div class="message-list-item-left">
+                      <div class="message-avatar-initials"><?php echo htmlspecialchars(substr($thread['sender_name'] ?? 'NA', 0, 2)); ?></div>
+                      <div>
+                        <div class="message-sender-name"><?php echo htmlspecialchars($thread['sender_name'] ?? 'System'); ?></div>
+                        <div class="message-preview-text"><?php echo htmlspecialchars($thread['subject'] ?? 'No subject'); ?></div>
+                      </div>
+                    </div>
+                    <span class="message-list-item-time <?php echo (int) ($thread['is_read'] ?? 0) === 0 ? 'unread' : ''; ?>"><?php echo htmlspecialchars(date('M d Y', strtotime($thread['sent_at']))); ?></span>
                   </div>
-                </div>
-                <span class="message-list-item-time unread">2 Hours ago</span>
-              </div>
-
-              <div class="message-list-item">
-                <div class="message-list-item-left">
-                  <div class="message-avatar-initials">FO</div>
-                  <div>
-                    <div class="message-sender-name">Finance Official</div>
-                    <div class="message-preview-text">Outstanding Reminder - 12 May 2026</div>
-                  </div>
-                </div>
-                <span class="message-list-item-time unread">Yesterday</span>
-              </div>
-
-              <div class="message-list-item">
-                <div class="message-list-item-left">
-                  <div class="message-avatar-initials">AD</div>
-                  <div>
-                    <div class="message-sender-name">Admin</div>
-                    <div class="message-preview-text">2026 Member Portal</div>
-                  </div>
-                </div>
-                <span class="message-list-item-time">Mar 10 2026</span>
-              </div>
-
-              <div class="message-list-item">
-                <div class="message-list-item-left">
-                  <div class="message-avatar-initials">ST</div>
-                  <div>
-                    <div class="message-sender-name">Security Tips</div>
-                    <div class="message-preview-text">Save Environment Guidlines</div>
-                  </div>
-                </div>
-                <span class="message-list-item-time">Feb 09 2026</span>
-              </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="zone-empty-state">No messages have been sent to this member yet.</div>
+              <?php endif; ?>
             </div>
 
-            <!-- Message Detail -->
             <div class="message-detail-panel">
-              <div class="message-detail-header">
-                <div class="message-detail-subject">Annual General Meeting - 12 May 2026</div>
-                <div class="message-detail-meta-row">
-                  <div class="message-detail-meta-left">
-                    <div class="message-avatar-initials" style="background-color: rgba(255,255,255,0.12); color: #ffffff;">SC</div>
-                    From: <strong>Secretariat</strong> Today, 2:30 PM
+              <?php if ($selectedThread): ?>
+                <div class="message-detail-header">
+                  <div class="message-detail-subject"><?php echo htmlspecialchars($selectedThread['subject']); ?></div>
+                  <div class="message-detail-meta-row">
+                    <div class="message-detail-meta-left">
+                      <div class="message-avatar-initials" style="background-color: rgba(255,255,255,0.12); color: #ffffff;">"><?php echo htmlspecialchars(substr($selectedThread['sender_name'] ?? 'NA', 0, 2)); ?></div>
+                      From: <strong><?php echo htmlspecialchars($selectedThread['sender_name'] ?? 'System'); ?></strong> <?php echo htmlspecialchars(date('D, d M Y', strtotime($selectedThread['sent_at']))); ?>
+                    </div>
+                    <span class="message-detail-tag"><?php echo htmlspecialchars($selectedThread['tag'] ?: 'Official'); ?></span>
                   </div>
-                  <span class="message-detail-tag">Official</span>
                 </div>
-              </div>
 
-              <div class="message-detail-body">
-                <p>Dear Member,</p>
-                <p>This is to formally notify you of the upcoming Annual General Meeting (AGM) scheduled for Saturday, 12 July 2026 at 10:00 AM.</p>
-                <p>Venue: Eko Hotel, Victoria Island, Lagos</p>
-                <p>All members are required to attend. Please confirm your RSVP via the Events section of your portal.</p>
-                <p>Regards, The Secretariat</p>
-              </div>
+                <div class="message-detail-body">
+                  <p><?php echo nl2br(htmlspecialchars($selectedThread['body'])); ?></p>
+                </div>
 
-              <div class="message-reply-bar">
-                <input type="text" class="message-reply-input" placeholder="Write your reply" />
-                <button class="btn-reply-send">
-                  <i class="fa-solid fa-paper-plane"></i> Reply
-                </button>
-              </div>
+                <div class="message-reply-bar">
+                  <input type="text" class="message-reply-input" placeholder="Write your reply" />
+                  <button class="btn-reply-send">
+                    <i class="fa-solid fa-paper-plane"></i> Reply
+                  </button>
+                </div>
+              <?php else: ?>
+                <div class="zone-empty-state">Select a thread to read your messages.</div>
+              <?php endif; ?>
             </div>
           </section>
         </div>

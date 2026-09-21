@@ -3,11 +3,64 @@ require_once 'inc/auth.php';
 require_once '../../inc/db.php';
 
 $memberId = (int) $_SESSION['member_id'];
-$memberResult = mysqli_query($conn, "SELECT id, org_id, member_code, first_name, last_name, email, phone, status, joined_date, title_id, zone_id, subzone_id FROM members WHERE id = $memberId LIMIT 1");
+$memberResult = mysqli_query($conn, "SELECT * FROM members WHERE id = $memberId LIMIT 1");
 $member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
 $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
 $memberCode = $member['member_code'] ?? 'N/A';
 $memberStatus = ucfirst($member['status'] ?? 'Active');
+
+$initials = '';
+foreach (explode(' ', trim($memberName)) as $part) {
+  $part = trim($part);
+  if ($part !== '') {
+    $initials .= strtoupper(substr($part, 0, 1));
+  }
+  if (strlen($initials) >= 2) {
+    break;
+  }
+}
+$memberInitials = $initials ?: 'M';
+
+$profileFields = ['first_name', 'last_name', 'email', 'phone', 'home_address', 'date_of_birth', 'occupation', 'state_of_origin', 'emergency_contact_name', 'profile_photo_path'];
+$filledFields = 0;
+foreach ($profileFields as $field) {
+  if (!empty($member[$field] ?? null)) {
+    $filledFields++;
+  }
+}
+$profileCompletion = count($profileFields) > 0 ? (int) round(($filledFields / count($profileFields)) * 100) : 0;
+
+$memberOrgId = isset($_SESSION['member_org_id']) ? (int) $_SESSION['member_org_id'] : 0;
+$documentsCount = 0;
+$documentsCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM documents WHERE org_id = $memberOrgId");
+if ($documentsCountResult) {
+  $documentsCountRow = mysqli_fetch_assoc($documentsCountResult);
+  $documentsCount = (int) ($documentsCountRow['total'] ?? 0);
+}
+
+$outstandingDues = 0;
+$duesResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'pending'");
+if ($duesResult) {
+  $duesRow = mysqli_fetch_assoc($duesResult);
+  $outstandingDues = (float) ($duesRow['total'] ?? 0);
+}
+
+$nextEventQuery = mysqli_query($conn, "SELECT MIN(event_date) AS next_date, COUNT(*) AS total FROM events WHERE event_date >= CURDATE()");
+$nextEventDate = null;
+$upcomingEventCount = 0;
+if ($nextEventQuery) {
+  $nextEventRow = mysqli_fetch_assoc($nextEventQuery);
+  $upcomingEventCount = (int) ($nextEventRow['total'] ?? 0);
+  $nextEventDate = $nextEventRow['next_date'] ?? null;
+}
+
+$notifications = [];
+$notificationsResult = mysqli_query($conn, "SELECT id, title, message, is_read, created_at FROM notifications WHERE member_id = $memberId ORDER BY created_at DESC LIMIT 4");
+if ($notificationsResult) {
+  while ($notification = mysqli_fetch_assoc($notificationsResult)) {
+    $notifications[] = $notification;
+  }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -66,8 +119,8 @@ $memberStatus = ucfirst($member['status'] ?? 'Active');
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
-              <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
+              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
+              <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars($memberStatus); ?></span>
             </div>
           </div>
         </header>
@@ -102,13 +155,13 @@ $memberStatus = ucfirst($member['status'] ?? 'Active');
                   <i class="fa-solid fa-user"></i>
                 </div>
               </div>
-              <div class="summary-value">90%</div>
-              <div class="summary-sublabel">1 field remaining to complete</div>
+              <div class="summary-value"><?php echo $profileCompletion; ?>%</div>
+              <div class="summary-sublabel"><?php echo $filledFields; ?> of <?php echo count($profileFields); ?> profile fields filled</div>
               <div class="summary-progress-row">
                 <div class="progress-bar-wrapper">
-                  <div class="progress-bar-fill" style="width: 90%"></div>
+                  <div class="progress-bar-fill" style="width: <?php echo $profileCompletion; ?>%"></div>
                 </div>
-                <span class="summary-progress-percent">90%</span>
+                <span class="summary-progress-percent"><?php echo $profileCompletion; ?>%</span>
               </div>
             </div>
 
@@ -119,9 +172,9 @@ $memberStatus = ucfirst($member['status'] ?? 'Active');
                   <i class="fa-solid fa-circle-info"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;10,000</div>
-              <div class="summary-sublabel">Due date by 1 August 2026</div>
-              <button class="btn-summary-action">Pay up</button>
+              <div class="summary-value">&#8358;<?php echo number_format($outstandingDues, 0); ?></div>
+              <div class="summary-sublabel"><?php echo $outstandingDues > 0 ? 'Payment still due' : 'No pending dues'; ?></div>
+              <button class="btn-summary-action" onclick="window.location.href='payment.php'">Pay up</button>
             </div>
 
             <div class="summary-card">
@@ -131,9 +184,9 @@ $memberStatus = ucfirst($member['status'] ?? 'Active');
                   <i class="fa-regular fa-calendar"></i>
                 </div>
               </div>
-              <div class="summary-value" style="font-size: 1.1rem;">Annual Meetings</div>
-              <div class="summary-sublabel">Sat, 20 August 2026, 10:00am</div>
-              <button class="btn-summary-action">View details</button>
+              <div class="summary-value" style="font-size: 1.1rem;"><?php echo $upcomingEventCount; ?> event(s)</div>
+              <div class="summary-sublabel"><?php echo $nextEventDate ? date('D, d M Y', strtotime($nextEventDate)) : 'No upcoming events'; ?></div>
+              <button class="btn-summary-action" onclick="window.location.href='events.php'">View details</button>
             </div>
           </section>
 
@@ -150,72 +203,36 @@ $memberStatus = ucfirst($member['status'] ?? 'Active');
                 </div>
               </div>
               <div class="list-card-body">
-                <div class="list-card-row">
-                  <div class="list-card-row-left">
-                    <div class="list-card-row-icon">
-                      <i class="fa-regular fa-credit-card"></i>
+                <?php if ($notifications): ?>
+                  <?php foreach ($notifications as $notification): ?>
+                    <div class="list-card-row">
+                      <div class="list-card-row-left">
+                        <div class="list-card-row-icon">
+                          <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <div>
+                          <div class="list-card-row-title"><?php echo htmlspecialchars($notification['title']); ?></div>
+                          <div class="list-card-row-desc"><?php echo htmlspecialchars($notification['message']); ?></div>
+                        </div>
+                      </div>
+                      <span class="list-card-row-time"><?php echo htmlspecialchars(date('D, d M Y', strtotime($notification['created_at']))); ?></span>
                     </div>
-                    <div>
-                      <div class="list-card-row-title">Dues Reminder</div>
-                      <div class="list-card-row-desc">Your annual dues of 10,000 are due on 1 Aug.</div>
-                    </div>
-                  </div>
-                  <span class="list-card-row-time unread">2 Hours ago</span>
-                </div>
-
-                <div class="list-card-row">
-                  <div class="list-card-row-left">
-                    <div class="list-card-row-icon">
-                      <i class="fa-regular fa-calendar"></i>
-                    </div>
-                    <div>
-                      <div class="list-card-row-title">Events: Annual meeting</div>
-                      <div class="list-card-row-desc">Annual general meetings is scheduled for 20 Aug</div>
-                    </div>
-                  </div>
-                  <span class="list-card-row-time unread">2 Hours ago</span>
-                </div>
-
-                <div class="list-card-row">
-                  <div class="list-card-row-left">
-                    <div class="list-card-row-icon">
-                      <i class="fa-solid fa-user"></i>
-                    </div>
-                    <div>
-                      <div class="list-card-row-title">Profile Complete</div>
-                      <div class="list-card-row-desc">Please update your emergency contact information</div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <div class="list-card-row">
+                    <div class="list-card-row-left">
+                      <div class="list-card-row-icon">
+                        <i class="fa-solid fa-bell"></i>
+                      </div>
+                      <div>
+                        <div class="list-card-row-title">No notifications</div>
+                        <div class="list-card-row-desc">You do not have any updates yet.</div>
+                      </div>
                     </div>
                   </div>
-                  <span class="list-card-row-time">3 Days ago</span>
-                </div>
-
-                <div class="list-card-row">
-                  <div class="list-card-row-left">
-                    <div class="list-card-row-icon">
-                      <i class="fa-solid fa-microphone"></i>
-                    </div>
-                    <div>
-                      <div class="list-card-row-title">Announcement</div>
-                      <div class="list-card-row-desc">New document has been uploaded. Review now</div>
-                    </div>
-                  </div>
-                  <span class="list-card-row-time">1 Week ago</span>
-                </div>
-
-                <div class="list-card-row">
-                  <div class="list-card-row-left">
-                    <div class="list-card-row-icon">
-                      <i class="fa-solid fa-bell"></i>
-                    </div>
-                    <div>
-                      <div class="list-card-row-title">Membership Renewal</div>
-                      <div class="list-card-row-desc">Your membership has been renewed for 2026</div>
-                    </div>
-                  </div>
-                  <span class="list-card-row-time">2 Weeks ago</span>
-                </div>
+                <?php endif; ?>
               </div>
-              <a href="#" class="list-card-footer-btn">View All Notifications</a>
+              <a href="messages.php" class="list-card-footer-btn">View All Notifications</a>
             </div>
 
             <!-- Recent Activities -->

@@ -1,4 +1,36 @@
-<?php require_once 'inc/auth.php'; ?>
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+
+$attendanceSummary = [
+  'total' => 0,
+  'present' => 0,
+  'late' => 0,
+  'absent' => 0,
+];
+$attendanceSummaryResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM attendance_logs WHERE member_id = $memberId GROUP BY status");
+if ($attendanceSummaryResult) {
+  while ($row = mysqli_fetch_assoc($attendanceSummaryResult)) {
+    $status = $row['status'] ?? 'present';
+    $attendanceSummary['total'] += (int) $row['total'];
+    if (isset($attendanceSummary[$status])) {
+      $attendanceSummary[$status] = (int) $row['total'];
+    }
+  }
+}
+
+$attendanceHistory = [];
+$attendanceHistoryResult = mysqli_query($conn, "SELECT id, check_in, check_out, status, created_at FROM attendance_logs WHERE member_id = $memberId ORDER BY check_in DESC LIMIT 10");
+if ($attendanceHistoryResult) {
+  while ($row = mysqli_fetch_assoc($attendanceHistoryResult)) {
+    $attendanceHistory[] = $row;
+  }
+}
+
+$attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['present'] / $attendanceSummary['total']) * 100) : 0;
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,7 +88,7 @@
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
+              <div class="avatar-badge"><?php echo htmlspecialchars(substr($_SESSION['member_id'] ?? 'M', 0, 2)); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>
@@ -67,32 +99,32 @@
           <section class="summary-cards-grid" style="grid-template-columns: repeat(4, 1fr);">
             <div class="summary-card">
               <div class="summary-card-header">
-                <span class="summary-card-title">Total Events</span>
+                <span class="summary-card-title">Total Records</span>
                 <div class="summary-icon-circle">
                   <i class="fa-solid fa-circle-info"></i>
                 </div>
               </div>
-              <div class="summary-value">8</div>
+              <div class="summary-value"><?php echo (int) $attendanceSummary['total']; ?></div>
             </div>
 
             <div class="summary-card">
               <div class="summary-card-header">
-                <span class="summary-card-title">Attended</span>
+                <span class="summary-card-title">Present</span>
                 <div class="summary-icon-circle">
                   <i class="fa-solid fa-check"></i>
                 </div>
               </div>
-              <div class="summary-value">6</div>
+              <div class="summary-value"><?php echo (int) $attendanceSummary['present']; ?></div>
             </div>
 
             <div class="summary-card">
               <div class="summary-card-header">
-                <span class="summary-card-title">Missed</span>
+                <span class="summary-card-title">Late</span>
                 <div class="summary-icon-circle">
                   <i class="fa-solid fa-xmark"></i>
                 </div>
               </div>
-              <div class="summary-value">2</div>
+              <div class="summary-value"><?php echo (int) $attendanceSummary['late']; ?></div>
             </div>
 
             <div class="summary-card">
@@ -102,7 +134,7 @@
                   <i class="fa-solid fa-chart-simple"></i>
                 </div>
               </div>
-              <div class="summary-value">75%</div>
+              <div class="summary-value"><?php echo $attendanceRate; ?>%</div>
             </div>
           </section>
 
@@ -110,12 +142,12 @@
           <section class="dashboard-card">
             <div class="progress-labeled-row">
               <span class="progress-labeled-title">Overall Attendance Rate</span>
-              <span class="progress-labeled-percent">75%</span>
+              <span class="progress-labeled-percent"><?php echo $attendanceRate; ?>%</span>
             </div>
             <div class="progress-bar-wrapper" style="height: 8px; margin-top: 0;">
-              <div class="progress-bar-fill" style="width: 75%; background-color: var(--banner-bg);"></div>
+              <div class="progress-bar-fill" style="width: <?php echo $attendanceRate; ?>%; background-color: var(--banner-bg);"></div>
             </div>
-            <div class="progress-note">Excellent attendance - you are eligible to member benefits.</div>
+            <div class="progress-note"><?php echo $attendanceRate >= 75 ? 'Excellent attendance - you are eligible to member benefits.' : 'Your attendance is being tracked. Keep up the momentum.'; ?></div>
           </section>
 
           <!-- Attendance History -->
@@ -140,84 +172,30 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Q2 General Meeting 2026</td>
-                  <td>June 15, 2026</td>
-                  <td><span class="event-type-pill">Meetings</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Leadership Workshop</td>
-                  <td>May 12,2026</td>
-                  <td><span class="event-type-pill">Workshop</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Q1 General Meeting</td>
-                  <td>Jan 15, 2026</td>
-                  <td><span class="event-type-pill">Meetings</span></td>
-                  <td><span class="status-text-missed"><i class="fa-solid fa-xmark"></i> Missed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Annual General Meeting 2026</td>
-                  <td>Mar 20, 2026</td>
-                  <td><span class="event-type-pill">AGM</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Year End Gala 2025</td>
-                  <td>Dec 17, 2025</td>
-                  <td><span class="event-type-pill">Social</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Q4 General Meeting 2025</td>
-                  <td>Oct 15, 2025</td>
-                  <td><span class="event-type-pill">Meetings</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-weight: 600; color: var(--text-primary);">Welfare Community Meetings</td>
-                  <td>June 15, 2025</td>
-                  <td><span class="event-type-pill">Community</span></td>
-                  <td><span class="status-text-missed"><i class="fa-solid fa-xmark"></i> Missed</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr>
+                <?php if ($attendanceHistory): ?>
+                  <?php foreach ($attendanceHistory as $record): ?>
+                    <?php
+                      $statusText = ucfirst($record['status'] ?? 'present');
+                      $badgeClass = $record['status'] === 'present' ? 'status-text-attended' : ($record['status'] === 'late' ? 'status-text-pending' : 'status-text-missed');
+                    ?>
+                    <tr>
+                      <td style="font-weight: 600; color: var(--text-primary);">Attendance Record</td>
+                      <td><?php echo htmlspecialchars(date('F j, Y', strtotime($record['check_in']))); ?></td>
+                      <td><span class="event-type-pill"><?php echo htmlspecialchars($statusText); ?></span></td>
+                      <td><span class="<?php echo $badgeClass; ?>"><?php echo $record['status'] === 'present' ? '<i class="fa-solid fa-check"></i>' : ($record['status'] === 'late' ? '<i class="fa-solid fa-clock"></i>' : '<i class="fa-solid fa-xmark"></i>'); ?> <?php echo htmlspecialchars($statusText); ?></span></td>
+                      <td style="text-align: right;">
+                        <button class="btn-action-trigger" aria-label="Options">
+                          <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr>
+                    <td colspan="5" class="zone-empty-state">No attendance records are available yet for this member.</td>
+                  </tr>
+                <?php endif; ?>
+
                   <td style="font-weight: 600; color: var(--text-primary);">Annual General Meeting 2025</td>
                   <td>Jan 15, 2025</td>
                   <td><span class="event-type-pill">Meetings</span></td>

@@ -9,6 +9,18 @@ $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['las
 $memberCode = $member['member_code'] ?? 'N/A';
 $fullAddress = trim(($member['home_address'] ?? '') ?: 'Address not available');
 $memberStatus = ucfirst($member['status'] ?? 'active');
+
+$initials = '';
+foreach (explode(' ', trim($memberName)) as $part) {
+  $part = trim($part);
+  if ($part !== '') {
+    $initials .= strtoupper(substr($part, 0, 1));
+  }
+  if (strlen($initials) >= 2) {
+    break;
+  }
+}
+$memberInitials = $initials ?: 'M';
 ?>
 <!doctype html>
 <html lang="en">
@@ -67,8 +79,8 @@ $memberStatus = ucfirst($member['status'] ?? 'active');
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
-              <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
+              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
+              <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars($memberStatus); ?></span>
             </div>
           </div>
         </header>
@@ -193,7 +205,7 @@ $memberStatus = ucfirst($member['status'] ?? 'active');
                   <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
                   <span class="checklist-label">Full Name</span>
                 </div>
-                <span class="checklist-value">Joseph Raymond</span>
+                <span class="checklist-value"><?php echo htmlspecialchars($memberName ?: 'Not set'); ?></span>
               </div>
 
               <div class="checklist-row">
@@ -201,63 +213,63 @@ $memberStatus = ucfirst($member['status'] ?? 'active');
                   <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
                   <span class="checklist-label">Email Address</span>
                 </div>
-                <span class="checklist-value">Jraymond@gmail.com</span>
+                <span class="checklist-value"><?php echo htmlspecialchars($member['email'] ?? 'Not set'); ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
+                  <span class="checklist-check <?php echo !empty($member['home_address']) ? 'checked' : ''; ?>"><?php echo !empty($member['home_address']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Home Address</span>
                 </div>
-                <span class="checklist-value">12,Okota Road Lagos Nigeria</span>
+                <span class="checklist-value"><?php echo !empty($member['home_address']) ? htmlspecialchars($member['home_address']) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
+                  <span class="checklist-check <?php echo !empty($member['phone']) ? 'checked' : ''; ?>"><?php echo !empty($member['phone']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Phone number</span>
                 </div>
-                <span class="checklist-value">+234-80123456789</span>
+                <span class="checklist-value"><?php echo !empty($member['phone']) ? htmlspecialchars($member['phone']) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
+                  <span class="checklist-check <?php echo !empty($member['date_of_birth']) ? 'checked' : ''; ?>"><?php echo !empty($member['date_of_birth']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Date Of Birth</span>
                 </div>
-                <span class="checklist-value">March 14 1986</span>
+                <span class="checklist-value"><?php echo !empty($member['date_of_birth']) ? htmlspecialchars(date('F j, Y', strtotime($member['date_of_birth']))) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
+                  <span class="checklist-check <?php echo !empty($member['occupation']) ? 'checked' : ''; ?>"><?php echo !empty($member['occupation']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Occupation</span>
                 </div>
-                <span class="checklist-value">Civil Engineer</span>
+                <span class="checklist-value"><?php echo !empty($member['occupation']) ? htmlspecialchars($member['occupation']) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check checked"><i class="fa-solid fa-check"></i></span>
+                  <span class="checklist-check <?php echo !empty($member['state_of_origin']) ? 'checked' : ''; ?>"><?php echo !empty($member['state_of_origin']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">State Of Origin</span>
                 </div>
-                <span class="checklist-value">Delta State</span>
+                <span class="checklist-value"><?php echo !empty($member['state_of_origin']) ? htmlspecialchars($member['state_of_origin']) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check"></span>
+                  <span class="checklist-check <?php echo !empty($member['emergency_contact_name']) ? 'checked' : ''; ?>"><?php echo !empty($member['emergency_contact_name']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Emergency Contact</span>
                 </div>
-                <span class="checklist-value required">Required</span>
+                <span class="checklist-value"><?php echo !empty($member['emergency_contact_name']) ? htmlspecialchars($member['emergency_contact_name']) : '<span class="required">Required</span>'; ?></span>
               </div>
 
               <div class="checklist-row">
                 <div class="checklist-row-left">
-                  <span class="checklist-check"></span>
+                  <span class="checklist-check <?php echo !empty($member['profile_photo_path']) ? 'checked' : ''; ?>"><?php echo !empty($member['profile_photo_path']) ? '<i class="fa-solid fa-check"></i>' : ''; ?></span>
                   <span class="checklist-label">Profile Photo</span>
                 </div>
-                <span class="checklist-value required">Required</span>
+                <span class="checklist-value"><?php echo !empty($member['profile_photo_path']) ? 'Uploaded' : '<span class="required">Required</span>'; ?></span>
               </div>
             </div>
           </section>

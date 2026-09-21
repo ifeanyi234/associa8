@@ -1,4 +1,12 @@
-<?php require_once 'inc/auth.php'; ?>
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+$memberResult = mysqli_query($conn, "SELECT * FROM members WHERE id = $memberId LIMIT 1");
+$member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
+$memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,8 +64,8 @@
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
-              <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
+              <div class="avatar-badge"><?php echo htmlspecialchars(substr($memberName ?: 'M', 0, 2)); ?></div>
+              <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars(ucfirst($member['status'] ?? 'active')); ?></span>
             </div>
           </div>
         </header>
@@ -75,28 +83,28 @@
                 <div class="settings-row">
                   <div>
                     <div class="settings-row-label">Full Name</div>
-                    <div class="settings-row-value">Joseph Raymond</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($memberName); ?></div>
                   </div>
                   <button class="btn-settings-action">Edit</button>
                 </div>
                 <div class="settings-row">
                   <div>
                     <div class="settings-row-label">Email Address</div>
-                    <div class="settings-row-value">Jraymond@gmail.com</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['email'] ?? 'Not set'); ?></div>
                   </div>
                   <button class="btn-settings-action">Edit</button>
                 </div>
                 <div class="settings-row">
                   <div>
                     <div class="settings-row-label">Phone Number</div>
-                    <div class="settings-row-value">+234-80123456789</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['phone'] ?? 'Not set'); ?></div>
                   </div>
                   <button class="btn-settings-action">Edit</button>
                 </div>
                 <div class="settings-row">
                   <div>
                     <div class="settings-row-label">Member ID</div>
-                    <div class="settings-row-value">ID - ASC -2026-001</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['member_code'] ?? 'N/A'); ?></div>
                   </div>
                   <button class="btn-settings-action">Edit</button>
                 </div>
@@ -119,10 +127,10 @@
                 <div class="settings-row">
                   <div>
                     <div class="settings-row-label">Two-Factor Authentication</div>
-                    <div class="settings-row-value">Not Enable</div>
+                    <div class="settings-row-value"><?php echo !empty($member['two_factor_enabled']) ? 'Enabled' : 'Not enabled'; ?></div>
                   </div>
                   <label class="form-switch">
-                    <input type="checkbox" class="form-switch-input" />
+                    <input type="checkbox" class="form-switch-input" <?php echo !empty($member['two_factor_enabled']) ? 'checked' : ''; ?> />
                   </label>
                 </div>
                 <div class="settings-row">
@@ -189,28 +197,28 @@
                 <a href="#" class="settings-row" style="text-decoration: none; cursor: pointer;">
                   <div>
                     <div class="settings-row-label">Language</div>
-                    <div class="settings-row-value">English (Nigeria)</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['language'] ?? 'English (Nigeria)'); ?></div>
                   </div>
                   <i class="fa-solid fa-chevron-right settings-row-chevron"></i>
                 </a>
                 <a href="#" class="settings-row" style="text-decoration: none; cursor: pointer;">
                   <div>
                     <div class="settings-row-label">Timezone</div>
-                    <div class="settings-row-value">Africa / Lagos(WTA, CT+1)</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['timezone'] ?? 'Africa/Lagos'); ?></div>
                   </div>
                   <i class="fa-solid fa-chevron-right settings-row-chevron"></i>
                 </a>
                 <a href="#" class="settings-row" style="text-decoration: none; cursor: pointer;">
                   <div>
                     <div class="settings-row-label">Date / Format</div>
-                    <div class="settings-row-value">DD / MM / YYYY</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['date_format'] ?? 'DD/MM/YYYY'); ?></div>
                   </div>
                   <i class="fa-solid fa-chevron-right settings-row-chevron"></i>
                 </a>
                 <a href="#" class="settings-row" style="text-decoration: none; cursor: pointer;">
                   <div>
                     <div class="settings-row-label">Currency Display</div>
-                    <div class="settings-row-value">Nigeria / Naira</div>
+                    <div class="settings-row-value"><?php echo htmlspecialchars($member['currency_display'] ?? 'Nigeria/Naira'); ?></div>
                   </div>
                   <i class="fa-solid fa-chevron-right settings-row-chevron"></i>
                 </a>

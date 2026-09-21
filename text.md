@@ -29,7 +29,7 @@
 16. [ ] Same for every `proc-*.php` write handler — every `INSERT` into an org-scoped table must include `org_id` from session.
 17. [ ] Update `admin/add-member.php`, `proc-add-member.php`, `add-zone.php`, `proc-add-zone.php`, `add-title.php`, `proc-add-title.php`, `add-admission.php`, `proc-add-admission.php`, `add-cbt-exam.php`, `proc-add-cbt-exam.php`, `add-cbt-question.php`, `proc-add-cbt-question.php`, `upload-document.php`, `proc-upload-document.php` the same way.
 
-## Phase 5 — Build the actual member login flow
+## Phase 5 — Build the actual member login flow ✅
 
 18. [ ] Create `member-login.php` (public-facing, separate from `admin/index.php`) with a simple username/password (or email/password) form.
 19. [ ] Create `proc-member-login.php`: verify against `members.email` + `members.password` (you'll need to backfill/hash passwords for existing member rows or force a "set password" flow for new members).

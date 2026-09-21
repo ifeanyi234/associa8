@@ -1,4 +1,20 @@
-<?php require_once 'inc/auth.php'; ?>
+<?php
+require_once 'inc/auth.php';
+require_once '../../inc/db.php';
+
+$memberId = (int) $_SESSION['member_id'];
+
+$events = [];
+$eventsResult = mysqli_query($conn, "SELECT e.*, IFNULL(r.status, 'not_booked') AS member_status FROM events e LEFT JOIN event_rsvps r ON r.event_id = e.id AND r.member_id = $memberId ORDER BY e.event_date ASC");
+if ($eventsResult) {
+  while ($row = mysqli_fetch_assoc($eventsResult)) {
+    $events[] = $row;
+  }
+}
+
+$upcomingEvents = array_filter($events, fn($event) => ($event['event_date'] ?? '') >= date('Y-m-d'));
+$pastEvents = array_filter($events, fn($event) => ($event['event_date'] ?? '') < date('Y-m-d'));
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -56,7 +72,7 @@
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
+              <div class="avatar-badge"><?php echo htmlspecialchars(substr($_SESSION['member_id'] ?? 'M', 0, 2)); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>
@@ -66,75 +82,37 @@
           <!-- Upcoming Events -->
           <div>
             <div class="section-label" style="margin-bottom: 1rem;">
-              Upcoming Events (<span class="count-highlight">3</span>)
+              Upcoming Events (<span class="count-highlight"><?php echo count($upcomingEvents); ?></span>)
             </div>
 
             <div class="events-list">
-              <div class="event-card">
-                <div>
-                  <span class="event-card-tag">AGM</span>
-                  <div class="event-card-title">Annual General Meeting</div>
-                  <div class="event-card-meta">
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-calendar"></i> Saturday, 21th Sept 2026
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-clock"></i> 10:00 AM
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-location-dot"></i> Eko Hotel, Victoria Island, Lagos.
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-users"></i> Capacity: 200
-                    </span>
+              <?php if ($upcomingEvents): ?>
+                <?php foreach ($upcomingEvents as $event): ?>
+                  <div class="event-card">
+                    <div>
+                      <span class="event-card-tag"><?php echo htmlspecialchars($event['event_type'] ?: 'Event'); ?></span>
+                      <div class="event-card-title"><?php echo htmlspecialchars($event['title']); ?></div>
+                      <div class="event-card-meta">
+                        <span class="event-card-meta-item">
+                          <i class="fa-regular fa-calendar"></i> <?php echo htmlspecialchars(date('l, jS M Y', strtotime($event['event_date']))); ?>
+                        </span>
+                        <span class="event-card-meta-item">
+                          <i class="fa-regular fa-clock"></i> <?php echo !empty($event['event_time']) ? htmlspecialchars(date('h:i A', strtotime($event['event_time']))) : 'Time TBA'; ?>
+                        </span>
+                        <span class="event-card-meta-item">
+                          <i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($event['venue'] ?: 'Venue TBA'); ?>
+                        </span>
+                        <span class="event-card-meta-item">
+                          <i class="fa-solid fa-users"></i> Capacity: <?php echo (int) ($event['capacity'] ?? 0); ?>
+                        </span>
+                      </div>
+                    </div>
+                    <button class="btn-book-seat"><?php echo $event['member_status'] === 'booked' ? 'Booked' : 'Book a Seat'; ?></button>
                   </div>
-                </div>
-                <button class="btn-book-seat">Book a Seat</button>
-              </div>
-
-              <div class="event-card">
-                <div>
-                  <span class="event-card-tag">Networking</span>
-                  <div class="event-card-title">Mid Year Review &amp; Networking</div>
-                  <div class="event-card-meta">
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-calendar"></i> Saturday, 20th Nov 2026
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-clock"></i> 10:00 AM
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-location-dot"></i> Tag Hotel, Victoria Island, Lagos.
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-users"></i> Capacity: 400
-                    </span>
-                  </div>
-                </div>
-                <button class="btn-book-seat">Book a Seat</button>
-              </div>
-
-              <div class="event-card">
-                <div>
-                  <span class="event-card-tag">Workshop</span>
-                  <div class="event-card-title">Leadership Workshop: 2026 Edition</div>
-                  <div class="event-card-meta">
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-calendar"></i> Saturday, 11th Dec 2026
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-regular fa-clock"></i> 10:00 AM
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-location-dot"></i> Eko Hotel, Victoria Island, Lagos.
-                    </span>
-                    <span class="event-card-meta-item">
-                      <i class="fa-solid fa-users"></i> Capacity: 100
-                    </span>
-                  </div>
-                </div>
-                <button class="btn-book-seat">Book a Seat</button>
-              </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="zone-empty-state">No upcoming events have been published yet.</div>
+              <?php endif; ?>
             </div>
           </div>
 
@@ -143,21 +121,19 @@
             <div class="section-label" style="margin-bottom: 1rem;">Past Events</div>
 
             <div class="events-list">
-              <div class="past-event-row">
-                <div class="past-event-row-left">
-                  <span class="event-type-pill">Meetings</span>
-                  <span class="past-event-title">Q2 General Meeting</span>
-                </div>
-                <span class="past-event-date">Fri, 20 Mar 2026</span>
-              </div>
-
-              <div class="past-event-row">
-                <div class="past-event-row-left">
-                  <span class="event-type-pill">Workshop</span>
-                  <span class="past-event-title">Leadership Workshop - May 2026</span>
-                </div>
-                <span class="past-event-date">Fri, 20 May 2026</span>
-              </div>
+              <?php if ($pastEvents): ?>
+                <?php foreach ($pastEvents as $event): ?>
+                  <div class="past-event-row">
+                    <div class="past-event-row-left">
+                      <span class="event-type-pill"><?php echo htmlspecialchars($event['event_type'] ?: 'Event'); ?></span>
+                      <span class="past-event-title"><?php echo htmlspecialchars($event['title']); ?></span>
+                    </div>
+                    <span class="past-event-date"><?php echo htmlspecialchars(date('D, d M Y', strtotime($event['event_date']))); ?></span>
+                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="zone-empty-state">No past events are available yet.</div>
+              <?php endif; ?>
             </div>
           </div>
         </div>

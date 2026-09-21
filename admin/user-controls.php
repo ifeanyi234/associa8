@@ -1,4 +1,15 @@
-<?php require_once "inc/auth.php"; ?>
+<?php
+require_once "inc/auth.php";
+require_once "../inc/db.php";
+
+$users = [];
+$userResult = mysqli_query($conn, "SELECT * FROM users ORDER BY created_at DESC");
+if ($userResult) {
+  while ($user = mysqli_fetch_assoc($userResult)) {
+    $users[] = $user;
+  }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -84,6 +95,14 @@
     </div>
   </div>
 
+  <?php if (isset($_GET['status'])): ?>
+    <div class="dashboard-card" style="margin-bottom: 1.25rem;">
+      <div class="alert-box <?php echo $_GET['status'] === 'success' ? 'success' : 'error'; ?>">
+        <?php echo htmlspecialchars($_GET['msg'] ?? 'Please review the form and try again.'); ?>
+      </div>
+    </div>
+  <?php endif; ?>
+
   <!-- User Form Card -->
   <div class="dashboard-card">
     <form action="process-user.php" method="POST" id="userControlForm">
@@ -160,6 +179,45 @@
       </div>
     </form>
   </div>
+
+  <div class="dashboard-card" style="margin-top: 1.5rem;">
+    <div class="page-action-header mb-3">
+      <div>
+        <h3 class="page-title-main" style="font-size: 1.2rem; margin: 0;">Existing Users</h3>
+      </div>
+    </div>
+
+    <div class="table-responsive-card">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if ($users): ?>
+            <?php foreach ($users as $user): ?>
+              <tr>
+                <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></td>
+                <td><?php echo htmlspecialchars($user['email']); ?></td>
+                <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $user['role']))); ?></td>
+                <td><span class="badge-pill <?php echo $user['status'] === 'active' ? 'status-active' : 'status-inactive'; ?>"><?php echo htmlspecialchars($user['status']); ?></span></td>
+                <td><?php echo htmlspecialchars(date('M d, Y', strtotime($user['created_at']))); ?></td>
+              </tr>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <tr>
+              <td colspan="5" class="zone-empty-state">No users have been created yet.</td>
+            </tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
         <!-- Footer -->
@@ -168,6 +226,23 @@
     </div>
 
     <!-- Interactive Scripts -->
+    <style>
+      .alert-box {
+        padding: 0.9rem 1rem;
+        border-radius: 10px;
+        font-weight: 600;
+      }
+      .alert-box.success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #166534;
+        border: 1px solid rgba(34, 197, 94, 0.25);
+      }
+      .alert-box.error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+    </style>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");
