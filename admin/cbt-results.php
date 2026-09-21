@@ -1,9 +1,16 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $resultsResult = mysqli_query($conn, "SELECT r.id, r.score, r.status, r.taken_at, m.first_name, m.last_name, m.email, m.phone, e.title AS exam_title FROM cbt_results r INNER JOIN members m ON m.id = r.member_id INNER JOIN cbt_exams e ON e.id = r.exam_id ORDER BY r.taken_at DESC");
+
 $results = [];
-if ($resultsResult) { while ($result = mysqli_fetch_assoc($resultsResult)) { $results[] = $result; } }
+if ($resultsResult) { 
+  while ($result = mysqli_fetch_assoc($resultsResult)) {
+    $results[] = $result; 
+  } 
+}
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -125,7 +132,10 @@ if ($resultsResult) { while ($result = mysqli_fetch_assoc($resultsResult)) { $re
                       <td><?php echo htmlspecialchars($result['email']); ?></td>
                       <td><?php echo htmlspecialchars($result['phone'] ?: 'Not provided'); ?></td>
                       <td><?php echo (int) $result['score']; ?></td>
-                      <td><span class="badge-pill <?php echo $result['status'] === 'passed' ? 'status-active' : 'status-inactive'; ?>"><?php echo ucfirst($result['status']); ?></span></td>
+                      <td>
+                        <span class="badge-pill <?php echo $result['status'] === 'passed' ? 'status-active' : 'status-inactive'; ?>"><?php echo ucfirst($result['status']); ?>
+                        </span>
+                      </td>
                       <td style="text-align: right;"><?php echo htmlspecialchars($result['exam_title']); ?></td>
                     </tr>
                   <?php endforeach; ?>

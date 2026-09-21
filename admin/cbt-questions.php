@@ -1,11 +1,20 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $questionResult = mysqli_query($conn, "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id ORDER BY q.created_at DESC");
+
 $questions = [];
-if ($questionResult) { while ($question = mysqli_fetch_assoc($questionResult)) { $questions[] = $question; } }
+
+if ($questionResult) { 
+  while ($question = mysqli_fetch_assoc($questionResult)) {
+    $questions[] = $question; 
+  } 
+}
+
 $examCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM cbt_exams");
 $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['total'] : 0;
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -137,8 +146,13 @@ $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['tota
               <?php if ($questions): ?>
                 <?php foreach ($questions as $index => $question): ?>
                   <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
-                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question <?php echo $index + 1; ?> <small>(<?php echo htmlspecialchars($question['exam_title']); ?>)</small></h3>
-                    <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;"><?php echo htmlspecialchars($question['question_text']); ?></p>
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 
+                      <?php echo $index + 1; ?> 
+                      <small>(<?php echo htmlspecialchars($question['exam_title']); ?>)</small>
+                    </h3>
+                    <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
+                      <?php echo htmlspecialchars($question['question_text']); ?>
+                    </p>
                     <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
                       <?php foreach (['a', 'b', 'c', 'd', 'e'] as $option): ?>
                         <?php if ($question['option_' . $option] !== null && $question['option_' . $option] !== ''): ?><div>(<?php echo strtoupper($option); ?>) <?php echo htmlspecialchars($question['option_' . $option]); ?></div><?php endif; ?>

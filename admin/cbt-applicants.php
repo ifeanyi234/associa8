@@ -1,9 +1,16 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $applicantsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status = 'under_review' ORDER BY applied_at DESC");
+
 $applicants = [];
-if ($applicantsResult) { while ($applicant = mysqli_fetch_assoc($applicantsResult)) { $applicants[] = $applicant; } }
+if ($applicantsResult) { 
+  while ($applicant = mysqli_fetch_assoc($applicantsResult)) { 
+    $applicants[] = $applicant; 
+  } 
+}
+
 ?>
 <!doctype html>
 <html lang="en">

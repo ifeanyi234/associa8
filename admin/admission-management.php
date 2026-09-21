@@ -1,12 +1,24 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+
 $admissionStatsResult = mysqli_query($conn, "SELECT status, COUNT(*) AS total FROM admissions GROUP BY status");
 $admissionStats = ['pending' => 0, 'under_review' => 0, 'approved' => 0, 'rejected' => 0];
-if ($admissionStatsResult) { while ($stat = mysqli_fetch_assoc($admissionStatsResult)) { $admissionStats[$stat['status']] = (int) $stat['total']; } }
+
+if ($admissionStatsResult) { 
+  while ($stat = mysqli_fetch_assoc($admissionStatsResult)) { 
+    $admissionStats[$stat['status']] = (int) $stat['total']; 
+  } 
+}
+
 $admissionsResult = mysqli_query($conn, "SELECT id, application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions ORDER BY applied_at DESC");
+
 $admissions = [];
-if ($admissionsResult) { while ($admission = mysqli_fetch_assoc($admissionsResult)) { $admissions[] = $admission; } }
+if ($admissionsResult) { 
+  while ($admission = mysqli_fetch_assoc($admissionsResult)) {
+    $admissions[] = $admission; 
+  } 
+}
 ?>
 <!doctype html>
 <html lang="en">
