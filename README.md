@@ -1,441 +1,167 @@
-# Associa8 Project Guide
+# Associa8 — Project Guide (Actual Current State)
 
-This project is a custom PHP + MySQL membership portal for an organization with separate admin and member experiences. The key business idea is that users are organized by zone and sub-zone, and documents should only be visible to the people who belong to the right scope.
-
-The most important design rule in this app is:
-
-- a document can be organization-wide, zone-scoped, or sub-zone-scoped
-- users should only see documents they are permitted to see
-- super admins see everything unless a stricter rule is introduced later
-- regular admins and members are filtered by the zone/sub-zone they belong to
+Associa8 is a PHP + MySQL (mysqli) membership management platform intended to let multiple **organizations** each run their own isolated portal: an admin side for staff and a member side for members. This document describes what the code **actually does today**, table by table and flow by flow — not the intended design. Gaps between intended and actual behavior are called out explicitly wherever they occur.
 
 ---
 
-## 1. Project structure
+## 1. Folder structure
 
-The app is split into public pages and authenticated admin/member sections.
-
-Main folders:
-
-- `admin/` — admin dashboard and admin management pages
-- `admin/member/` — member dashboard area
-- `inc/` — shared app includes like database connection and navbar/footer
-- `css/` — styling
-- `js/` — frontend scripts
-- `images/` and `videos/` — assets
-
-Key files:
-
-- `admin/proc-login.php` — logs admin users in and sets session values
-- `admin/inc/auth.php` — checks whether a user is authenticated
-- `admin/documents.php` — admin document list with scoped visibility
-- `admin/upload-document.php` — upload form with zone/sub-zone visibility selector
-- `admin/proc-upload-document.php` — saves uploaded docs and stores scope
-- `admin/member/documents.php` — member-facing document list filtered by zone/sub-zone
-- `associa8.sql` — database schema and data dump
+- `/` — public marketing site (`index.php`, `about.php`, `pricing.php`, `contact.php`, `signup.php`)
+- `inc/` — public-site shared includes: `db.php` (mysqli connection), `navbar.php`, `mobile-nav.php`, `footer.php`, `cta.php`
+- `admin/` — admin-facing app (super admin + scoped admin pages, all `proc-*.php` handlers)
+- `admin/inc/` — admin-only includes: `auth.php` (session gate), `sidebar.php`, `preloader.php`, `footer.php`, `pagination.php`
+- `admin/member/` — member-facing dashboard pages (**currently static mockups, not wired to real data or auth** — see §5)
+- `admin/member/inc/` — member sidebar include
+- `css/`, `js/`, `images/`, `videos/` — assets
+- `associa8.sql` — full schema + seed/test data dump
 
 ---
 
-## 2. The main business model
+## 2. Database schema — table by table, with what's missing
 
-The project is built around members and zones.
+**None of the tables below have an `org_id` column.** This is the single biggest structural gap in the project (see §7).
 
-There are three important identity layers:
-
-1. `acc-info`
-   - this is the login table used for account access
-   - it stores username and password
-
-2. `admin-info`
-   - admin profile data
-   - includes role, zone_id, subzone_id
-   - this is where the admin’s access scope is usually defined
-
-3. `members`
-   - member profile data
-   - includes zone_id and subzone_id
-   - this is the member’s actual organizational scope
-
-The zone/sub-zone relationship is the key link between people and document visibility.
+| Table                                         | Purpose                                                                 | Key columns                                                                             | Gaps                                                                                                                                                                                             |
+| --------------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `org-info`                                    | One row per organization created at signup                              | `name`, `type`, `email`, `phone`, `country`, `state`, `pricing`, `total-members`        | No `id` is referenced anywhere else in the schema. Fully orphaned after insert.                                                                                                                  |
+| `admin-info`                                  | Admin/staff profile (name, job title, role)                             | `id`, `role` (`super_admin`/`admin`/`manager`), `zone_id`, `subzone_id`                 | No FK to `org-info`. No FK to `acc-info` — login code assumes `admin-info.id == acc-info.id`, which is only true by coincidence (see `associa8.sql`: `acc-info` has 1 row, `admin-info` has 11). |
+| `acc-info`                                    | Login credentials only                                                  | `id`, `username`, `password` (hashed), `otp`                                            | This is the **only** table checked at login. Not linked to `admin-info` by any real foreign key.                                                                                                 |
+| `members`                                     | Organization members                                                    | `id`, `member_code`, `email`, `password`, `zone_id`, `subzone_id`, `title_id`, `status` | Has `email`/`password` columns clearly meant for member login, but **no login flow uses them yet**. No `org_id`.                                                                                 |
+| `zones` / `subzones`                          | Geographic/organizational divisions used to scope members and documents | `id`, `name`, `coordinator_name`                                                        | No `org_id` — a "Lagos Zone" created by Org A is visible/usable by Org B's admin too.                                                                                                            |
+| `titles`                                      | Membership hierarchy (Patron, President, Fellow, etc.) with `level`     | `id`, `title`, `level` (unique)                                                         | No `org_id`. `level` is globally unique, so two orgs can't both have a "level 1" title.                                                                                                          |
+| `documents`                                   | Uploaded files, scoped by zone/subzone/org-wide                         | `zone_id`, `subzone_id` (both nullable = org-wide)                                      | Scoping is zone-based only, **not org-based** — see §6.                                                                                                                                          |
+| `admissions`                                  | Applicant pipeline (pending → under_review → approved/rejected)         | `application_number`, `status`, guarantor fields                                        | No `org_id`. Every org's applicants share one pool.                                                                                                                                              |
+| `cbt_exams` / `cbt_questions` / `cbt_results` | Computer-based testing module tied to admissions                        | —                                                                                       | No `org_id`.                                                                                                                                                                                     |
+| `suspensions`                                 | Member suspension/reinstatement history                                 | `member_id`, `action_type`, `status`                                                    | Fine within a member, but member itself has no org boundary.                                                                                                                                     |
+| `portal_settings`                             | Admission/CBT portal open/close windows                                 | `portal_key` (unique: `admission`, `cbt`)                                               | Global, not per-org — every org shares one admission window.                                                                                                                                     |
+| `users` / `user_module_permissions`           | A **second, unused** user/permission system                             | —                                                                                       | Referenced by FK from `documents.uploaded_by` and `admissions.reviewed_by`, but nothing ever inserts into `users`. Currently dead code paths.                                                    |
 
 ---
 
-## 3. Why zone and sub-zone matter
+## 3. The signup flow (`signup.php` → `proc-signup.php`)
 
-Documents are not just global files. In this app, they are scoped by location.
+A single 3-step form, submitted as one POST:
 
-Possible visibility states:
+1. **Step 1 — Organization Information**: name, type, email, phone, country, state, pricing plan, member count.
+2. **Step 2 — Administrator Info**: first/last name, email, phone, job title, role.
+3. **Step 3 — Account Info**: username, password, confirm password, OTP.
 
-- Organization-wide: visible to everyone
-- Zone-specific: visible only to that zone
-- Sub-zone-specific: visible only to that sub-zone
+`proc-signup.php` does, in order:
 
-This means the app should not just show documents to any logged-in user. It must query the database using the user’s zone/sub-zone and compare it with the document row.
+1. Validates password === confirm password.
+2. Hashes the password (`password_hash`).
+3. Runs three separate `INSERT` statements: one into `org-info`, one into `admin-info`, one into `acc-info`.
+4. Wraps them in `mysqli_begin_transaction` / `mysqli_commit`, so all three succeed or all three roll back together.
+5. **Does not capture or store any of the returned insert IDs against each other.** After commit, `org-info.id`, `admin-info.id`, and `acc-info.id` are three independent auto-increment values with no recorded relationship.
+6. On success, redirects to `signup.php?status=success`.
 
----
-
-## 4. Admin and member relationship in the app
-
-### Admin side
-
-The admin dashboard is for internal staff or moderators.
-
-They usually belong to:
-
-- a role like `super_admin`, `admin`, or `manager`
-- a `zone_id`
-- optionally a `subzone_id`
-
-In the code, the access pattern is:
-
-- `super_admin` sees all documents
-- other admin roles only see documents that are:
-  - organization-wide, or
-  - in the same zone, or
-  - in the same sub-zone
-
-This is enforced in the query logic in `admin/documents.php`.
-
-### Member side
-
-The member dashboard is for organization members.
-
-Members are also associated with a `zone_id` and `subzone_id`. Their document list is filtered using the same principle:
-
-- they see organization-wide documents
-- they see documents from their own zone
-- they see documents from their own sub-zone
-- they do not see documents from other zones/sub-zones
-
-This is enforced in `admin/member/documents.php`.
-
-### Super admin logic
-
-The super admin is treated as a full-access user.
-
-The app currently interprets this as:
-
-- role is `super_admin`
-- or no zone is assigned to the admin
-
-When that happens, the app avoids scoping and returns everything.
-
-This is a very important concept in the project because it determines whether a user is a true global administrator or a scoped administrator.
+**Uniqueness checks are broken as written**: `proc-signup.php` runs `SELECT` queries against `org-info`/`admin-info`/`acc-info` for existing email/username, but only _uses_ the results in the `else if` branches after the inserts already ran — meaning duplicate-detection logic can't actually block a duplicate insert from happening first. Also note there's a separate, simpler `admin/signup.php` (an admin-only registration form) whose submit handler is `onsubmit="event.preventDefault()"` — it does nothing; it's a UI shell with no backend at all.
 
 ---
 
-## 5. The document upload process
+## 4. The login flow (`admin/index.php` → `admin/proc-login.php`)
 
-The document flow begins in `admin/upload-document.php`.
+1. Form posts `username`/`password` to `proc-login.php`.
+2. Looks up the row in `acc-info` by username.
+3. `password_verify()`s the password against the hash.
+4. On success: sets `$_SESSION['user_id']` and `$_SESSION['username']` from the `acc-info` row.
+5. **Then** runs `SELECT role, zone_id, subzone_id FROM admin-info WHERE id = $user_id`, using the `acc-info` ID as if it were the `admin-info` ID.
+   - If a matching row happens to exist, session gets `admin_role`, `admin_zone_id`, `admin_subzone_id` from it.
+   - If no matching row exists (the realistic case, since these are independent counters), it silently falls back to `admin_role = 'admin'`, `zone_id = null`, `subzone_id = null` — meaning **every login that doesn't luckily hit a matching row becomes an unscoped generic admin.**
+6. Redirects to `admin/dashboard.php`.
 
-The form includes:
+**There is exactly one login destination: the admin dashboard.** There is no role check at login that could route a "member" account anywhere else, because member accounts don't log in through this flow at all (see §5).
 
-- document title
-- file type
-- file upload
-- visibility selector
-- zone selector
-- sub-zone selector
+`admin/inc/auth.php` is the gate every protected `admin/*.php` page includes: it just checks `$_SESSION['user_id']` is set, redirecting to `admin/index.php` if not. It does **not** re-verify role or org scope on every page — each page trusts whatever `admin_role`/`admin_zone_id` landed in session at login time.
 
-### Visibility selection
-
-The form allows the uploader to choose one of these modes:
-
-1. Organization-wide
-2. Specific zone
-3. Specific sub-zone
-
-If the uploader chooses a zone or sub-zone, the form populates the dependent dropdowns so the user can select a valid scope.
-
-### Server handling
-
-`admin/proc-upload-document.php` then does the following:
-
-1. checks request method is POST
-2. validates title and file type
-3. ensures a file was uploaded successfully
-4. checks the file extension is allowed
-5. stores the file in the upload folder
-6. builds a safe file path
-7. saves metadata into `documents`
-8. includes `zone_id` and `subzone_id` if the doc is scoped
-
-The important database columns are:
-
-- `documents.title`
-- `documents.file_path`
-- `documents.file_type`
-- `documents.file_size`
-- `documents.category`
-- `documents.uploaded_by`
-- `documents.zone_id`
-- `documents.subzone_id`
-
-This is what makes the visibility rules possible.
+`admin/logout.php` clears `$_SESSION`, destroys the session, and redirects to `index.php` (the _public_ homepage, not `admin/index.php` — worth checking if that's intentional).
 
 ---
 
-## 6. The admin document query logic
+## 5. The member side — currently a disconnected mockup
 
-The admin documents list is not just "select all from documents". It is context-aware.
+`admin/member/dashboard.php`, `profile.php`, `attendance.php`, `payment.php`, `events.php`, `messages.php`, `documents.php`, `settings.php`:
 
-In `admin/documents.php`, the app reads the current logged-in admin session:
+- **None of them `require_once "inc/auth.php"`** (or any auth check). They are reachable directly by URL by anyone.
+- All content is **hardcoded HTML** — "Joseph Raymond", "90%", "₦10,000 due" — not pulled from the `members` table.
+- `admin/member/documents.php` is the one partial exception: it references a `$documents` variable (filtered by zone/subzone) but the query that would populate `$documents` isn't present in that file — it's presumably meant to mirror `admin/documents.php`'s scoping logic but doesn't yet.
+- There is no `member-login.php`, no `proc-member-login.php`, and no session variables (`member_id`, `member_zone_id`, etc.) ever get set anywhere in the codebase.
+- The `members` table already has `email` and `password` columns sitting ready for this — they're just never read at login time by any script.
 
-- `admin_role`
-- `admin_zone_id`
-- `admin_subzone_id`
+**Conclusion: today, a member never logs in.** The member dashboard is a design/frontend deliverable only.
 
-Then it decides whether to scope the query.
+---
 
-Pseudo-flow:
+## 6. Document visibility — how scoping works today (and its real boundary)
 
-```php
-if (admin is super_admin) {
-    show all documents
-} else if (admin has zone) {
-    show documents where:
-        - org-wide, OR
-        - same zone, OR
-        - same subzone
-} else {
-    show only org-wide documents or default safe fallback
-}
+`admin/documents.php` (admin's document manager) reads the logged-in admin's session (`admin_role`, `admin_zone_id`, `admin_subzone_id`) and:
+
+- If `admin_role === 'super_admin'` OR `admin_zone_id` is null → shows **all** documents, no filtering.
+- Otherwise → shows documents where `(zone_id IS NULL AND subzone_id IS NULL)` (org-wide) `OR zone_id = admin's zone` `OR subzone_id = admin's subzone`.
+
+`admin/upload-document.php` → `admin/proc-upload-document.php` lets the uploader pick Organization-wide / Specific zone / Specific sub-zone, validates the chosen sub-zone actually belongs to the chosen zone, and inserts accordingly.
+
+**This is zone/subzone scoping, not organization scoping.** Because `zones`/`subzones`/`documents` have no `org_id`, this logic only correctly separates "people in Zone A" from "people in Zone B" _within what the schema currently treats as one single shared organization_. Two different signed-up organizations, today, share the exact same pool of zones and documents. An admin from Org B logging in — if their `admin-info` row happens to have no zone assigned, or matches an Org A zone by ID — can see Org A's documents.
+
+---
+
+## 7. The core structural gap: no organization boundary anywhere
+
+This is the issue your project needs solved before "multiple organizations, isolated data" is true:
+
+- No table has `org_id`.
+- `admin-info` and `acc-info` aren't linked by a real foreign key — only by a coincidental matching auto-increment ID.
+- `zones`, `subzones`, `titles`, `members`, `documents`, `admissions`, `cbt_exams`, `cbt_results`, `suspensions`, `portal_settings` are all **global tables shared by every signed-up organization.**
+- Practical consequence: right now, every organization that signs up is, from the database's point of view, contributing to and reading from **one shared organization's worth of data.**
+
+---
+
+## 8. The actual current loop (as code, not as intended)
+
+```
+signup.php → proc-signup.php
+   ├─ INSERT org-info        (orphaned — id never reused)
+   ├─ INSERT admin-info      (orphaned — id never reused)
+   └─ INSERT acc-info        (only this is used to log in)
+              │
+              ▼
+admin/proc-login.php
+   ├─ verify against acc-info
+   ├─ SELECT admin-info WHERE id = acc-info.id   ← coincidental match, often fails silently
+   └─ session: user_id, admin_role, admin_zone_id, admin_subzone_id
+              │
+              ▼
+admin/dashboard.php  (the ONE login destination — role read from session, no member routing exists)
+              │
+              ▼
+Admin creates members via admin/add-member.php → proc-add-member.php
+   → INSERT members (zone_id, subzone_id, title_id — no org_id)
+              │
+              ▼
+admin/member/*.php  ← reachable by anyone, unauthenticated, shows hardcoded mock data
+              │
+              X   (dead end — no member session, no member login exists, loop does not close)
 ```
 
-This SQL intent is the heart of the permission model.
+**The loop does not currently close into members.** It stops at "admin creates a member row in the database." Nothing lets that member authenticate and view their own scoped dashboard.
 
 ---
 
-## 7. The member document query logic
+## 9. Known secondary issues worth fixing alongside the above
 
-The member document list in `admin/member/documents.php` works in a similar way but checks the member’s own `zone_id` and `subzone_id`.
-
-A member can see:
-
-- documents where `zone_id IS NULL AND subzone_id IS NULL` (organization-wide)
-- documents where `zone_id = member zone`
-- documents where `subzone_id = member subzone`
-
-They cannot see unrelated zone or sub-zone documents.
-
-This is the app’s core security rule for member access.
+- `admin/signup.php` — non-functional UI shell (`onsubmit="event.preventDefault()"`), no backend.
+- `proc-signup.php` duplicate-checks run _after_ the inserts they're meant to guard against.
+- `users` / `user_module_permissions` tables exist and are referenced by FKs (`documents.uploaded_by`, `admissions.reviewed_by`) but are never inserted into — `admin/user-controls.php`'s form posts to `process-user.php`, which doesn't exist in the provided codebase.
+- `admin/logout.php` redirects to the public homepage rather than the admin login page.
+- `admin/portal-settings.php` is an empty file (0 bytes) despite `proc-portal-settings.php` existing and expecting to render a form into it.
+- `inc/db.php` has hardcoded DB credentials committed to source control.
 
 ---
 
-## 8. Auth and session flow
-
-This part is critical.
-
-### Admin login flow
-
-`admin/proc-login.php` does this:
-
-- finds user by username in `acc-info`
-- verifies password
-- if valid, stores session values such as:
-  - `user_id`
-  - `username`
-  - `admin_role`
-  - `admin_zone_id`
-  - `admin_subzone_id`
-
-This is how the dashboard “knows” which scope the logged-in admin has.
-
-### Important security fact
-
-The current app assumes the admin identity can be matched directly to an admin record by the same ID.
-
-This is risky because the app has two different tables:
-
-- `acc-info` for login credentials
-- `admin-info` for admin profile and authorization data
-
-If a real admin record does not exist for that same ID, the zone/sub-zone scope will be missing and the app may not filter correctly.
-
-### Member session flow
-
-The member side expects a member session such as `member_id`, but the project does not appear to consistently populate it everywhere.
-
-That is a gap in the auth model that needs to be cleaned up for safe access control.
-
----
-
-## 9. Recommended auth/session model to tighten the app
-
-The current app works, but it is still partly dependent on assumptions. A cleaner and safer model is:
-
-1. Login should resolve a single user identity from a normalized auth table.
-2. The app should then load the actual profile record from the correct table:
-   - `admin-info` for admin users
-   - `members` for member users
-3. The session should store only the final, verified access values:
-   - `user_type` = `admin` or `member`
-   - `user_id`
-   - `role`
-   - `zone_id`
-   - `subzone_id`
-4. Every protected page should read from the same session contract, not direct database assumptions.
-5. Optional: include a `session_hash` or `auth_token` if the system grows beyond the current custom PHP flow.
-
-A safer pattern is:
-
-```php
-$_SESSION['user_type'] = 'admin';
-$_SESSION['user_id'] = 12;
-$_SESSION['role'] = 'manager';
-$_SESSION['zone_id'] = 2;
-$_SESSION['subzone_id'] = 4;
-```
-
-This is much clearer than letting each page guess where the user came from or whether the ID matches the right table.
-
-The app should never have a page doing: “if user_id exists, assume admin scope is valid.” That is not enough for a protected multi-role system.
-
----
-
-## 10. Project flow diagram
-
-The project flows like this:
-
-```mermaid
-flowchart TD
-    A[User opens app] --> B{Login type}
-    B -->|Admin| C[acc-info login]
-    B -->|Member| D[member login / member table]
-
-    C --> E[Load admin profile]
-    D --> F[Load member profile]
-
-    E --> G[Set role, zone_id, subzone_id in session]
-    F --> G
-
-    G --> H[Open dashboard]
-    H --> I{Page type}
-    I -->|Admin docs| J[admin/documents.php]
-    I -->|Member docs| K[admin/member/documents.php]
-    I -->|Upload doc| L[admin/upload-document.php]
-
-    J --> M[Filter documents by role + zone + subzone]
-    K --> N[Filter documents by member zone + subzone]
-    L --> O[Save document with zone_id and subzone_id]
-
-    O --> P[Document becomes visible only to authorized users]
-    M --> P
-    N --> P
-```
-
-This is the clean mental model: the user logs in, the session stores the effective scope, and every protected page reads that scope before showing data.
-
----
-
-## 11. Security checklist for the remaining gaps
-
-These are the main things still worth checking before the app is considered secure enough for real production use:
-
-- [ ] Every protected page must enforce authentication before loading data
-- [ ] Session values must be loaded from the correct profile table, not assumed from ID alone
-- [ ] `admin_role`, `zone_id`, and `subzone_id` must always be present for admin users
-- [ ] `member_id`, `zone_id`, and `subzone_id` must always be present for member users
-- [ ] Document visibility must be enforced in SQL, not only in the UI
-- [ ] Direct file downloads should be protected by a permission check before serving the file
-- [ ] Super admin logic should be explicit and not dependent on missing zone data
-- [ ] All document inserts should validate that the selected sub-zone belongs to the selected zone
-- [ ] Admin and member sessions should not leak cross-role access by mistake
-- [ ] A missing or stale session should redirect to login immediately
-
----
-
-## 12. Current gaps and what the app still needs
-
-There are a few places where the logic is not yet completely safe or consistent.
-
-### 1. Auth is not fully normalized
-
-`admin/inc/auth.php` only checks whether a user is logged in. It does not automatically populate the full access profile from the database.
-
-This means the app relies on session values being set reliably somewhere else.
-
-### 2. Admin login assumes same ID across tables
-
-`admin/proc-login.php` reads from `admin-info` using the same ID as `acc-info`.
-
-That is only safe if those IDs are guaranteed to match. If not, a user can get a session without a valid zone scope.
-
-### 3. Member login/session is not fully consistent
-
-The member pages expect `member_id` and member-specific data, but the actual login process is not always clearly mapping one login record to one member record.
-
-### 4. File download protection is still a frontier
-
-Right now the app protects access in the list pages, but a direct URL to a document file could still be accessed if someone knows the path.
-
-A stronger fix is to add a secure document view endpoint that checks identity + zone + sub-zone before serving the file.
-
----
-
-## 13. The correct mental model for this project
-
-If you want to understand the app properly, think of it this way:
-
-- the system is not about documents alone
-- it is about access boundaries
-- those boundaries are defined by location: zone and sub-zone
-- everything is filtered by that scope
-- the dashboard is just the place the user sees the allowed data
-
-The real connection is:
-
-- person -> zone/sub-zone -> visible documents
-
-That is the central idea.
-
-Admin dashboard and member dashboard are both just views into that same rule set.
-
-The difference is:
-
-- admin dashboard is controlled by admin role and admin scope
-- member dashboard is controlled by member zone/sub-zone
-- super admin is a global override with full visibility
-
----
-
-## 14. Recommended next steps
-
-To make the project clean and defensible, the next moves should be:
-
-1. centralize access logic in one helper
-   - one function for `canAccessDocument(userType, userZoneId, userSubzoneId, documentZoneId, documentSubzoneId)`
-
-2. make auth session data explicit and consistent
-   - store role, zone, subzone in session after login
-   - resolve them from the actual profile table, not by assumption
-
-3. secure direct file access
-   - do not allow direct path access without permission checks
-
-4. enforce org-wide vs scoped behavior in SQL and in server-side logic
-   - do not rely only on UI hiding
-
-5. decide the super admin rule clearly
-   - either `role = super_admin` always means full access
-   - or no zone assignment means full access only for certain accounts
-
----
-
-## 15. Summary
-
-The heart of Associa8 is not just file upload. It is permission-aware document access controlled by organization structure.
-
-The real pattern is:
-
-- admin/member identity
-- zone and sub-zone assignment
-- document scope
-- server-side filtering
-- safe visibility
-
-Once this is cleanly implemented, the dashboards become predictable and the company can trust that documents are only visible where they should be.
-
----
-
-This file is meant to explain the project from the perspective of how the code is designed right now, and where the next security and architecture improvements need to happen.
+## 10. What "done" looks like
+
+1. Every org-scoped table carries `org_id`, and every query that touches those tables filters by the logged-in user's `org_id`.
+2. `admin-info` and `acc-info` are linked by a real foreign key, not a coincidental shared ID.
+3. A real member login flow exists, authenticating against `members.email`/`members.password`, setting a member session, and the `admin/member/*.php` pages query real data scoped to that member's org + zone/subzone instead of showing hardcoded mockup content.
+4. `admin/inc/auth.php`-equivalent guard added to every `admin/member/*.php` page.
+5. Super admin (`role = 'super_admin'`) is the only role allowed to bypass org/zone scoping, and that check happens consistently everywhere scoping is enforced.
