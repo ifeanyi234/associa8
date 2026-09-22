@@ -1,7 +1,16 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
-$examsResult = mysqli_query($conn, "SELECT id, title FROM cbt_exams WHERE status <> 'closed' ORDER BY created_at DESC");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+$examSql = "SELECT id, title FROM cbt_exams WHERE status <> 'closed'";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $examSql .= " AND org_id = " . $orgId;
+}
+$examsResult = mysqli_query($conn, $examSql . " ORDER BY created_at DESC");
+$status = $_GET['status'] ?? '';
+$message = $_GET['msg'] ?? '';
+$selectedExamId = (int) ($_GET['exam_id'] ?? 0);
 ?>
 <!doctype html>
 <html lang="en">
@@ -43,6 +52,11 @@ $examsResult = mysqli_query($conn, "SELECT id, title FROM cbt_exams WHERE status
 </i> Back to questions
             </a>
           </div>
+          <?php if ($message !== ''): ?>
+            <div class="inline-form-message <?php echo $status === 'success' ? 'success' : 'error'; ?>" role="status">
+              <?php echo htmlspecialchars($message); ?>
+            </div>
+          <?php endif; ?>
           <section class="dashboard-card structure-form-card">
             <form action="proc-add-cbt-question.php" method="POST" class="structure-form">
               <div class="form-group">
@@ -51,7 +65,7 @@ $examsResult = mysqli_query($conn, "SELECT id, title FROM cbt_exams WHERE status
                   <option value="" selected disabled>Select exam</option>
                   <?php if ($examsResult): ?>
                     <?php while ($exam = mysqli_fetch_assoc($examsResult)): ?>
-                      <option value="<?php echo (int) $exam['id']; ?>">
+                      <option value="<?php echo (int) $exam['id']; ?>" <?php echo $selectedExamId === (int) $exam['id'] ? 'selected' : ''; ?>>
 <?php echo htmlspecialchars($exam['title']); ?>
 </option>
                     <?php endwhile; ?>
@@ -99,6 +113,24 @@ $examsResult = mysqli_query($conn, "SELECT id, title FROM cbt_exams WHERE status
 </script>
     <script src="../js/preloader.js">
 </script>
+    <style>
+      .inline-form-message {
+        margin-bottom: 1.25rem;
+        padding: .85rem 1rem;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+      }
+      .inline-form-message.success {
+        color: #166534;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+      }
+      .inline-form-message.error {
+        color: #991b1b;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+      }
+    </style>
   </body>
 </html>
 

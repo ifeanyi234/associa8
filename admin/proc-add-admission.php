@@ -1,6 +1,7 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once "../inc/admission-notifications.php";
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { header('Location: admission-management.php'); exit; }
 $number = trim($_POST['application_number'] ?? '');
 $name = trim($_POST['applicant_name'] ?? '');
@@ -26,6 +27,10 @@ if (!$statement) {
 }
 mysqli_stmt_bind_param($statement, 'issssssss', $orgId, $number, $name, $email, $phone, $guarantorName, $guarantorEmail, $guarantorPhone, $guarantorRelationship);
 $success = mysqli_stmt_execute($statement);
+$admissionId = mysqli_insert_id($conn);
+if ($success) {
+	notify_admission_status($conn, (int) $admissionId, 'pending', $name, $email);
+}
 $message = $success ? 'Admission application created successfully.' : 'Could not save this application. The application number may already exist.';
 header('Location: admission-management.php?status=' . ($success ? 'success' : 'error') . '&msg=' . urlencode($message));
 exit;

@@ -186,7 +186,7 @@ if ($admissionsResult) {
                         <span class="badge-pill dues-arrears">Pending</span>
                       </td>
                       <td>
-                        <?php if (in_array($admission['status'], ['pending', 'under_review'], true)): ?>
+                        <?php if (in_array($admission['status'], ['pending', 'under_review', 'cbt_completed'], true)): ?>
                           <div class="dropdown admission-actions">
                             <button class="btn-action-trigger" type="button" aria-label="Admission actions" aria-expanded="false">
                               <i class="fa-solid fa-ellipsis"></i>

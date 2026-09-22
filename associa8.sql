@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 21, 2026 at 01:49 PM
+-- Generation Time: Sep 22, 2026 at 01:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -40,7 +40,8 @@ CREATE TABLE `acc-info` (
 --
 
 INSERT INTO `acc-info` (`id`, `org_id`, `username`, `password`, `otp`) VALUES
-(1, 1, 'ifeanyi', '$2y$10$y13pYMPQX9gxSV6Bi/e4.uE6FfVLZUjuzKicqwdO1G.ROkRLU99nS', '888888');
+(1, 1, 'ifeanyi', '$2y$10$y13pYMPQX9gxSV6Bi/e4.uE6FfVLZUjuzKicqwdO1G.ROkRLU99nS', '888888'),
+(3, 26, 'oabikay', '$2y$10$gt.1fHRO2ZUteGMClzNLoOk3.opDpTl3y73bwrM5QpteAMfH9KkNu', '777777');
 
 -- --------------------------------------------------------
 
@@ -91,7 +92,8 @@ INSERT INTO `admin-info` (`id`, `org_id`, `acc_id`, `first-name`, `last-name`, `
 (16, 1, NULL, 'uiewiwe', 'Ezeh', 'kshdfdkf@gmail.com', 2147483647, '4304dkjdfdkf', 'admin', NULL, NULL),
 (20, 1, NULL, 'Ifeanyi', 'Ezeh', 'ggggg@yahoo.com', 2147483647, 'doctor', 'admin', NULL, NULL),
 (23, 1, NULL, 'ffffffff', 'Ezeh', 'qqqqqqqqqqq@dsds', 2147483647, 'doctor', 'manager', NULL, NULL),
-(24, 1, NULL, 'Ifeanyi', 'k3j4jk3434', 'luobikay@yahoo.com', 2147483647, 'ddddddddd', 'super_admin', NULL, NULL);
+(24, 1, NULL, 'Ifeanyi', 'k3j4jk3434', 'luobikay@yahoo.com', 2147483647, 'ddddddddd', 'super_admin', NULL, NULL),
+(26, 26, 3, 'Olumide', 'Abikoye', 'oabikay@yahoo.com', 2147483647, 'Developer', 'admin', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -110,7 +112,11 @@ CREATE TABLE `admissions` (
   `guarantor_email` varchar(100) DEFAULT NULL,
   `guarantor_phone` varchar(20) DEFAULT NULL,
   `guarantor_relationship` varchar(50) DEFAULT NULL,
-  `status` enum('pending','under_review','approved','rejected') DEFAULT 'pending',
+  `status` enum('pending','under_review','cbt_scheduled','cbt_completed','approved','rejected') DEFAULT 'pending',
+  `exam_code` varchar(10) DEFAULT NULL,
+  `exam_scheduled_at` datetime DEFAULT NULL,
+  `exam_expires_at` datetime DEFAULT NULL,
+  `cbt_exam_id` int(10) UNSIGNED DEFAULT NULL,
   `reviewed_by` int(10) UNSIGNED DEFAULT NULL,
   `applied_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -119,18 +125,19 @@ CREATE TABLE `admissions` (
 -- Dumping data for table `admissions`
 --
 
-INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `reviewed_by`, `applied_at`) VALUES
-(1, NULL, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, '2026-09-06 18:58:00'),
-(2, NULL, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-14 09:53:54'),
-(3, NULL, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, '2026-09-14 09:56:27'),
-(4, NULL, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-14 13:20:54'),
-(5, NULL, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:43:11'),
-(6, NULL, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-15 14:45:15'),
-(7, NULL, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-15 14:50:27'),
-(9, NULL, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-17 10:55:18'),
-(10, NULL, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, '2026-09-17 11:51:47'),
-(11, NULL, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, '2026-09-20 20:56:18'),
-(12, NULL, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '2026-09-20 20:58:45');
+INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `exam_code`, `exam_scheduled_at`, `exam_expires_at`, `cbt_exam_id`, `reviewed_by`, `applied_at`) VALUES
+(1, 1, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-06 18:58:00'),
+(2, 1, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:53:54'),
+(3, 1, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:56:27'),
+(4, 1, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-14 13:20:54'),
+(5, 1, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:43:11'),
+(6, 1, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:45:15'),
+(7, 1, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:50:27'),
+(9, 1, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-17 10:55:18'),
+(10, 1, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'rejected', NULL, NULL, NULL, NULL, NULL, '2026-09-17 11:51:47'),
+(11, 1, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-20 20:56:18'),
+(12, 1, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-20 20:58:45'),
+(13, 1, 'APP-2026-012', 'Jacob Ramsey', 'jacobramsey@yahoo.com', '04033333333', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-22 12:35:12');
 
 -- --------------------------------------------------------
 
@@ -172,7 +179,8 @@ CREATE TABLE `cbt_exams` (
 
 INSERT INTO `cbt_exams` (`id`, `org_id`, `title`, `duration_minutes`, `pass_mark`, `status`, `created_at`) VALUES
 (1, NULL, 'Roll up', 60, 50, 'active', '2026-09-09 23:52:04'),
-(2, NULL, 'rew', 60, 50, 'draft', '2026-09-15 17:19:50');
+(2, NULL, 'rew', 60, 50, 'draft', '2026-09-15 17:19:50'),
+(3, 1, 'Premier league History', 60, 70, 'active', '2026-09-22 12:10:51');
 
 -- --------------------------------------------------------
 
@@ -198,7 +206,8 @@ CREATE TABLE `cbt_questions` (
 --
 
 INSERT INTO `cbt_questions` (`id`, `exam_id`, `question_text`, `option_a`, `option_b`, `option_c`, `option_d`, `option_e`, `correct_option`, `created_at`) VALUES
-(1, 1, 'Roll it up', 'Yes', 'No', 'IDGAF', 'No I\'m Gay', '', 'D', '2026-09-09 23:59:36');
+(1, 1, 'Roll it up', 'Yes', 'No', 'IDGAF', 'No I\'m Gay', '', 'D', '2026-09-09 23:59:36'),
+(2, 3, 'Which of these clubs is the biggest football club in london?', 'West Ham', 'Ass-nal', 'Totteham Hotspur', 'Millwall', 'Chelsea', 'E', '2026-09-22 12:15:14');
 
 -- --------------------------------------------------------
 
@@ -210,7 +219,8 @@ CREATE TABLE `cbt_results` (
   `id` int(10) UNSIGNED NOT NULL,
   `org_id` int(15) DEFAULT NULL,
   `exam_id` int(10) UNSIGNED NOT NULL,
-  `member_id` int(10) UNSIGNED NOT NULL,
+  `member_id` int(10) UNSIGNED DEFAULT NULL,
+  `admission_id` int(10) UNSIGNED DEFAULT NULL,
   `score` int(11) NOT NULL DEFAULT 0,
   `status` enum('passed','failed') NOT NULL,
   `taken_at` datetime DEFAULT current_timestamp()
@@ -242,10 +252,10 @@ CREATE TABLE `documents` (
 --
 
 INSERT INTO `documents` (`id`, `org_id`, `title`, `owner_name`, `file_path`, `file_type`, `file_size`, `category`, `uploaded_by`, `zone_id`, `subzone_id`, `created_at`) VALUES
-(1, 1, 'yktv', 'ifeanyi', 'uploads/documents/doc_6aa55a93649e06.36685700.png', 'PNG', '296 KB', 'General', NULL, NULL, NULL, '2026-09-12 14:58:43'),
-(2, 1, 'skeletu', 'Lu', 'uploads/documents/doc_6aa6810c7be5a1.25143418.pdf', 'PDF', '226 KB', 'General', NULL, NULL, NULL, '2026-09-13 11:55:08'),
 (5, 1, 'sumgba', 'john doe', 'uploads/documents/doc_6aa68c0e84b403.61473684.png', 'PNG', '299 KB', 'General', NULL, NULL, NULL, '2026-09-13 12:42:06'),
-(8, 1, 'new', NULL, 'uploads/documents/doc_6ab04746a0f107.07973435.pdf', 'PDF', '231 KB', 'General', NULL, 2, NULL, '2026-09-20 21:51:18');
+(8, 1, 'new', NULL, 'uploads/documents/doc_6ab04746a0f107.07973435.pdf', 'PDF', '231 KB', 'General', NULL, 2, NULL, '2026-09-20 21:51:18'),
+(11, 1, 'Donald Trump Nudes', 'Kamala Harris', 'uploads/documents/doc_6ab1716a0c3bc8.51394726.png', 'PNG', '67 KB', 'General', 1, 1, NULL, '2026-09-21 19:03:22'),
+(12, 1, 'Queen Elizabeth\'s Drug case', 'Prince Charles', 'uploads/documents/doc_6ab248399a18c7.82019220.png', 'PNG', '67 KB', 'General', 1, 2, NULL, '2026-09-22 10:19:54');
 
 -- --------------------------------------------------------
 
@@ -354,9 +364,9 @@ CREATE TABLE `members` (
 --
 
 INSERT INTO `members` (`id`, `org_id`, `member_code`, `first_name`, `last_name`, `email`, `password`, `phone`, `code`, `zone_id`, `subzone_id`, `date_of_birth`, `occupation`, `state_of_origin`, `home_address`, `profile_photo_path`, `tier`, `membership_valid_until`, `emergency_contact_name`, `emergency_contact_phone`, `two_factor_enabled`, `language`, `timezone`, `date_format`, `currency_display`, `status`, `joined_date`, `created_at`, `updated_at`, `title_id`) VALUES
-(1, 1, 'ASC-001', 'Ezeh', 'Ifeanyi', 'ei711283@gmail.com', NULL, '07043277337', 'ASC-001', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'suspended', '2026-09-06', '2026-09-06 18:08:33', '2026-09-21 12:38:54', 1),
-(2, 1, 'ASC-002', 'Daniel', 'Solomon', 'danielsolomon@gmail.com', NULL, '08099999999', 'ASC-002', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-06', '2026-09-06 18:40:56', '2026-09-21 12:38:54', 2),
-(3, 1, 'ASC-003', 'Fola', 'Shomolu', 'folasho@gmail.com', NULL, '07043277337', 'ASC-003', 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-20', '2026-09-20 20:37:29', '2026-09-21 12:38:54', 2);
+(1, 1, 'ASC-001', 'Ezeh', 'Ifeanyi', 'ei711283@gmail.com', '$2y$10$BciNZRMKvZtzbXH3s.USyeErZEImPtXxCJo07DYE0D21pr12jgafC', '07043277337', 'ASC-001', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-06', '2026-09-06 18:08:33', '2026-09-21 15:48:59', 1),
+(2, 1, 'ASC-002', 'Daniel', 'Solomon', 'danielsolomon@gmail.com', '$2y$10$5dYFFQfgM4qpiX4jC/KkMukaJsRjdzxRaHBWUOQm9ElN50ITzx4/q', '08099999999', 'ASC-002', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-06', '2026-09-06 18:40:56', '2026-09-21 18:43:18', 2),
+(3, 1, 'ASC-003', 'Fola', 'Shomolu', 'folasho@gmail.com', '$2y$10$6bfD.ZHuW4kKCBJ0y7FUcOQB5tkeEZKkhx9wjZQbr2V9s.Xc8W8xG', '07043277337', 'ASC-003', 2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 'English (Nigeria)', 'Africa/Lagos', 'DD/MM/YYYY', 'Nigeria/Naira', 'active', '2026-09-20', '2026-09-20 20:37:29', '2026-09-21 14:19:16', 2);
 
 -- --------------------------------------------------------
 
@@ -427,13 +437,22 @@ CREATE TABLE `message_threads` (
 
 CREATE TABLE `notifications` (
   `id` int(10) UNSIGNED NOT NULL,
-  `member_id` int(10) UNSIGNED NOT NULL,
+  `member_id` int(10) UNSIGNED DEFAULT NULL,
+  `admission_id` int(10) UNSIGNED DEFAULT NULL,
   `type` varchar(50) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `message` varchar(255) NOT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `member_id`, `admission_id`, `type`, `title`, `message`, `is_read`, `created_at`) VALUES
+(1, NULL, 13, 'pending', 'Application status: Pending', 'Your Associa8 application is now pending.', 0, '2026-09-22 12:35:12'),
+(2, NULL, 13, 'under_review', 'Application status: Under Review', 'Your Associa8 application is now under review.', 0, '2026-09-22 12:38:02');
 
 -- --------------------------------------------------------
 
@@ -458,7 +477,7 @@ CREATE TABLE `org-info` (
 --
 
 INSERT INTO `org-info` (`id`, `name`, `type`, `email`, `phone`, `country`, `state`, `pricing`, `total-members`) VALUES
-(1, 'mdnsddsddf', 'church', 'sdfdf@eereref', 2147483647, 'erk/ejrjker', 'state1', 'professional', 2),
+(1, 'Chelsea', 'church', 'sdfdf@eereref', 2147483647, 'erk/ejrjker', 'state1', 'professional', 2),
 (2, 'mdnsddsddf', 'church', 'sdfd@gmail.com', 2147483647, 'erk/ejrjker', 'state1', 'professional', 2),
 (3, 'ksdhskdshkd', 'association', 'errrrrrrr@kjfdf', 2147483647, 'nigeria', 'state2', 'professional', 3),
 (4, 'eiueureur', 'association', 'sjkeukjwe@gma.com', 2147483647, 'nigeria', 'state2', 'professional', 6),
@@ -468,7 +487,8 @@ INSERT INTO `org-info` (`id`, `name`, `type`, `email`, `phone`, `country`, `stat
 (16, 'new', 'ngo', 'rat@gmail.com', 2147483647, 'Kenya', 'state2', 'professional', 2),
 (20, 'ksdhskdshkd', 'ngo', 'ei711283@gmail.com', 2147483647, 'oilkerljerjler', 'state1', 'professional', 2),
 (23, 'mdnsddsddf', 'ngo', 'eifeanyi320@gmail.com', 2147483647, 'Botswana', 'state2', 'elite', 5),
-(24, 'mdnsddsddf', 'church', 'luobikay@yahoo.com', 2147483647, 'Mozambique', 'state2', 'professional', 9);
+(24, 'mdnsddsddf', 'church', 'luobikay@yahoo.com', 2147483647, 'Mozambique', 'state2', 'professional', 9),
+(26, 'Aledoy Solution Limited', 'corporate', 'solutions@aledoy.com', 2147483647, 'Nigeria', 'state3', 'elite', 30);
 
 -- --------------------------------------------------------
 
@@ -491,7 +511,7 @@ CREATE TABLE `portal_settings` (
 
 INSERT INTO `portal_settings` (`id`, `org_id`, `portal_key`, `start_at`, `end_at`, `updated_at`) VALUES
 (1, NULL, 'admission', '2026-09-30 19:49:00', '2026-10-28 19:49:00', '2026-09-15 12:37:21'),
-(2, NULL, 'cbt', NULL, NULL, '2026-09-06 19:48:50');
+(2, NULL, 'cbt', '2026-09-22 12:01:00', '2026-09-30 12:02:00', '2026-09-22 12:02:10');
 
 -- --------------------------------------------------------
 
@@ -545,7 +565,10 @@ INSERT INTO `suspensions` (`id`, `org_id`, `member_id`, `reason`, `action_type`,
 (3, NULL, 1, 'ghfr', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 11:09:59'),
 (4, NULL, 1, 'sdksdsd', 'suspension', 'active', '2026-09-17', '2026-09-17 11:47:16'),
 (5, NULL, 2, 'sdsssss', 'suspension', 'active', '2026-09-17', '2026-09-17 11:48:36'),
-(6, NULL, 2, 'this', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 16:45:59');
+(6, NULL, 2, 'this', 'reinstatement', 'completed', '2026-09-17', '2026-09-17 16:45:59'),
+(7, NULL, 2, 'Nah ashawo', 'suspension', 'active', '2026-09-21', '2026-09-21 15:48:31'),
+(8, NULL, 1, 'Good guy', 'reinstatement', 'completed', '2026-09-21', '2026-09-21 15:48:59'),
+(9, NULL, 2, 'blah', 'reinstatement', 'completed', '2026-09-21', '2026-09-21 18:43:18');
 
 -- --------------------------------------------------------
 
@@ -588,6 +611,13 @@ CREATE TABLE `users` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `role`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'Delu', 'Sumbo', 'delusumbo@gmail.com', '$2y$10$wkeIJPUV3pBVJUtEgXsRHuI.i8XdVQhFr0bbI27oM.wyyA1h6avb6', 'staff', 'active', '2026-09-21 17:58:03', '2026-09-21 17:58:03');
+
 -- --------------------------------------------------------
 
 --
@@ -599,6 +629,15 @@ CREATE TABLE `user_module_permissions` (
   `user_id` int(10) UNSIGNED NOT NULL,
   `module_key` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_module_permissions`
+--
+
+INSERT INTO `user_module_permissions` (`id`, `user_id`, `module_key`) VALUES
+(2, 1, 'admission'),
+(3, 1, 'attendance'),
+(1, 1, 'cbt_management');
 
 -- --------------------------------------------------------
 
@@ -657,7 +696,8 @@ ALTER TABLE `admissions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `application_number` (`application_number`),
   ADD KEY `reviewed_by` (`reviewed_by`),
-  ADD KEY `admissions_org_fk` (`org_id`);
+  ADD KEY `admissions_org_fk` (`org_id`),
+  ADD KEY `admissions_cbt_exam_idx` (`cbt_exam_id`);
 
 --
 -- Indexes for table `attendance_logs`
@@ -688,7 +728,8 @@ ALTER TABLE `cbt_results`
   ADD PRIMARY KEY (`id`),
   ADD KEY `exam_id` (`exam_id`),
   ADD KEY `member_id` (`member_id`),
-  ADD KEY `cbt_results_org_fk` (`org_id`);
+  ADD KEY `cbt_results_org_fk` (`org_id`),
+  ADD KEY `cbt_results_admission_idx` (`admission_id`);
 
 --
 -- Indexes for table `documents`
@@ -774,7 +815,8 @@ ALTER TABLE `message_threads`
 --
 ALTER TABLE `notifications`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `notifications_admission_idx` (`admission_id`);
 
 --
 -- Indexes for table `org-info`
@@ -844,7 +886,7 @@ ALTER TABLE `zones`
 -- AUTO_INCREMENT for table `acc-info`
 --
 ALTER TABLE `acc-info`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `activity_log`
@@ -856,13 +898,13 @@ ALTER TABLE `activity_log`
 -- AUTO_INCREMENT for table `admin-info`
 --
 ALTER TABLE `admin-info`
-  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(30) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `admissions`
 --
 ALTER TABLE `admissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `attendance_logs`
@@ -874,13 +916,13 @@ ALTER TABLE `attendance_logs`
 -- AUTO_INCREMENT for table `cbt_exams`
 --
 ALTER TABLE `cbt_exams`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `cbt_questions`
 --
 ALTER TABLE `cbt_questions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `cbt_results`
@@ -892,7 +934,7 @@ ALTER TABLE `cbt_results`
 -- AUTO_INCREMENT for table `documents`
 --
 ALTER TABLE `documents`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `events`
@@ -946,19 +988,19 @@ ALTER TABLE `message_threads`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `org-info`
 --
 ALTER TABLE `org-info`
-  MODIFY `id` int(15) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int(15) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `portal_settings`
 --
 ALTER TABLE `portal_settings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `subzones`
@@ -970,7 +1012,7 @@ ALTER TABLE `subzones`
 -- AUTO_INCREMENT for table `suspensions`
 --
 ALTER TABLE `suspensions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `titles`
@@ -982,13 +1024,13 @@ ALTER TABLE `titles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `user_module_permissions`
 --
 ALTER TABLE `user_module_permissions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `zones`
@@ -1023,6 +1065,7 @@ ALTER TABLE `admin-info`
 -- Constraints for table `admissions`
 --
 ALTER TABLE `admissions`
+  ADD CONSTRAINT `admissions_cbt_exam_fk` FOREIGN KEY (`cbt_exam_id`) REFERENCES `cbt_exams` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `admissions_ibfk_1` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `admissions_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
@@ -1049,6 +1092,7 @@ ALTER TABLE `cbt_questions`
 -- Constraints for table `cbt_results`
 --
 ALTER TABLE `cbt_results`
+  ADD CONSTRAINT `cbt_results_admission_fk` FOREIGN KEY (`admission_id`) REFERENCES `admissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `cbt_results_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `cbt_exams` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `cbt_results_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `cbt_results_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
@@ -1117,6 +1161,7 @@ ALTER TABLE `message_threads`
 -- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_admission_fk` FOREIGN KEY (`admission_id`) REFERENCES `admissions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
 
 --
