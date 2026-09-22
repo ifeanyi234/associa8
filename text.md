@@ -37,14 +37,14 @@
 21. [ ] Create `admin/member/inc/auth.php` (mirrors `admin/inc/auth.php` but checks `$_SESSION['member_id']`), and add `require_once` to the top of every file in `admin/member/`.
 22. [ ] Decide: when admin creates a member (`proc-add-member.php`), does it auto-generate a temp password / send an invite email? Add that.
 
-## Phase 6 — Wire the member dashboard pages to real data
+## Phase 6 — Wire the member dashboard pages to real data ✅
 
 23. [ ] `admin/member/dashboard.php` — replace hardcoded "Joseph Raymond" etc. with a `SELECT` on `members WHERE id = $_SESSION['member_id']`.
 24. [ ] `admin/member/profile.php` — same, pull real member row + editable form wired to a new `proc-update-member-profile.php`.
 25. [ ] `admin/member/documents.php` — write the actual `$documents` query: `WHERE org_id = member_org_id AND ((zone_id IS NULL AND subzone_id IS NULL) OR zone_id = member_zone_id OR subzone_id = member_subzone_id)`.
 26. [ ] `admin/member/attendance.php`, `payment.php`, `events.php`, `messages.php`, `settings.php` — same treatment: replace hardcoded blocks with real queries against `attendance_logs`, `finance_transactions`, `events`/`event_rsvps`, `message_threads`/`message_replies`, and member profile fields respectively (these tables already exist in `associa8.sql` and are currently unused — that's your data source).
 
-## Phase 7 — Cleanup / secondary fixes
+## Phase 7 — Cleanup / secondary fixes ✅
 
 27. [ ] Delete or implement `admin/user-controls.php`'s missing `process-user.php` backend.
 28. [ ] Populate `admin/portal-settings.php` (it's currently empty) with a real form posting to the existing `proc-portal-settings.php`.

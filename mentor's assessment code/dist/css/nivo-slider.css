@@ -1,0 +1,356 @@
+/*
+ * jQuery Nivo Slider v3.2
+ * http://nivo.dev7studios.com
+ *
+ * Copyright 2012, Dev7studios
+ * Free to use and abuse under the MIT license.
+ * http://www.opensource.org/licenses/mit-license.php
+ */
+ 
+/* The Nivo Slider styles */
+.nivoSlider {
+	width:100%;
+	height:auto;
+	font-family:eFont;
+}
+.nivoSlider img {
+	top:0px;
+	left:0px;
+	max-width: none;
+	width:100%;
+}
+.nivo-main-image {
+	display: block !important;
+	position: relative !important; 
+	width: 100% !important;
+}
+
+/* If an image is wrapped in a link */
+.nivoSlider a.nivo-imageLink {
+	position:absolute;
+	top:0px;
+	left:0px;
+	width:100%;
+	height:100%;
+	border:0;
+	padding:0;
+	margin:0;
+	z-index:6;
+	display:none;
+	background:white; 
+	filter:alpha(opacity=0); 
+	opacity:0;
+}
+/* The slices and boxes in the Slider */
+.nivo-slice {
+	display:block;
+	position:absolute;
+	z-index:5;
+	height:100%;
+	top:0;
+}
+.nivo-box {
+	display:block;
+	position:absolute;
+	z-index:5;
+	overflow:hidden;
+}
+.nivo-box img { display:block; }
+
+/* Caption styles */
+.nivo-caption {
+	position:absolute;
+	left:0px;
+	bottom:0px;
+	color:#000;
+	width:100%;
+	z-index:8;
+	padding: 5px 10px;
+	overflow: hidden;
+	display: none;
+	-webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+	-moz-box-sizing: border-box;    /* Firefox, other Gecko */
+	box-sizing: border-box;         /* Opera/IE 8+ */
+}
+.nivo-caption p {
+	padding:2px;
+	margin:0;
+}
+.nivo-caption a {
+	display:inline !important;
+}
+.nivo-html-caption {
+    display:none;
+}
+
+/* Direction nav styles (e.g. Next & Prev) */
+.nivo-directionNav a {
+	position:absolute;
+	top:45%;
+	z-index:9;
+	cursor:pointer;
+}
+.nivo-prevNav {
+	left:0px;
+}
+.nivo-nextNav {
+	right:0px;
+}
+/* Control nav styles (e.g. 1,2,3...) */
+.nivo-controlNav {
+	text-align:center;
+	padding: 15px 0;
+}
+.nivo-controlNav a {
+	cursor:pointer;
+}
+.nivo-controlNav a.active {
+	font-weight:bold;
+}
+
+
+
+
+.futurico-theme.slider-wrapper {
+    width:100%;
+    margin:0;
+	padding:0px;
+    background: #141517;
+	position: relative;
+	overflow:hidden;
+}
+
+ 
+.futurico-theme .nivoSlider {
+    position: relative;
+	width:100%;
+	margin: 0;
+}
+ 
+.futurico-theme .nivoSlider img {
+    display: none;
+    position: absolute;
+	width:100%;
+	margin:0px;
+}
+
+.futurico-theme .nivo-controlNav {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+	z-index:100;
+}
+
+.futurico-theme .nivo-controlNav a {
+    display: none;
+    float: left;
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+    text-indent: -9999px;
+ 
+    background: #141517;
+ 
+    -webkit-border-radius: 16px;
+    -moz-border-radius: 16px;
+    border-radius: 16px;
+ 
+    -webkit-box-shadow: inset 0px 1px 1px rgba(0,0,0, .5), 0px 1px 1px rgba(255,255,255, .05);
+    -moz-box-shadow: inset 0px 1px 1px rgba(0,0,0, .5), 0px 1px 1px rgba(255,255,255, .05);
+    box-shadow: inset 0px 1px 1px rgba(0,0,0, .5), 0px 1px 1px rgba(255,255,255, .05);
+}
+
+.futurico-theme .nivo-controlNav a.active,
+.futurico-theme .nivo-caption span {
+	background: #000;
+    background: -moz-linear-gradient(top,  #a5cd4e 0%, #6b8f1a 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#a5cd4e), color-stop(100%,#6b8f1a));
+    background: -webkit-linear-gradient(top,  #a5cd4e 0%,#6b8f1a 100%);
+    background: -o-linear-gradient(top,  #a5cd4e 0%,#6b8f1a 100%);
+    background: -ms-linear-gradient(top,  #a5cd4e 0%,#6b8f1a 100%);
+    background: linear-gradient(top,  #a5cd4e 0%,#6b8f1a 100%);
+ 
+    -webkit-box-shadow: inset 0px 1px 1px rgba(255,255,255, .4), 0px 1px 1px rgba(0,0,0, .3);
+    -moz-box-shadow: inset 0px 1px 1px rgba(255,255,255, .4), 0px 1px 1px rgba(0,0,0, .3);
+    box-shadow: inset 0px 1px 1px rgba(255,255,255, .4), 0px 1px 1px rgba(0,0,0, .3);
+	color:#000;
+	
+}
+
+.futurico-theme .nivo-directionNav a {
+	position: absolute;
+    display: block;
+    top:70%;
+	z-index:100;
+    font-size: 40px;
+    color: #292727;
+    text-shadow: 0px 1px 1px rgba(255,255,255, .05);
+}
+ 
+.futurico-theme a.nivo-prevNav { left: 50px; }
+ 
+.futurico-theme a.nivo-nextNav { left: 90px; }
+
+
+.futurico-theme .nivo-caption {
+	font-family:bFont;
+	display:block;
+	margin-left:50%;
+	width:40%;
+	text-align:left;
+	float:left;
+    padding: 5px 0;
+	padding-bottom:30px;
+	top:35%;
+    font-size: 1.8em;
+    color:#000;
+    -webkit-border-radius: 0 0 3px 3px;
+    -moz-border-radius: 0 0 3px 3px;
+    border-radius: 0 0 3px 3px;
+}
+
+.futurico-theme .nivo-caption p{
+	font-family:bFont;
+	font-weight:bold;
+    font-size: 1.2em;
+    color:#0f5382;
+}
+
+
+
+
+
+
+ 
+.futurico-theme .nivo-caption span,  .futurico-theme .nivo-caption span:hover{
+    display: inherit;
+    height: auto;
+	background:#145897;
+	margin:1.5% 0;
+	text-align: justify;
+	margin-left:0;
+	padding:5%;
+	opacity:.8;
+    color:#000;
+ 	font-size: .35em;
+	border:none;
+	box-shadow:none;
+	text-decoration:none;
+}
+.futurico-theme .nivo-caption span-text,  .futurico-theme .nivo-caption span-text:hover{
+    display: inherit;
+    height: auto;
+	margin:1.5% 0;
+	text-align: justify;
+	font-family:aFont;
+	margin-left:0;
+    color:#000;
+ 	font-size: .8em;
+	border:none;
+	box-shadow:none;
+	text-decoration:none;
+	width:85%;
+	
+}
+
+
+.futurico-theme .nivo-caption span-about,  .futurico-theme .nivo-caption span-about:hover{
+    display: inherit;
+    height: auto;
+	background:#f07788;
+	margin:1.5% 0;
+	text-align: justify;
+	margin-left:0;
+	padding:3% 5%;
+    color:#333;
+ 	font-size: .2em;
+	font-family:cFont;
+	border:none;
+	box-shadow:none;
+	text-decoration:none;
+	width:60%;
+}
+
+
+
+
+.futurico-theme .nivo-caption strong{
+	font-size: 1.5em;
+	font-weight:bold;
+}
+
+.futurico-theme .nivo-caption span > button:hover{
+	border-radius:12px;
+	background:#cb2027;
+	color:#fff;
+	padding:3px 30px;
+	float:right;
+	margin-top:-10px;
+}
+
+ 
+.futurico-theme .nivo-caption em {
+    color: #fff;
+	background:#2a789c;
+	padding:30px;
+	font-style:normal;
+	font-size:.5em;
+	text-align:center;
+}
+
+
+
+.futurico-theme .nivo-caption em:hover {
+    color: #d2a538;
+	background:#23271f;
+	padding:30px;
+	font-style:normal;
+	font-size:.5em;
+	text-align:center;
+	cursor:pointer;
+}
+
+.futurico-theme .nivo-caption.right {
+    color: #fff;
+	background:#2a789c;
+	float:right;
+	margin-left:80%;
+	padding:30px;
+	font-style:normal;
+	font-size:.5em;
+	text-align:center;
+}
+
+@media (max-width: 850px) {
+	.futurico-theme.slider-wrapper {
+    position: relative;
+    top:40%;
+	height: auto;
+}
+
+.futurico-theme .nivo-directionNav a {
+	position: absolute;
+    display: block;
+    top:85%;
+	z-index:100;
+    font-size: 40px;
+    color: #fefcfa;
+    text-shadow: 0px 1px 1px rgba(255,255,255, .05);
+}
+ 
+.futurico-theme a.nivo-prevNav { left: 60px; }
+ 
+.futurico-theme a.nivo-nextNav { right: 20px; }
+
+
+
+.futurico-theme .nivo-caption {
+	position:absolute;
+	top:5%;
+	left:7%; 
+    font-size: 1em;
+}
+.futurico-theme .nivo-controlNav {
+	top:60%;
+}
+}

@@ -1,0 +1,19 @@
+# Sensitive config — never commit real credentials
+inc/mail-config.php
+inc/db.php
+
+# Composer dependencies (installed via composer install, not committed)
+/vendor/
+
+# Uploaded user content — grows constantly, shouldn't be in git
+admin/uploads/
+uploads/
+
+# OS/editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local env files if you ever add one
+.env
+.env.local

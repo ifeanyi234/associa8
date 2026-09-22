@@ -125,10 +125,10 @@ if ($documentsResult) {
                       <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($document['title']); ?></td>
                       <td><?php echo htmlspecialchars($visibilityText); ?></td>
                       <td><?php echo htmlspecialchars($document['file_type'] ?: 'Document'); ?></td>
-                      <td><a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
+                      <td><a href="../<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
                       <td><?php echo htmlspecialchars($document['category'] ?: 'General'); ?></td>
                       <td>
-                        <a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="btn-action-edit" target="_blank">View</a>
+                        <a href="../<?php echo htmlspecialchars($document['file_path']); ?>" class="btn-action-edit" target="_blank">View</a>
                       </td>
                     </tr>
                   <?php endforeach; ?>

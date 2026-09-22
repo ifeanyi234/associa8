@@ -9,10 +9,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $visibility = $_POST['visibility'] ?? 'org';
 $organizationWide = !empty($_POST['organization_wide']);
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : 0;
 $zoneId = isset($_POST['zone_id']) ? (int) $_POST['zone_id'] : 0;
 $subzoneId = isset($_POST['subzone_id']) ? (int) $_POST['subzone_id'] : 0;
 $title = trim($_POST['document_title'] ?? '');
+$ownerName = trim($_POST['document_owner'] ?? '');
 $fileType = trim($_POST['file_type'] ?? '');
+
+if ($orgId < 1) {
+    header('Location: upload-document.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
+    exit;
+}
 
 if ($organizationWide || $visibility === 'org') {
     $zoneId = 0;
@@ -30,14 +37,22 @@ if ($visibility === 'subzone') {
         exit;
     }
 
-    $subzoneCheck = mysqli_query($conn, "SELECT id FROM subzones WHERE id = $subzoneId AND zone_id = $zoneId LIMIT 1");
+    $subzoneCheck = mysqli_query($conn, "SELECT sz.id FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE sz.id = $subzoneId AND sz.zone_id = $zoneId AND z.org_id = $orgId LIMIT 1");
     if (!$subzoneCheck || mysqli_num_rows($subzoneCheck) === 0) {
         header('Location: upload-document.php?status=error&msg=' . urlencode('The selected sub-zone does not belong to the chosen zone.'));
         exit;
     }
 }
 
-if ($title === '' || !in_array($fileType, ['JPEG', 'PNG', 'PDF'], true)) {
+if ($zoneId > 0) {
+    $zoneCheck = mysqli_query($conn, "SELECT id FROM zones WHERE id = $zoneId AND org_id = $orgId LIMIT 1");
+    if (!$zoneCheck || mysqli_num_rows($zoneCheck) === 0) {
+        header('Location: upload-document.php?status=error&msg=' . urlencode('The selected zone does not belong to your organization.'));
+        exit;
+    }
+}
+
+if ($title === '' || $ownerName === '' || !in_array($fileType, ['JPEG', 'PNG', 'PDF'], true)) {
     header('Location: upload-document.php?status=error&msg=' . urlencode('Complete all fields and choose a valid file type.'));
     exit;
 }
@@ -90,27 +105,27 @@ if (!$subzoneColumnCheck || mysqli_num_rows($subzoneColumnCheck) === 0) {
 
 if ($zoneId > 0 && $subzoneId > 0) {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category, uploaded_by, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssssiii', $title, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId, $subzoneId);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssssiii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId, $subzoneId);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssssii', $title, $relativeFilePath, $fileType, $fileSize, $category, $zoneId, $subzoneId);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssssii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $zoneId, $subzoneId);
     }
 } elseif ($zoneId > 0) {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category, uploaded_by, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssssi', $title, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssssii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category, zone_id) VALUES (?, ?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssssi', $title, $relativeFilePath, $fileType, $fileSize, $category, $zoneId);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssssi', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $zoneId);
     }
 } else {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssssi', $title, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssssi', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (title, file_path, file_type, file_size, category) VALUES (?, ?, ?, ?, ?)');
-        mysqli_stmt_bind_param($statement, 'sssss', $title, $relativeFilePath, $fileType, $fileSize, $category);
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        mysqli_stmt_bind_param($statement, 'issssss', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category);
     }
 }
 
