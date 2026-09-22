@@ -90,7 +90,7 @@ if (!$inserted || !$updated || mysqli_stmt_affected_rows($update) !== 1) {
 }
 mysqli_commit($conn);
 
-notify_admission_status($conn, $admissionId, 'cbt_completed', $assessment['applicant_name'], $assessment['email']);
+notify_admission_status($conn, $admissionId, 'cbt_completed', $assessment['applicant_name'], $assessment['email'], $score, $resultStatus);
 $_SESSION['applicant_result_id'] = $resultId;
 unset($_SESSION['applicant_admission_id'], $_SESSION['applicant_org_id'], $_SESSION['applicant_exam_id'], $_SESSION['applicant_exam_title'], $_SESSION['applicant_exam_expires_at'], $_SESSION['applicant_assessment_expires_at']);
 
