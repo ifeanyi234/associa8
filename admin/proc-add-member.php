@@ -9,7 +9,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $firstName = trim($_POST['first_name'] ?? '');
 $lastName = trim($_POST['last_name'] ?? '');
-$memberCode = trim($_POST['member_code'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $phone = trim($_POST['phone'] ?? '');
 $joinedDate = $_POST['joined_date'] ?? '';
@@ -17,7 +16,7 @@ $titleId = (int) ($_POST['title_id'] ?? 0);
 $zoneId = (int) ($_POST['zone_id'] ?? 0);
 $subzoneId = (int) ($_POST['subzone_id'] ?? 0);
 
-if ($firstName === '' || $lastName === '' || $memberCode === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $titleId < 1 || $zoneId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate)) {
+if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $titleId < 1 || $zoneId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate)) {
     header('Location: add-member.php?status=error&msg=' . urlencode('Complete all member fields with valid values.'));
     exit;
 }
@@ -35,6 +34,21 @@ $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SE
 if ($adminRole !== 'super_admin' && $orgId === null) {
     header('Location: add-member.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
     exit;
+}
+
+$codeResult = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(member_code, 5) AS UNSIGNED)) AS last_number FROM members WHERE member_code REGEXP '^ASC-[0-9]+$'");
+$lastNumber = $codeResult ? (int) (mysqli_fetch_assoc($codeResult)['last_number'] ?? 0) : 0;
+$memberCode = 'ASC-' . str_pad((string) ($lastNumber + 1), 3, '0', STR_PAD_LEFT);
+while (true) {
+    $codeCheck = mysqli_prepare($conn, 'SELECT id FROM members WHERE member_code = ? LIMIT 1');
+    mysqli_stmt_bind_param($codeCheck, 's', $memberCode);
+    mysqli_stmt_execute($codeCheck);
+    $codeCheckResult = mysqli_stmt_get_result($codeCheck);
+    if (!$codeCheckResult || mysqli_num_rows($codeCheckResult) === 0) {
+        break;
+    }
+    $lastNumber++;
+    $memberCode = 'ASC-' . str_pad((string) ($lastNumber + 1), 3, '0', STR_PAD_LEFT);
 }
 
 $subzoneColumnExists = mysqli_query($conn, "SHOW COLUMNS FROM members LIKE 'subzone_id'");

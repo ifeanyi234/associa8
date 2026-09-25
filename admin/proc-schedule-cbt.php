@@ -80,13 +80,10 @@ if ($admission['status'] !== 'under_review') {
     exit;
 }
 
-$expiresAt = clone $scheduledAt;
-$expiresAt->modify('+' . (int) $exam['duration_minutes'] . ' minutes');
 $scheduledSqlValue = $scheduledAt->format('Y-m-d H:i:s');
-$expiresSqlValue = $expiresAt->format('Y-m-d H:i:s');
 
 mysqli_begin_transaction($conn);
-$update = mysqli_prepare($conn, 'UPDATE admissions SET cbt_exam_id = ?, exam_code = NULL, exam_scheduled_at = ?, exam_expires_at = ?, status = \'cbt_scheduled\' WHERE id = ? AND status = \'under_review\'');
+$update = mysqli_prepare($conn, 'UPDATE admissions SET cbt_exam_id = ?, exam_code = NULL, exam_expires_at = NULL, status = \'under_review\' WHERE id = ? AND status = \'under_review\'');
 $notification = mysqli_prepare($conn, 'INSERT INTO notifications (admission_id, type, title, message) VALUES (?, \'cbt_scheduled\', ?, ?)');
 $title = 'CBT exam scheduled';
 $basePath = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
@@ -99,7 +96,7 @@ if (!$update || !$notification) {
     exit;
 }
 
-mysqli_stmt_bind_param($update, 'issi', $examId, $scheduledSqlValue, $expiresSqlValue, $admissionId);
+mysqli_stmt_bind_param($update, 'ii', $examId, $admissionId);
 mysqli_stmt_bind_param($notification, 'iss', $admissionId, $title, $message);
 $updated = mysqli_stmt_execute($update);
 $notified = mysqli_stmt_execute($notification);

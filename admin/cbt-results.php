@@ -5,7 +5,7 @@ require_once "../inc/db.php";
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-$resultsSql = "SELECT r.id, r.score, r.status, r.taken_at, COALESCE(m.first_name, SUBSTRING_INDEX(a.applicant_name, ' ', 1)) AS first_name, COALESCE(m.last_name, TRIM(SUBSTRING(a.applicant_name, LENGTH(SUBSTRING_INDEX(a.applicant_name, ' ', 1)) + 1))) AS last_name, COALESCE(m.email, a.email) AS email, m.phone, e.title AS exam_title FROM cbt_results r LEFT JOIN members m ON m.id = r.member_id LEFT JOIN admissions a ON a.id = r.admission_id INNER JOIN cbt_exams e ON e.id = r.exam_id";
+$resultsSql = "SELECT r.id, r.score, r.status, r.taken_at, COALESCE(m.first_name, SUBSTRING_INDEX(a.applicant_name, ' ', 1)) AS first_name, COALESCE(m.last_name, TRIM(SUBSTRING(a.applicant_name, LENGTH(SUBSTRING_INDEX(a.applicant_name, ' ', 1)) + 1))) AS last_name, COALESCE(m.email, a.email) AS email, COALESCE(m.phone, a.phone) AS phone, e.title AS exam_title FROM cbt_results r LEFT JOIN members m ON m.id = r.member_id LEFT JOIN admissions a ON a.id = r.admission_id INNER JOIN cbt_exams e ON e.id = r.exam_id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $resultsSql .= " WHERE r.org_id = " . (int) $orgId . " AND e.org_id = " . (int) $orgId . " AND (m.org_id = " . (int) $orgId . " OR a.org_id = " . (int) $orgId . ")";
 }

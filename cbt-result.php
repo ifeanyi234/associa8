@@ -8,7 +8,7 @@ if ($resultId < 1) {
     exit;
 }
 
-$statement = mysqli_prepare($conn, 'SELECT r.score, r.status, r.taken_at, a.applicant_name, e.title AS exam_title, e.pass_mark FROM cbt_results r INNER JOIN admissions a ON a.id = r.admission_id INNER JOIN cbt_exams e ON e.id = r.exam_id WHERE r.id = ? AND r.admission_id IS NOT NULL LIMIT 1');
+$statement = mysqli_prepare($conn, 'SELECT r.score, r.status, r.taken_at, a.applicant_name, a.phone, e.title AS exam_title, e.pass_mark FROM cbt_results r INNER JOIN admissions a ON a.id = r.admission_id INNER JOIN cbt_exams e ON e.id = r.exam_id WHERE r.id = ? AND r.admission_id IS NOT NULL LIMIT 1');
 if (!$statement) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The result service is unavailable.'));
     exit;

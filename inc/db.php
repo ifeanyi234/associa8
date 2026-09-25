@@ -9,4 +9,9 @@
   if(!$conn){
     die("Database connection failed:" . mysqli_connect_error());
   }
+
+  // live server
+  // $db_name = "aledoypr_associa8"
+  // $db_user = "aledoypr_associa8"
+
 ?>

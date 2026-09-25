@@ -974,11 +974,13 @@ textarea::placeholder {
 .member-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .member-name {
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .member-email {
@@ -1763,6 +1765,23 @@ textarea::placeholder {
   overflow-x: visible;
 }
 
+.member-directory-table-card {
+  overflow: visible;
+}
+
+.member-directory-table-card .admin-table th:first-child,
+.member-directory-table-card .admin-table td:first-child {
+  width: 26%;
+  min-width: 220px;
+}
+
+.member-directory-table-card .admin-table th:last-child,
+.member-directory-table-card .admin-table td:last-child {
+  width: 3.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
 .custom-admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -1933,6 +1952,9 @@ textarea::placeholder {
   }
   .table-responsive-card {
     overflow-x: auto;
+  }
+  .member-directory-table-card {
+    overflow: visible;
   }
 }
 /* --- Admission & Portal Custom Components --- */

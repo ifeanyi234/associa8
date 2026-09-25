@@ -101,8 +101,8 @@ if ($subzonesResult) {
 </div>
               <div class="form-row-2col">
 <div class="form-group">
-<label for="memberCode" class="form-label">Member code</label>
-<input class="form-control" id="memberCode" name="member_code" placeholder="e.g. ASC-001" required />
+<label class="form-label">Member code</label>
+<div class="form-hint">Generated automatically in the format ASC-001.</div>
 </div>
 <div class="form-group">
 <label for="email" class="form-label">Email</label>

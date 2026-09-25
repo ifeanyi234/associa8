@@ -152,7 +152,7 @@ if ($membersResult) {
           </div>
 
           <!-- Directory Data Table Card -->
-          <div class="table-responsive-card">
+          <div class="table-responsive-card member-directory-table-card">
             <table class="admin-table" data-record-count="<?php echo $memberCount; ?>" data-server-pagination="true">
               <thead>
                 <tr>
@@ -191,7 +191,18 @@ if ($membersResult) {
                       <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucfirst($member['status']); ?></span></td>
                       <td><span class="badge-pill dues-current">Not available</span></td>
                       <td><?php echo htmlspecialchars($member['joined_date'] ?: 'Not provided'); ?></td>
-                      <td><button class="btn-action-trigger" type="button" aria-label="Options"><i class="fa-solid fa-ellipsis"></i></button></td>
+                      <td>
+                        <div class="dropdown admission-actions">
+                          <button class="btn-action-trigger" type="button" aria-label="Member actions" aria-expanded="false"><i class="fa-solid fa-ellipsis"></i></button>
+                          <div class="dropdown-menu">
+                            <a class="dropdown-item" href="edit-member.php?id=<?php echo (int) $member['id']; ?>"><i class="fa-solid fa-pen"></i> Edit</a>
+                            <form action="proc-delete-member.php" method="POST" onsubmit="return confirm('Delete this member? This cannot be undone.');">
+                              <input type="hidden" name="member_id" value="<?php echo (int) $member['id']; ?>" />
+                              <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </form>
+                          </div>
+                        </div>
+                      </td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
@@ -535,6 +546,18 @@ if ($membersResult) {
           link.addEventListener("click", closeSidebar);
         }
       });
+
+      document.querySelectorAll(".admission-actions").forEach((dropdown) => {
+        const trigger = dropdown.querySelector(".btn-action-trigger");
+        trigger.addEventListener("click", (event) => {
+          event.stopPropagation();
+          document.querySelectorAll(".admission-actions.show").forEach((openDropdown) => {
+            if (openDropdown !== dropdown) openDropdown.classList.remove("show");
+          });
+          dropdown.classList.toggle("show");
+        });
+      });
+      document.addEventListener("click", () => document.querySelectorAll(".admission-actions.show").forEach((dropdown) => dropdown.classList.remove("show")));
 
       // 3. Filter Pill Toggle State
       const filterPills = document.querySelectorAll(".filter-pill");

@@ -14,7 +14,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.applicant_name, a.email, e.title AS exam_title, e.duration_minutes FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE LOWER(a.email) = ? AND a.org_id IS NOT NULL AND a.status = 'cbt_scheduled' LIMIT 1");
+$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.applicant_name, a.email, a.cbt_exam_id, a.cbt_response_deadline, e.title AS exam_title, e.duration_minutes FROM admissions a LEFT JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id AND e.status = 'active' WHERE LOWER(a.email) = ? AND a.org_id IS NOT NULL AND a.status = 'under_review' AND (a.cbt_response_deadline IS NULL OR a.cbt_response_deadline > UTC_TIMESTAMP()) LIMIT 1");
 if (!$statement) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The CBT email service is unavailable.'));
     exit;
@@ -26,6 +26,36 @@ $admission = $result ? mysqli_fetch_assoc($result) : null;
 
 if (!$admission) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('No active CBT assessment was found for this email.'));
+    exit;
+}
+
+if ($admission['cbt_response_deadline'] === null) {
+    $deadlineStatement = mysqli_prepare($conn, 'UPDATE admissions SET cbt_response_deadline = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 36 HOUR) WHERE id = ? AND status = \'under_review\' AND cbt_response_deadline IS NULL');
+    if ($deadlineStatement) {
+        mysqli_stmt_bind_param($deadlineStatement, 'i', $admission['id']);
+        mysqli_stmt_execute($deadlineStatement);
+    }
+}
+
+if ($admission['cbt_exam_id'] === null) {
+    $examStatement = mysqli_prepare($conn, "SELECT id, title, duration_minutes FROM cbt_exams WHERE org_id = ? AND status = 'active' ORDER BY id LIMIT 1");
+    if (!$examStatement) {
+        header('Location: cbt-code.php?status=error&msg=' . urlencode('The CBT exam service is unavailable.'));
+        exit;
+    }
+    mysqli_stmt_bind_param($examStatement, 'i', $admission['org_id']);
+    mysqli_stmt_execute($examStatement);
+    $examResult = mysqli_stmt_get_result($examStatement);
+    $exam = $examResult ? mysqli_fetch_assoc($examResult) : null;
+    if (!$exam) {
+        header('Location: cbt-code.php?status=error&msg=' . urlencode('No active CBT exam is available for your organization.'));
+        exit;
+    }
+    $admission['cbt_exam_id'] = $exam['id'];
+    $admission['exam_title'] = $exam['title'];
+    $admission['duration_minutes'] = $exam['duration_minutes'];
+} elseif ($admission['exam_title'] === null) {
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('The assigned CBT exam is no longer active.'));
     exit;
 }
 
@@ -43,12 +73,12 @@ if ($attemptResult && mysqli_num_rows($attemptResult) > 0) {
 }
 
 $examCode = strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
-$update = mysqli_prepare($conn, 'UPDATE admissions SET exam_code = ?, exam_expires_at = NULL WHERE id = ? AND status = \'cbt_scheduled\'');
+$update = mysqli_prepare($conn, 'UPDATE admissions SET cbt_exam_id = ?, exam_code = ?, exam_expires_at = DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? MINUTE) WHERE id = ? AND status = \'under_review\'');
 if (!$update) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The CBT code service is unavailable.'));
     exit;
 }
-mysqli_stmt_bind_param($update, 'si', $examCode, $admission['id']);
+mysqli_stmt_bind_param($update, 'isii', $admission['cbt_exam_id'], $examCode, $admission['duration_minutes'], $admission['id']);
 if (!mysqli_stmt_execute($update) || mysqli_stmt_affected_rows($update) !== 1) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The access code could not be generated. Please try again.'));
     exit;

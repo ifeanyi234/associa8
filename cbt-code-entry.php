@@ -78,6 +78,7 @@ $message = $_GET['msg'] ?? '';
     <script>
       window.addEventListener("DOMContentLoaded", () => {
         const boxes = [...document.querySelectorAll(".code-box")];
+        boxes[0]?.focus();
         boxes.forEach((box, index) => {
           box.addEventListener("input", () => {
             box.value = box.value.replace(/[^a-z0-9]/gi, "").toUpperCase();

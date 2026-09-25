@@ -4,13 +4,12 @@ require_once __DIR__ . '/inc/db.php';
 
 $admissionId = (int) ($_SESSION['applicant_admission_id'] ?? 0);
 $examId = (int) ($_SESSION['applicant_exam_id'] ?? 0);
-$assessmentExpiresAt = (int) ($_SESSION['applicant_assessment_expires_at'] ?? 0);
 if ($admissionId < 1 || $examId < 1) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('Enter your CBT access code before starting the assessment.'));
     exit;
 }
 
-$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.status, a.exam_expires_at, e.id AS exam_id, e.title, e.duration_minutes FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND e.id = ? AND a.org_id IS NOT NULL AND a.status = 'cbt_scheduled' LIMIT 1");
+$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.status, a.exam_expires_at, e.id AS exam_id, e.title, e.duration_minutes FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND e.id = ? AND a.org_id IS NOT NULL AND a.status = 'under_review' LIMIT 1");
 if (!$statement) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment service is unavailable.'));
     exit;
@@ -19,7 +18,8 @@ mysqli_stmt_bind_param($statement, 'ii', $admissionId, $examId);
 mysqli_stmt_execute($statement);
 $result = mysqli_stmt_get_result($statement);
 $assessment = $result ? mysqli_fetch_assoc($result) : null;
-if (!$assessment || empty($assessment['exam_expires_at']) || strtotime($assessment['exam_expires_at']) <= time() || $assessmentExpiresAt <= time()) {
+$assessmentExpiresAt = $assessment ? strtotime($assessment['exam_expires_at'] . ' UTC') : 0;
+if (!$assessment || empty($assessment['exam_expires_at']) || $assessmentExpiresAt <= time()) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('This assessment is no longer available.'));
     exit;
 }
@@ -177,9 +177,10 @@ if (!$questions) {
       });
       function updateCountdown() {
         const remaining = Math.max(0, Math.ceil((expiryTimestamp - Date.now()) / 1000));
-        const minutes = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const hours = String(Math.floor(remaining / 3600)).padStart(2, "0");
+        const minutes = String(Math.floor((remaining % 3600) / 60)).padStart(2, "0");
         const seconds = String(remaining % 60).padStart(2, "0");
-        countdown.textContent = minutes + ":" + seconds;
+        countdown.textContent = (remaining >= 3600 ? hours + ":" : "") + minutes + ":" + seconds;
         if (remaining === 0 && !submitted) {
           submitted = true;
           localStorage.removeItem(questionStorageKey);

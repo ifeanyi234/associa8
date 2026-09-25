@@ -105,26 +105,56 @@ if (!$subzoneColumnCheck || mysqli_num_rows($subzoneColumnCheck) === 0) {
 
 if ($zoneId > 0 && $subzoneId > 0) {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssssiii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId, $subzoneId);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id, subzone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssssii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $zoneId, $subzoneId);
     }
 } elseif ($zoneId > 0) {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssssii', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy, $zoneId);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, zone_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssssi', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $zoneId);
     }
 } else {
     if ($uploadedBy !== null) {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssssi', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category, $uploadedBy);
     } else {
-        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+        $statement = mysqli_prepare($conn, 'INSERT INTO documents (org_id, title, owner_name, file_path, file_type, file_size, category) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        if (!$statement) {
+            error_log('Document insert prepare failed: ' . mysqli_error($conn));
+            header('Location: upload-document.php?status=error&msg=' . urlencode('Could not prepare the document record.'));
+            exit;
+        }
         mysqli_stmt_bind_param($statement, 'issssss', $orgId, $title, $ownerName, $relativeFilePath, $fileType, $fileSize, $category);
     }
 }

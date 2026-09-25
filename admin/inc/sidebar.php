@@ -111,14 +111,6 @@
                 </a>
               </li>
               <li>
-                <a href="schedule-cbt.php" class="sidebar-link">
-                  <div class="sidebar-link-content">
-                    <i class="fa-solid fa-calendar-check"></i>
-                    <span>Schedule CBT</span>
-                  </div>
-                </a>
-              </li>
-              <li>
                 <a href="cbt-questions.php" class="sidebar-link">
                   <div class="sidebar-link-content">
                     <i class="fa-solid fa-circle-question"></i>

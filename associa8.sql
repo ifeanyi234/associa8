@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 22, 2026 at 01:40 PM
+-- Generation Time: Sep 23, 2026 at 12:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -112,9 +112,9 @@ CREATE TABLE `admissions` (
   `guarantor_email` varchar(100) DEFAULT NULL,
   `guarantor_phone` varchar(20) DEFAULT NULL,
   `guarantor_relationship` varchar(50) DEFAULT NULL,
-  `status` enum('pending','under_review','cbt_scheduled','cbt_completed','approved','rejected') DEFAULT 'pending',
+  `status` enum('pending','under_review','cbt_completed','approved','rejected') DEFAULT 'pending',
   `exam_code` varchar(10) DEFAULT NULL,
-  `exam_scheduled_at` datetime DEFAULT NULL,
+  `cbt_response_deadline` datetime DEFAULT NULL,
   `exam_expires_at` datetime DEFAULT NULL,
   `cbt_exam_id` int(10) UNSIGNED DEFAULT NULL,
   `reviewed_by` int(10) UNSIGNED DEFAULT NULL,
@@ -122,10 +122,8 @@ CREATE TABLE `admissions` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `admissions`
---
 
-INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `exam_code`, `exam_scheduled_at`, `exam_expires_at`, `cbt_exam_id`, `reviewed_by`, `applied_at`) VALUES
+INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `exam_code`, `cbt_response_deadline`, `exam_expires_at`, `cbt_exam_id`, `reviewed_by`, `applied_at`) VALUES
 (1, 1, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, NULL, NULL, NULL, NULL, '2026-09-06 18:58:00'),
 (2, 1, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:53:54'),
 (3, 1, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:56:27'),
@@ -207,7 +205,16 @@ CREATE TABLE `cbt_questions` (
 
 INSERT INTO `cbt_questions` (`id`, `exam_id`, `question_text`, `option_a`, `option_b`, `option_c`, `option_d`, `option_e`, `correct_option`, `created_at`) VALUES
 (1, 1, 'Roll it up', 'Yes', 'No', 'IDGAF', 'No I\'m Gay', '', 'D', '2026-09-09 23:59:36'),
-(2, 3, 'Which of these clubs is the biggest football club in london?', 'West Ham', 'Ass-nal', 'Totteham Hotspur', 'Millwall', 'Chelsea', 'E', '2026-09-22 12:15:14');
+(2, 3, 'Which of these clubs is the biggest football club in london?', 'West Ham', 'Ass-nal', 'Totteham Hotspur', 'Millwall', 'Chelsea', 'E', '2026-09-22 12:15:14'),
+(3, 3, 'In October 2009, Sunderland scored a famous, bizarre goal against Liverpool thanks to a deflection off an unexpected object sitting on the pitch. What was the object, and who was responsible for it?', 'A giant inflatable flamingo brought out by the club mascot', 'A red beach ball thrown onto the pitch by a 16-year-old Liverpool fan', 'A stray seagull that had legally signed a contract as a central defender', 'A half-eaten steak pie dropped by the assistant referee', 'Arsène Wenger’s famous oversized sleeping-bag jacket', 'B', '2026-09-22 15:24:50'),
+(4, 3, 'In April 2005, Newcastle United players Kieron Dyer and Lee Bowyer etched their names into Premier League history during a 3-0 defeat against Aston Villa. What unbelievable event occurred?', 'They decided to play rock-paper-scissors in the center circle to decide who takes a throw-in', 'They engaged in a full-blown fistfight with each other on the pitch while playing for the same team', 'They attempted a synchronized double-tackle on the referee', 'They sat on the grass and went on strike until the manager substituted them', 'They accidentally passed the ball to Aston Villa\'s manager', 'B', '2026-09-22 15:32:48'),
+(5, 3, 'When Sheffield Wednesday forward Paolo Di Canio was shown a red card in 1998 and pushed referee Paul Alcock, what made the moment go down in internet comedy history?', 'The referee executed a martial arts counter-attack on the spot', 'The referee stumbled backward and collapsed in dramatic, super slow-motion like a falling tree', 'The referee accidentally high-fived Di Canio instead of pointing off the pitch', 'The ball boy ran onto the field to referee the remaining 20 minutes', 'Di Canio immediately pulled out a pizza slice to apologize', 'B', '2026-09-22 15:35:45'),
+(6, 3, 'In 2005, Arsenal legends Robert Pires and Thierry Henry attempted to recreate Johan Cruyff\'s iconic \"passed penalty\" routine against Manchester City. What actually happened?', 'Henry kicked the ball out of the stadium entirely', 'Pires miskicked, grazed the top of the ball, panicked, touched it again, and gave away a free kick', 'The goalkeeper intercepted the pass and scored on the other end', 'The referee confiscated the ball for \"excessive swagger\"', 'Both players ran toward the ball at the same time and bumped heads', 'B', '2026-09-22 15:37:57'),
+(7, 3, 'After scoring the opening goal in Manchester City’s legendary 6-1 thrashing of Manchester United at Old Trafford in 2011, what iconic slogan did Mario Balotelli reveal on his undershirt?', '\"Is This Paid In Cash?\"', '\"WHY ALWAYS ME?\"', '\"Don\'t Set Off Fireworks In My Bathroom\"', '\"Sorry Sir Alex\"', '\"I Thought This Was A Friendly\"', 'B', '2026-09-22 15:47:52'),
+(8, 3, 'In 2003, Birmingham City midfielder David Dunn attempted a super-flashy \"rabona\" cross against rivals Aston Villa. How did that turn out for him?', 'He tripped over his own legs, kicked his own ankle, and collapsed flat on his face', 'He scored an overhead bicycle kick from outside the penalty box', 'The ball landed in the manager\'s cup of hot tea', 'He accidentally chipped his own goalkeeper from 40 yards away', 'The referee booked him for \"showing off\"', 'A', '2026-09-22 15:54:59'),
+(9, 3, 'In 2009, Hull City’s Jimmy Bullard scored a penalty against Manchester City and led one of the most famous goal celebrations in football history. What did he do?', 'He took off his jersey to reveal a shirt that said \"Hire Me Pep\"', 'He ran to the opposition fans and challenged them to a arm-wrestling contest', 'He sat all his teammates down on the pitch and gave them a mock, angry team talk like manager Phil Brown', 'He pulled out a folding chair and took a quick 30-second nap on the pitch', 'He did the moonwalk all the way back to the center circle', 'C', '2026-09-22 15:57:42'),
+(10, 3, 'During the infamous \"Battle of Old Trafford\" between Arsenal and Manchester United in 2003, what did Arsenal defender Martin Keown do immediately after Ruud van Nistelrooy missed a last-minute penalty?', 'He offered Van Nistelrooy a gentle hug to cheer him up', 'He executed a backflip directly over the referee', 'He sprinted to the corner flag and snapped it in half', 'He jumped straight over Van Nistelrooy, screamed in his face, and smashed him on the back of the head', 'He ran off the pitch and sat in the dugout', 'D', '2026-09-22 15:59:57'),
+(11, 3, 'In February 2016, Manchester United manager Louis van Gaal got so fed up with Arsenal players diving that he decided to demonstrate it to the fourth official. What did he do on the touchline?', 'He threw his clipboards and glasses directly at the referee', 'He started rolling on the grass for two full minutes', 'He called his assistant manager over and tackled him to the ground', 'He challenged the linesman to a footrace along the touchline', 'He dramatically threw himself backward onto his back, lying flat on the floor live on TV', 'E', '2026-09-22 16:01:44');
 
 -- --------------------------------------------------------
 
@@ -336,7 +343,7 @@ CREATE TABLE `members` (
   `password` varchar(255) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `code` varchar(15) NOT NULL,
-  `zone_id` int(10) UNSIGNED NOT NULL,
+  `zone_id` int(10) UNSIGNED DEFAULT NULL,
   `subzone_id` int(10) UNSIGNED DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `occupation` varchar(100) DEFAULT NULL,
@@ -922,7 +929,7 @@ ALTER TABLE `cbt_exams`
 -- AUTO_INCREMENT for table `cbt_questions`
 --
 ALTER TABLE `cbt_questions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `cbt_results`

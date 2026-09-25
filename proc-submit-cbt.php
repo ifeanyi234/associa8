@@ -10,14 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $admissionId = (int) ($_SESSION['applicant_admission_id'] ?? 0);
 $examId = (int) ($_SESSION['applicant_exam_id'] ?? 0);
-$assessmentExpiresAt = (int) ($_SESSION['applicant_assessment_expires_at'] ?? 0);
 $answers = is_array($_POST['answers'] ?? null) ? $_POST['answers'] : [];
-if ($admissionId < 1 || $examId < 1 || $assessmentExpiresAt < 1) {
+if ($admissionId < 1 || $examId < 1) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('Your CBT session has expired. Enter your access code again.'));
     exit;
 }
 
-$assessmentStatement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.applicant_name, a.email, a.status, a.exam_expires_at, e.id AS exam_id, e.pass_mark FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND e.id = ? AND a.org_id IS NOT NULL AND a.status = 'cbt_scheduled' LIMIT 1");
+$assessmentStatement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.applicant_name, a.email, a.status, a.exam_expires_at, e.id AS exam_id, e.pass_mark FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND e.id = ? AND a.org_id IS NOT NULL AND a.status = 'under_review' LIMIT 1");
 if (!$assessmentStatement) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment service is unavailable.'));
     exit;
@@ -30,7 +29,7 @@ if (!$assessment) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('This assessment is no longer available.'));
     exit;
 }
-if ($assessmentExpiresAt <= time()) {
+if (empty($assessment['exam_expires_at']) || strtotime($assessment['exam_expires_at'] . ' UTC') <= time()) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('Your assessment time has expired.'));
     exit;
 }
@@ -71,7 +70,7 @@ $resultStatus = $score >= (int) $assessment['pass_mark'] ? 'passed' : 'failed';
 
 mysqli_begin_transaction($conn);
 $insert = mysqli_prepare($conn, 'INSERT INTO cbt_results (org_id, exam_id, admission_id, member_id, score, status) VALUES (?, ?, ?, NULL, ?, ?)');
-$update = mysqli_prepare($conn, "UPDATE admissions SET status = 'cbt_completed' WHERE id = ? AND status = 'cbt_scheduled'");
+$update = mysqli_prepare($conn, "UPDATE admissions SET status = 'cbt_completed' WHERE id = ? AND status = 'under_review'");
 if (!$insert || !$update) {
     mysqli_rollback($conn);
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment result could not be saved.'));

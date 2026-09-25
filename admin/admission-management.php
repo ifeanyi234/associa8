@@ -19,9 +19,9 @@ if ($admissionStatsResult) {
   } 
 }
 
-$admissionsSql = "SELECT id, application_number, applicant_name, email, guarantor_name, guarantor_relationship, status, applied_at FROM admissions";
+$admissionsSql = "SELECT a.id, a.application_number, a.applicant_name, a.email, a.guarantor_name, a.guarantor_relationship, a.status, a.applied_at, r.score, r.status AS result_status FROM admissions a LEFT JOIN cbt_results r ON r.admission_id = a.id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
-  $admissionsSql .= " WHERE org_id = " . (int) $orgId;
+  $admissionsSql .= " WHERE a.org_id = " . (int) $orgId;
 }
 $admissionsSql .= " ORDER BY applied_at DESC";
 $admissionsResult = mysqli_query($conn, $admissionsSql);
@@ -183,7 +183,11 @@ if ($admissionsResult) {
                       </td>
                       <td><?php echo htmlspecialchars($admission['applied_at']); ?></td>
                       <td>
-                        <span class="badge-pill dues-arrears">Pending</span>
+                        <?php if ($admission['score'] !== null): ?>
+                          <span class="badge-pill <?php echo $admission['result_status'] === 'passed' ? 'status-active' : 'status-inactive'; ?>"><?php echo (int) $admission['score']; ?>% <?php echo ucfirst($admission['result_status']); ?></span>
+                        <?php else: ?>
+                          <span class="badge-pill dues-arrears">Pending</span>
+                        <?php endif; ?>
                       </td>
                       <td>
                         <?php if (in_array($admission['status'], ['pending', 'under_review', 'cbt_completed'], true)): ?>
@@ -193,18 +197,18 @@ if ($admissionsResult) {
                             </button>
                             <div class="dropdown-menu">
                               <?php if ($admission['status'] === 'pending'): ?>
-                                <form action="proc-update-admission-status.php" method="POST">
+                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Move this applicant to CBT review?');">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="under_review" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-forward"></i> Move to CBT</button>
                                 </form>
                               <?php else: ?>
-                                <form action="proc-update-admission-status.php" method="POST">
+                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Approve this applicant and create a member account?');">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="approved" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
                                 </form>
-                                <form action="proc-update-admission-status.php" method="POST">
+                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Reject this applicant?');">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="rejected" />
                                   <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
