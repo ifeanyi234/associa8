@@ -72,7 +72,7 @@ $pastEvents = array_filter($events, fn($event) => ($event['event_date'] ?? '') <
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars(substr($_SESSION['member_id'] ?? 'M', 0, 2)); ?></div>
+              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>

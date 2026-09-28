@@ -72,7 +72,7 @@ if ($documentsResult) {
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge">JR</div>
+              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>

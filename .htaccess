@@ -1,0 +1,13 @@
+RewriteEngine On
+RewriteBase /associa8/
+
+# Only redirect GET/HEAD requests, never POST (POST redirects lose form data)
+RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
+RewriteCond %{THE_REQUEST} \s/associa8/([^\s?]+)\.php[\s?] [NC]
+RewriteRule ^ /associa8/%1 [R=301,L]
+
+# Serve the .php file behind the clean URL (works for GET and POST)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.+)$ $1.php [L]

@@ -9,18 +9,6 @@ $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['las
 $memberCode = $member['member_code'] ?? 'N/A';
 $memberStatus = ucfirst($member['status'] ?? 'Active');
 
-$initials = '';
-foreach (explode(' ', trim($memberName)) as $part) {
-  $part = trim($part);
-  if ($part !== '') {
-    $initials .= strtoupper(substr($part, 0, 1));
-  }
-  if (strlen($initials) >= 2) {
-    break;
-  }
-}
-$memberInitials = $initials ?: 'M';
-
 $profileFields = ['first_name', 'last_name', 'email', 'phone', 'home_address', 'date_of_birth', 'occupation', 'state_of_origin', 'emergency_contact_name', 'profile_photo_path'];
 $filledFields = 0;
 foreach ($profileFields as $field) {

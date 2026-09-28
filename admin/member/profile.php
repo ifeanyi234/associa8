@@ -9,18 +9,11 @@ $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['las
 $memberCode = $member['member_code'] ?? 'N/A';
 $fullAddress = trim(($member['home_address'] ?? '') ?: 'Address not available');
 $memberStatus = ucfirst($member['status'] ?? 'active');
-
-$initials = '';
-foreach (explode(' ', trim($memberName)) as $part) {
-  $part = trim($part);
-  if ($part !== '') {
-    $initials .= strtoupper(substr($part, 0, 1));
-  }
-  if (strlen($initials) >= 2) {
-    break;
-  }
+$csrfToken = $_SESSION['member_profile_csrf'] ?? '';
+if ($csrfToken === '') {
+  $csrfToken = bin2hex(random_bytes(32));
+  $_SESSION['member_profile_csrf'] = $csrfToken;
 }
-$memberInitials = $initials ?: 'M';
 ?>
 <!doctype html>
 <html lang="en">
@@ -86,6 +79,11 @@ $memberInitials = $initials ?: 'M';
         </header>
 
         <div class="dashboard-content">
+          <?php if (($_GET['status'] ?? '') === 'success'): ?>
+            <p class="page-subtitle" role="status">Your profile details have been updated.</p>
+          <?php elseif (($_GET['status'] ?? '') === 'error'): ?>
+            <p class="page-subtitle" role="alert">Your profile could not be updated. Check your details and try again.</p>
+          <?php endif; ?>
           <section class="profile-grid">
             <!-- Photo Card -->
             <div class="profile-photo-card">
@@ -106,52 +104,28 @@ $memberInitials = $initials ?: 'M';
                 <span class="info-card-title">Personal Information</span>
               </div>
 
-              <div class="info-row-grid">
-                <div class="info-row">
-                  <i class="fa-solid fa-user"></i>
-                  <div>
-                    <div class="info-row-label">Full Name</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars($memberName); ?></div>
-                  </div>
+              <form action="proc-update-profile.php" method="POST" class="structure-form">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>" />
+                <div class="form-row-2col">
+                  <div class="form-group"><label class="form-label" for="firstName">First name</label><input class="form-control" id="firstName" name="first_name" maxlength="50" value="<?php echo htmlspecialchars($member['first_name'] ?? ''); ?>" required /></div>
+                  <div class="form-group"><label class="form-label" for="lastName">Last name</label><input class="form-control" id="lastName" name="last_name" maxlength="50" value="<?php echo htmlspecialchars($member['last_name'] ?? ''); ?>" required /></div>
                 </div>
-                <div class="info-row">
-                  <i class="fa-regular fa-envelope"></i>
-                  <div>
-                    <div class="info-row-label">Email</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars($member['email'] ?? 'Not provided'); ?></div>
-                  </div>
+                <div class="form-row-2col">
+                  <div class="form-group"><label class="form-label" for="email">Email</label><input class="form-control" type="email" id="email" name="email" maxlength="100" value="<?php echo htmlspecialchars($member['email'] ?? ''); ?>" required /></div>
+                  <div class="form-group"><label class="form-label" for="phone">Phone number</label><input class="form-control" type="tel" id="phone" name="phone" maxlength="20" value="<?php echo htmlspecialchars($member['phone'] ?? ''); ?>" /></div>
                 </div>
-                <div class="info-row">
-                  <i class="fa-solid fa-phone"></i>
-                  <div>
-                    <div class="info-row-label">Phone Number</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars($member['phone'] ?? 'Not provided'); ?></div>
-                  </div>
+                <div class="form-group"><label class="form-label" for="homeAddress">Home address</label><textarea class="form-control" id="homeAddress" name="home_address" rows="3"><?php echo htmlspecialchars($member['home_address'] ?? ''); ?></textarea></div>
+                <div class="form-row-2col">
+                  <div class="form-group"><label class="form-label" for="dateOfBirth">Date of birth</label><input class="form-control" type="date" id="dateOfBirth" name="date_of_birth" value="<?php echo htmlspecialchars($member['date_of_birth'] ?? ''); ?>" /></div>
+                  <div class="form-group"><label class="form-label" for="occupation">Occupation</label><input class="form-control" id="occupation" name="occupation" maxlength="100" value="<?php echo htmlspecialchars($member['occupation'] ?? ''); ?>" /></div>
                 </div>
-                <div class="info-row">
-                  <i class="fa-solid fa-location-dot"></i>
-                  <div>
-                    <div class="info-row-label">Address</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars($fullAddress); ?></div>
-                  </div>
+                <div class="form-row-2col">
+                  <div class="form-group"><label class="form-label" for="stateOfOrigin">State of origin</label><input class="form-control" id="stateOfOrigin" name="state_of_origin" maxlength="100" value="<?php echo htmlspecialchars($member['state_of_origin'] ?? ''); ?>" /></div>
+                  <div class="form-group"><label class="form-label" for="emergencyContactName">Emergency contact name</label><input class="form-control" id="emergencyContactName" name="emergency_contact_name" maxlength="150" value="<?php echo htmlspecialchars($member['emergency_contact_name'] ?? ''); ?>" /></div>
                 </div>
-                <div class="info-row">
-                  <i class="fa-regular fa-calendar"></i>
-                  <div>
-                    <div class="info-row-label">Date Of Birth</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars(($member['date_of_birth'] ?? 'Not provided') !== 'Not provided' ? date('F j, Y', strtotime($member['date_of_birth'])) : 'Not provided'); ?></div>
-                  </div>
-                </div>
-                <div class="info-row">
-                  <i class="fa-solid fa-user-tie"></i>
-                  <div>
-                    <div class="info-row-label">Occupation</div>
-                    <div class="info-row-value"><?php echo htmlspecialchars($member['occupation'] ?? 'Not provided'); ?></div>
-                  </div>
-                </div>
-              </div>
-
-              <button class="btn-summary-action" style="width: fit-content; padding-left: 1.5rem; padding-right: 1.5rem;">Edit Information</button>
+                <div class="form-group"><label class="form-label" for="emergencyContactPhone">Emergency contact phone</label><input class="form-control" type="tel" id="emergencyContactPhone" name="emergency_contact_phone" maxlength="30" value="<?php echo htmlspecialchars($member['emergency_contact_phone'] ?? ''); ?>" /></div>
+                <div class="structure-form-actions"><button class="btn-navy-filled" type="submit"><i class="fa-solid fa-check"></i> Save profile</button></div>
+              </form>
             </div>
 
             <!-- Membership Card -->

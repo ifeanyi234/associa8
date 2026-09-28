@@ -64,7 +64,7 @@ $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['las
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars(substr($memberName ?: 'M', 0, 2)); ?></div>
+              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars(ucfirst($member['status'] ?? 'active')); ?></span>
             </div>
           </div>

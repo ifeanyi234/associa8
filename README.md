@@ -154,14 +154,60 @@ admin/member/*.php  ← reachable by anyone, unauthenticated, shows hardcoded mo
 - `users` / `user_module_permissions` tables exist and are referenced by FKs (`documents.uploaded_by`, `admissions.reviewed_by`) but are never inserted into — `admin/user-controls.php`'s form posts to `process-user.php`, which doesn't exist in the provided codebase.
 - `admin/logout.php` redirects to the public homepage rather than the admin login page.
 - `admin/portal-settings.php` is an empty file (0 bytes) despite `proc-portal-settings.php` existing and expecting to render a form into it.
-- `inc/db.php` has hardcoded DB credentials committed to source control.
 
----
+# Associa8
 
-## 10. What "done" looks like
+Associa8 is a PHP and MySQL membership management portal for organizations. It brings member records, administration workflows, and member self-service tools together in one web application.
 
-1. Every org-scoped table carries `org_id`, and every query that touches those tables filters by the logged-in user's `org_id`.
-2. `admin-info` and `acc-info` are linked by a real foreign key, not a coincidental shared ID.
-3. A real member login flow exists, authenticating against `members.email`/`members.password`, setting a member session, and the `admin/member/*.php` pages query real data scoped to that member's org + zone/subzone instead of showing hardcoded mockup content.
-4. `admin/inc/auth.php`-equivalent guard added to every `admin/member/*.php` page.
-5. Super admin (`role = 'super_admin'`) is the only role allowed to bypass org/zone scoping, and that check happens consistently everywhere scoping is enforced.
+## Product Areas
+
+- **Public website:** organization information, pricing, contact, and registration pages.
+- **Administration:** member directory and records, membership titles, zones, document management, admissions, computer-based testing, attendance, finance, and portal settings.
+- **Member portal:** profile, attendance, events, messages, documents, and payment history.
+- **Email delivery:** PHPMailer integration for application email workflows.
+
+The application uses PHP with MySQLi and a MySQL database. The source tree includes the database schema and sample data in `associa8.sql`.
+
+## Requirements
+
+- PHP with MySQLi enabled
+- MySQL or MariaDB
+- Composer
+- Apache or another PHP-capable web server
+
+XAMPP is suitable for local development.
+
+## Local Setup
+
+1. Place the project in the web server's document root.
+2. Create a MySQL database named `associa8` and import `associa8.sql`.
+3. Set the database host, database name, username, and password in `inc/db.php` for your local environment.
+4. Install PHP dependencies from the project root:
+
+   ```sh
+   composer install
+   ```
+
+5. Open the site through your local web server, for example `http://localhost/associa8/`.
+
+Configure mail delivery in `inc/mail-config.php` before using features that send email. Do not use production credentials in a local or shared development environment.
+
+## Project Layout
+
+```text
+admin/             Administrative pages and member portal
+admin/member/      Authenticated member-facing pages
+css/               Application stylesheets
+images/            Brand and interface assets
+inc/               Shared database, navigation, and mail includes
+js/                Client-side interactions
+videos/            Website media
+associa8.sql       Database schema and seed data
+```
+
+## Notes For Contributors
+
+- Keep database access consistent with the existing MySQLi conventions.
+- Protect authenticated workflows with the relevant admin or member session guard.
+- Scope member-facing data changes to the signed-in member, and escape output rendered into HTML.
+- Review schema and query changes together when adding or changing member data fields.

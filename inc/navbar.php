@@ -12,7 +12,7 @@
   </ul>
 
   <div class="nav-actions">
-    <a href="admin/index.php" class="btn btn-outline-light" target="_blank">Login</a>
+    <a href="admin/index.php" class="btn btn-outline-light">Login</a>
     <a href="signup.php" class="btn btn-white">Sign Up</a>
   </div>
 
