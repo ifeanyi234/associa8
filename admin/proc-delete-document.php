@@ -8,14 +8,31 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $documentId = (int) ($_POST['document_id'] ?? 0);
-if ($documentId < 1) {
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($documentId < 1 || ($adminRole !== 'super_admin' && $orgId === null)) {
     header('Location: documents.php?status=error&msg=' . urlencode('Invalid document selected.'));
     exit;
 }
 
-$lookupStatement = mysqli_prepare($conn, 'SELECT file_path FROM documents WHERE id = ?');
-mysqli_stmt_bind_param($lookupStatement, 'i', $documentId);
-mysqli_stmt_execute($lookupStatement);
+$lookupSql = 'SELECT file_path FROM documents WHERE id = ?';
+if ($adminRole !== 'super_admin') {
+    $lookupSql .= ' AND org_id = ?';
+}
+$lookupStatement = mysqli_prepare($conn, $lookupSql);
+if (!$lookupStatement) {
+    header('Location: documents.php?status=error&msg=' . urlencode('The document could not be deleted.'));
+    exit;
+}
+if ($adminRole === 'super_admin') {
+    mysqli_stmt_bind_param($lookupStatement, 'i', $documentId);
+} else {
+    mysqli_stmt_bind_param($lookupStatement, 'ii', $documentId, $orgId);
+}
+if (!mysqli_stmt_execute($lookupStatement)) {
+    header('Location: documents.php?status=error&msg=' . urlencode('The document could not be deleted.'));
+    exit;
+}
 $lookupResult = mysqli_stmt_get_result($lookupStatement);
 $document = $lookupResult ? mysqli_fetch_assoc($lookupResult) : null;
 
@@ -24,8 +41,20 @@ if (!$document) {
     exit;
 }
 
-$deleteStatement = mysqli_prepare($conn, 'DELETE FROM documents WHERE id = ?');
-mysqli_stmt_bind_param($deleteStatement, 'i', $documentId);
+$deleteSql = 'DELETE FROM documents WHERE id = ?';
+if ($adminRole !== 'super_admin') {
+    $deleteSql .= ' AND org_id = ?';
+}
+$deleteStatement = mysqli_prepare($conn, $deleteSql);
+if (!$deleteStatement) {
+    header('Location: documents.php?status=error&msg=' . urlencode('The document could not be deleted.'));
+    exit;
+}
+if ($adminRole === 'super_admin') {
+    mysqli_stmt_bind_param($deleteStatement, 'i', $documentId);
+} else {
+    mysqli_stmt_bind_param($deleteStatement, 'ii', $documentId, $orgId);
+}
 $success = mysqli_stmt_execute($deleteStatement) && mysqli_stmt_affected_rows($deleteStatement) === 1;
 
 if ($success) {

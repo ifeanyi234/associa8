@@ -1,0 +1,17 @@
+<?php
+$mailHost = getenv('ASSOCIA8_MAIL_HOST') ?: '';
+$mailUsername = getenv('ASSOCIA8_MAIL_USERNAME') ?: '';
+$mailPassword = getenv('ASSOCIA8_MAIL_PASSWORD') ?: '';
+$mailPort = getenv('ASSOCIA8_MAIL_PORT') ?: '465';
+$mailFrom = getenv('ASSOCIA8_MAIL_FROM') ?: $mailUsername;
+$mailFromName = getenv('ASSOCIA8_MAIL_FROM_NAME') ?: 'Associa8';
+$mailReplyTo = getenv('ASSOCIA8_MAIL_REPLY_TO') ?: $mailFrom;
+
+define('MAIL_HOST', $mailHost);
+define('MAIL_USERNAME', $mailUsername);
+define('MAIL_PASSWORD', $mailPassword);
+define('MAIL_PORT', (int) $mailPort);
+define('MAIL_FROM_EMAIL', $mailFrom);
+define('MAIL_FROM_NAME', $mailFromName);
+define('MAIL_REPLY_TO', $mailReplyTo);
+define('MAIL_LOGO_PATH', __DIR__ . '/../images/brand-logo-white.png');

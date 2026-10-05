@@ -12,9 +12,11 @@ $actionType = $_POST['action_type'] ?? '';
 $status = $_POST['status'] ?? '';
 $reason = trim($_POST['reason'] ?? '');
 $actionDate = $_POST['action_date'] ?? '';
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
 $validStatuses = ['active', 'under_review', 'completed'];
-if ($memberId < 1 || !in_array($actionType, ['suspension', 'reinstatement'], true) || !in_array($status, $validStatuses, true) || $reason === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $actionDate)) {
+if ($memberId < 1 || ($adminRole !== 'super_admin' && $orgId === null) || !in_array($actionType, ['suspension', 'reinstatement'], true) || !in_array($status, $validStatuses, true) || $reason === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $actionDate)) {
     header('Location: add-suspension.php?type=' . urlencode($actionType) . '&status=error&msg=' . urlencode('Complete all action fields with valid values.'));
     exit;
 }
@@ -29,9 +31,27 @@ if ($actionType === 'suspension' && !in_array($status, ['active', 'under_review'
 }
 
 mysqli_begin_transaction($conn);
-$memberStatement = mysqli_prepare($conn, 'SELECT status FROM members WHERE id = ? FOR UPDATE');
-mysqli_stmt_bind_param($memberStatement, 'i', $memberId);
-mysqli_stmt_execute($memberStatement);
+$memberSql = 'SELECT status, org_id FROM members WHERE id = ?';
+if ($adminRole !== 'super_admin') {
+    $memberSql .= ' AND org_id = ?';
+}
+$memberSql .= ' FOR UPDATE';
+$memberStatement = mysqli_prepare($conn, $memberSql);
+if (!$memberStatement) {
+    mysqli_rollback($conn);
+    header('Location: add-suspension.php?type=' . urlencode($actionType) . '&status=error&msg=' . urlencode('The selected member could not be found.'));
+    exit;
+}
+if ($adminRole === 'super_admin') {
+    mysqli_stmt_bind_param($memberStatement, 'i', $memberId);
+} else {
+    mysqli_stmt_bind_param($memberStatement, 'ii', $memberId, $orgId);
+}
+if (!mysqli_stmt_execute($memberStatement)) {
+    mysqli_rollback($conn);
+    header('Location: add-suspension.php?type=' . urlencode($actionType) . '&status=error&msg=' . urlencode('The selected member could not be found.'));
+    exit;
+}
 $memberResult = mysqli_stmt_get_result($memberStatement);
 $member = $memberResult ? mysqli_fetch_assoc($memberResult) : null;
 
@@ -46,13 +66,22 @@ if (!$member) {
 
 if ($error === '') {
     $newMemberStatus = $actionType === 'reinstatement' ? 'active' : ($status === 'under_review' ? 'pending' : 'suspended');
-    $updateStatement = mysqli_prepare($conn, 'UPDATE members SET status = ? WHERE id = ?');
-    mysqli_stmt_bind_param($updateStatement, 'si', $newMemberStatus, $memberId);
-    $updateSuccess = mysqli_stmt_execute($updateStatement);
+    $updateStatement = mysqli_prepare($conn, 'UPDATE members SET status = ? WHERE id = ? AND org_id = ?');
+    $memberOrgId = (int) $member['org_id'];
+    if (!$updateStatement) {
+        $error = 'The member status and history could not be saved.';
+    } else {
+        mysqli_stmt_bind_param($updateStatement, 'sii', $newMemberStatus, $memberId, $memberOrgId);
+    }
+    $updateSuccess = $updateStatement && mysqli_stmt_execute($updateStatement) && mysqli_stmt_affected_rows($updateStatement) === 1;
 
-    $historyStatement = mysqli_prepare($conn, 'INSERT INTO suspensions (member_id, reason, action_type, status, action_date) VALUES (?, ?, ?, ?, ?)');
-    mysqli_stmt_bind_param($historyStatement, 'issss', $memberId, $reason, $actionType, $status, $actionDate);
-    $historySuccess = mysqli_stmt_execute($historyStatement);
+    $historyStatement = mysqli_prepare($conn, 'INSERT INTO suspensions (org_id, member_id, reason, action_type, status, action_date) VALUES (?, ?, ?, ?, ?, ?)');
+    if (!$historyStatement) {
+        $historySuccess = false;
+    } else {
+        mysqli_stmt_bind_param($historyStatement, 'iissss', $memberOrgId, $memberId, $reason, $actionType, $status, $actionDate);
+        $historySuccess = mysqli_stmt_execute($historyStatement);
+    }
 
     if (!$updateSuccess || !$historySuccess) {
         $error = 'The member status and history could not be saved.';
