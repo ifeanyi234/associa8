@@ -8,6 +8,48 @@ This is the implementation tracker for taking the current prototype to a secure,
 
 **Honest delivery status:** the admissions/CBT security work is substantially improved, but the app is still not complete enough to present as a finished product. The most visible unfinished areas are finance, attendance, and event workflows. These are still blockers for a boss-facing demo and must be treated as unfinished until they are tested and functional. Security hardening is important, but it does not replace basic feature completion.
 
+## Project Status Snapshot (truth check)
+
+This project is not in a "mostly finished" state. It is a mixed-status product with a secure core in some admission/CBT areas and multiple unfinished business modules still exposed in the UI.
+
+### Module status by reality
+
+#### Working or mostly working
+- [x] Admin authentication and basic role/session checks
+- [x] Organization scoping in key admission and CBT workflows
+- [x] CBT access-code issuance, verification, expiry, and result prevention
+- [x] Credential handling cleanup and safer local DB setup
+- [x] Document access gating and safer file handling in key routes
+- [x] Rerunnable schema/migration safety for CBT and rate-limit changes
+
+#### Partially working / needs hard validation
+- [ ] Admission management pages beyond the core flow
+- [ ] Member profile and settings flows
+- [ ] Document manager / upload experience end-to-end
+- [ ] CBT admin pages and result review flow once a full real dataset is used
+- [ ] Broader permission enforcement across remaining admin pages
+
+#### Not ready for demo or production use
+- [ ] Finance pages and any payment summary/dues logic that is still hardcoded or mock-driven
+- [ ] Attendance pages and any real check-in/check-out workflow
+- [ ] Event pages and RSVP booking flow
+- [ ] Module assignment UI [admin/user-controls.php](admin/user-controls.php) must not present unfinished modules as working features
+
+### Boss-facing rule
+- A page or module is not complete because it exists in the admin sidebar or user-controls form.
+- A module is only complete after it has a real DB-backed flow, role checks, validation, and a successful test path.
+- Any unfinished module must either be removed from the visible UI, clearly marked as in-progress, or blocked from assignment until it is working.
+
+### Immediate execution list
+1. [ ] Audit all visible admin modules and remove or disable any feature that is still static/mock before showing the app to management.
+2. [ ] Fix the Finance module completely: replace static cards and fake values with real tenant-scoped data and authorized workflows.
+3. [ ] Fix the Attendance module completely: real attendance records, validation, duplicate prevention, and organization-scoped reporting.
+4. [ ] Fix the Events/RSVP module completely: event ownership, capacity logic, booking/cancellation flow, and member access rules.
+5. [ ] Re-check every permission toggle in [admin/user-controls.php](admin/user-controls.php) against the actual pages behind it.
+6. [ ] Enforce module-level authorization consistently across all admin handlers and page loads, not just the CBT/admissions area.
+7. [ ] Run a full end-to-end walkthrough for each major module using safe test data and record real pass/fail results.
+8. [ ] After the working modules are proven, write the final boss-facing summary with only verified, working features listed.
+
 ## Phase 0: Agree On The Product
 
 - [x] Write and approve the MVP user roles: platform operator, organization owner/admin, manager/staff with assigned permissions, member, and applicant.
