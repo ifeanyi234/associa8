@@ -5,7 +5,7 @@ require_once "../inc/db.php";
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-$questionsSql = "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.title AS exam_title FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id";
+$questionsSql = "SELECT q.id, q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.option_e, q.correct_option, e.id AS exam_id, e.title AS exam_title, e.status AS exam_status, (e.status = 'draft' AND assigned.cbt_exam_id IS NULL AND result_usage.exam_id IS NULL) AS can_delete FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id LEFT JOIN (SELECT DISTINCT cbt_exam_id FROM admissions WHERE cbt_exam_id IS NOT NULL) assigned ON assigned.cbt_exam_id = e.id LEFT JOIN (SELECT DISTINCT exam_id FROM cbt_results) result_usage ON result_usage.exam_id = e.id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $questionsSql .= " WHERE e.org_id = " . (int) $orgId;
 }
@@ -13,11 +13,13 @@ $questionsSql .= " ORDER BY q.created_at DESC";
 $questionResult = mysqli_query($conn, $questionsSql);
 
 $questions = [];
-
-if ($questionResult) { 
-  while ($question = mysqli_fetch_assoc($questionResult)) {
-    $questions[] = $question; 
-  } 
+if (!$questionResult) {
+  error_log('CBT questions query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT questions are temporarily unavailable.');
+}
+while ($question = mysqli_fetch_assoc($questionResult)) {
+  $questions[] = $question;
 }
 
 $examCountSql = "SELECT COUNT(*) AS total FROM cbt_exams";
@@ -25,7 +27,46 @@ if ($adminRole !== 'super_admin' && $orgId !== null) {
   $examCountSql .= " WHERE org_id = " . (int) $orgId;
 }
 $examCountResult = mysqli_query($conn, $examCountSql);
-$examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['total'] : 0;
+if (!$examCountResult) {
+  error_log('CBT exam count query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT exam statistics are temporarily unavailable.');
+}
+$examCount = (int) mysqli_fetch_assoc($examCountResult)['total'];
+
+$examStatusSql = "SELECT status, COUNT(*) AS total FROM cbt_exams";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $examStatusSql .= " WHERE org_id = " . (int) $orgId;
+}
+$examStatusSql .= ' GROUP BY status';
+$examStatusResult = mysqli_query($conn, $examStatusSql);
+if (!$examStatusResult) {
+  error_log('CBT exam status query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT exam statistics are temporarily unavailable.');
+}
+$examStatuses = ['draft' => 0, 'active' => 0, 'closed' => 0];
+while ($examStatus = mysqli_fetch_assoc($examStatusResult)) {
+  if (array_key_exists($examStatus['status'], $examStatuses)) {
+    $examStatuses[$examStatus['status']] = (int) $examStatus['total'];
+  }
+}
+
+$examsSql = "SELECT e.id, e.title, e.status, e.duration_minutes, e.pass_mark, COALESCE(question_stats.question_count, 0) AS question_count, (e.status = 'draft' AND COALESCE(question_stats.question_count, 0) > 0 AND question_stats.ready_question_count = question_stats.question_count AND assigned.cbt_exam_id IS NULL AND result_usage.exam_id IS NULL) AS can_activate FROM cbt_exams e LEFT JOIN (SELECT exam_id, COUNT(*) AS question_count, SUM(CASE WHEN question_text <> '' AND option_a <> '' AND option_b <> '' AND option_c <> '' AND option_d <> '' AND correct_option IN ('A','B','C','D','E') AND (correct_option <> 'E' OR option_e <> '') THEN 1 ELSE 0 END) AS ready_question_count FROM cbt_questions GROUP BY exam_id) question_stats ON question_stats.exam_id = e.id LEFT JOIN (SELECT DISTINCT cbt_exam_id FROM admissions WHERE cbt_exam_id IS NOT NULL) assigned ON assigned.cbt_exam_id = e.id LEFT JOIN (SELECT DISTINCT exam_id FROM cbt_results) result_usage ON result_usage.exam_id = e.id";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $examsSql .= " WHERE e.org_id = " . (int) $orgId;
+}
+$examsSql .= ' ORDER BY e.created_at DESC';
+$examsResult = mysqli_query($conn, $examsSql);
+if (!$examsResult) {
+  error_log('CBT exams query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT exams are temporarily unavailable.');
+}
+$exams = [];
+while ($exam = mysqli_fetch_assoc($examsResult)) {
+  $exams[] = $exam;
+}
 
 ?>
 <!doctype html>
@@ -109,7 +150,7 @@ $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['tota
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">CBT Questions</h2>
-              <p class="page-subtitle">CBT Schedule & Onboarding</p>
+              <p class="page-subtitle">Manage exam questions and review CBT exam status.</p>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <a href="add-cbt-question.php" class="btn-outline-primary">
@@ -132,23 +173,50 @@ $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['tota
           <section class="stats-grid mb-4">
   <div class="suspension-stat-card">
     <div class="suspension-stat-value"><?php echo count($questions); ?></div>
-    <div class="suspension-stat-label">Application Review</div>
+    <div class="suspension-stat-label">Total Questions</div>
   </div>
   <div class="suspension-stat-card">
     <div class="suspension-stat-value"><?php echo $examCount; ?></div>
-    <div class="suspension-stat-label">CBT Review</div>
+    <div class="suspension-stat-label">Total Exams</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value">14</div>
-    <div class="suspension-stat-label">Onboarding</div>
+    <div class="suspension-stat-value"><?php echo $examStatuses['active']; ?></div>
+    <div class="suspension-stat-label">Active Exams</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value text-primary">9</div>
-    <div class="suspension-stat-label">Approved</div>
+    <div class="suspension-stat-value text-primary"><?php echo $examStatuses['draft']; ?></div>
+    <div class="suspension-stat-label">Draft Exams</div>
   </div>
 </section>
 
-          <!-- Questions Container Card -->
+<section class="dashboard-card mb-4">
+  <h2 class="page-title-main" style="font-size: 1.1rem;">Exams</h2>
+  <p class="page-subtitle">Exams start as drafts. Add complete questions before activating;,<br> active exam questions cannot be changed.</p>
+  <?php if ($exams): ?>
+    <?php foreach ($exams as $exam): ?>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid #e2e8f0;">
+        <div>
+          <strong><?php echo htmlspecialchars($exam['title'], ENT_QUOTES, 'UTF-8'); ?></strong>
+          <div><?php echo htmlspecialchars(ucfirst($exam['status']), ENT_QUOTES, 'UTF-8'); ?> · <?php echo (int) $exam['question_count']; ?> questions · <?php echo (int) $exam['duration_minutes']; ?> minutes · Pass mark <?php echo (int) $exam['pass_mark']; ?>%</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <?php if ($exam['status'] === 'draft'): ?>
+            <a class="btn-outline-primary" href="add-cbt-question.php?exam_id=<?php echo (int) $exam['id']; ?>">Add question</a>
+            <?php if ((int) $exam['can_activate'] === 1): ?>
+              <a class="btn-navy-filled" href="cbt-exam-preview.php?exam_id=<?php echo (int) $exam['id']; ?>">Review and activate</a>
+            <?php else: ?>
+              <span class="page-subtitle">Needs at least one complete question; activation locks the questions.</span>
+            <?php endif; ?>
+          <?php endif; ?>
+        </div>
+      </div>
+    <?php endforeach; ?>
+  <?php else: ?>
+    <p class="zone-empty-state">No CBT exams have been created yet.</p>
+  <?php endif; ?>
+</section>
+
+<!-- Questions Container Card -->
           <div class="table-responsive-card" style="padding: 0; overflow: hidden;">
             <div style="background: #0f2744; color: #ffffff; padding: 16px 24px; font-weight: 600; font-size: 1.05rem;">
               Questions
@@ -172,60 +240,19 @@ $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['tota
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                       <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Ans: <?php echo htmlspecialchars($question['correct_option']); ?></span>
-                      <form action="proc-delete-cbt-question.php" method="POST" onsubmit="return confirm('Delete this question?');">
-                        <input type="hidden" name="question_id" value="<?php echo (int) $question['id']; ?>" />
-                        <button type="submit" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">Del</button>
-                      </form>
+                      <?php if ((int) $question['can_delete'] === 1): ?>
+                        <form action="proc-delete-cbt-question.php" method="POST" onsubmit="return confirm('Delete this question?');">
+                          <input type="hidden" name="question_id" value="<?php echo (int) $question['id']; ?>" />
+                          <button type="submit" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">Delete</button>
+                        </form>
+                      <?php else: ?>
+                        <span class="badge-pill status-<?php echo htmlspecialchars($question['exam_status'], ENT_QUOTES, 'UTF-8'); ?>">Question locked because this exam is already in use.</span>
+                      <?php endif; ?>
                     </div>
                   </div>
                 <?php endforeach; ?>
               <?php else: ?>
-              <div style="margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #e2e8f0;">
-                <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 1</h3>
-                <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
-                  An insurance policy covering fire damage to stock pays 70% of the cost for the first $1000 and all the cost thereafter up to total of $7000, following a claim , the claimant had to pay an additional of $2000 to damage stock. how much was the stock cost?
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
-                  <div>(A) . $9000</div>
-                  <div>(B) . $9700</div>
-                  <div>(C) . $9300</div>
-                  <div>(D) . $8700</div>
-                  <div>(E) . $8300</div>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                  <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
-                    Ans: C
-                  </span>
-                  <button type="button" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-                    Del
-                  </button>
-                </div>
-              </div>
-              <?php endif; ?>
-
-              <?php if (!$questions): ?>
-              <!-- Question Item 2 -->
-              <div style="margin-bottom: 12px;">
-                <h3 style="font-size: 0.95rem; font-weight: 700; color: #0f2744; margin-bottom: 12px;">Question 2</h3>
-                <p style="font-size: 0.9rem; color: #334155; line-height: 1.6; margin-bottom: 16px;">
-                  An insurance policy covering fire damage to stock pays 70% of the cost for the first $1000 and all the cost thereafter up to total of $7000, following a claim , the claimant had to pay an additional of $2000 to damage stock. how much was the stock cost?
-                </p>
-                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.88rem; color: #475569; margin-bottom: 20px;">
-                  <div>(A) . $9000</div>
-                  <div>(B) . $9700</div>
-                  <div>(C) . $9300</div>
-                  <div>(D) . $8700</div>
-                  <div>(E) . $8300</div>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                  <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">
-                    Ans: C
-                  </span>
-                  <button type="button" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">
-                    Del
-                  </button>
-                </div>
-              </div>
+                <p class="zone-empty-state">No CBT questions have been added yet.</p>
               <?php endif; ?>
             </div>
           </div>
@@ -245,9 +272,9 @@ $examCount = $examCountResult ? (int) mysqli_fetch_assoc($examCountResult)['tota
         const success = status === "success";
         window.AppModal.open({
           type: success ? "success" : "error",
-          heading: success ? "Question deleted" : "Question not deleted",
+          heading: success ? "Action completed" : "Action not completed",
           body: params.get("msg") || "Please try again.",
-          detail: success ? "The question was removed from the database." : "No question was removed.",
+          detail: success ? "Your CBT change was saved." : "No CBT change was saved.",
         });
         window.history.replaceState({}, document.title, window.location.pathname);
       });

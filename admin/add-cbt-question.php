@@ -3,11 +3,17 @@ require_once "inc/auth.php";
 require_once "../inc/db.php";
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
-$examSql = "SELECT id, title FROM cbt_exams WHERE status <> 'closed'";
+$examSql = "SELECT id, title FROM cbt_exams WHERE status = 'draft'";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $examSql .= " AND org_id = " . $orgId;
 }
 $examsResult = mysqli_query($conn, $examSql . " ORDER BY created_at DESC");
+if (!$examsResult) {
+    error_log('CBT exam list query failed: ' . mysqli_error($conn));
+    http_response_code(500);
+    exit('CBT exams are temporarily unavailable.');
+}
+$hasDraftExams = mysqli_num_rows($examsResult) > 0;
 $status = $_GET['status'] ?? '';
 $message = $_GET['msg'] ?? '';
 $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
@@ -62,15 +68,16 @@ $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
             <form action="proc-add-cbt-question.php" method="POST" class="structure-form">
               <div class="form-group">
                 <label class="form-label" for="examId">Exam</label>
-                <select class="form-select" id="examId" name="exam_id" required>
+                <?php if (!$hasDraftExams): ?>
+                  <p class="inline-form-message error">Create a draft exam before adding questions.</p>
+                <?php endif; ?>
+                <select class="form-select" id="examId" name="exam_id" required <?php echo $hasDraftExams ? '' : 'disabled'; ?>>
                   <option value="" selected disabled>Select exam</option>
-                  <?php if ($examsResult): ?>
-                    <?php while ($exam = mysqli_fetch_assoc($examsResult)): ?>
+                  <?php while ($exam = mysqli_fetch_assoc($examsResult)): ?>
                       <option value="<?php echo (int) $exam['id']; ?>" <?php echo $selectedExamId === (int) $exam['id'] ? 'selected' : ''; ?>>
 <?php echo htmlspecialchars($exam['title']); ?>
 </option>
-                    <?php endwhile; ?>
-                  <?php endif; ?>
+                  <?php endwhile; ?>
                 </select>
               </div>
               <div class="form-group">
@@ -100,7 +107,7 @@ $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
               </div>
               <div class="structure-form-actions">
                 <a href="cbt-questions.php" class="btn-action-dark-outline">Cancel</a>
-                <button class="btn-navy-filled" type="submit">
+                <button class="btn-navy-filled" type="submit" <?php echo $hasDraftExams ? '' : 'disabled'; ?>>
 <i class="fa-solid fa-check">
 </i> Save question</button>
               </div>
@@ -134,4 +141,3 @@ $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
     </style>
   </body>
 </html>
-

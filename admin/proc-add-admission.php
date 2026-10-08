@@ -14,7 +14,7 @@ $guarantorRelationship = trim($_POST['guarantor_relationship'] ?? '');
 if ($number === '' || $name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $phone === '' || $guarantorName === '' || $guarantorPhone === '' || $guarantorRelationship === '' || ($guarantorEmail !== '' && !filter_var($guarantorEmail, FILTER_VALIDATE_EMAIL))) { header('Location: add-admission.php?status=error&msg=' . urlencode('Complete all applicant and guarantor fields with valid values.')); exit; }
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
-if ($adminRole !== 'super_admin' && $orgId === null) {
+if ($orgId === null || $orgId < 1) {
     header('Location: add-admission.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
     exit;
 }

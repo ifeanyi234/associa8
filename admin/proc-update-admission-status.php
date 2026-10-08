@@ -48,6 +48,11 @@ if (!$admission) {
     header('Location: admission-management.php?status=error&msg=' . urlencode('The selected admission could not be found.'));
     exit;
 }
+$admissionOrgId = (int) ($admission['org_id'] ?? 0);
+if ($admissionOrgId < 1) {
+    header('Location: admission-management.php?status=error&msg=' . urlencode('The selected admission is not linked to an organization.'));
+    exit;
+}
 
 $currentStatus = $admission['status'];
 $validTransition = ($currentStatus === 'pending' && $newStatus === 'under_review')
@@ -59,18 +64,18 @@ if (!$validTransition) {
 }
 
 if ($newStatus === 'approved') {
-    $memberCheck = mysqli_prepare($conn, 'SELECT id FROM members WHERE email = ? LIMIT 1');
-    mysqli_stmt_bind_param($memberCheck, 's', $admission['email']);
+    $memberOrgId = $admissionOrgId;
+
+    $memberCheck = mysqli_prepare($conn, 'SELECT id FROM members WHERE email = ? AND org_id = ? LIMIT 1');
+    if (!$memberCheck) {
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+        exit;
+    }
+    mysqli_stmt_bind_param($memberCheck, 'si', $admission['email'], $memberOrgId);
     mysqli_stmt_execute($memberCheck);
     $memberCheckResult = mysqli_stmt_get_result($memberCheck);
     if ($memberCheckResult && mysqli_num_rows($memberCheckResult) > 0) {
         header('Location: admission-management.php?status=error&msg=' . urlencode('A member already exists for this applicant email.'));
-        exit;
-    }
-
-    $memberOrgId = $admission['org_id'] !== null ? (int) $admission['org_id'] : $orgId;
-    if ($memberOrgId < 1) {
-        header('Location: admission-management.php?status=error&msg=' . urlencode('The admission is not linked to an organization.'));
         exit;
     }
 
@@ -98,14 +103,15 @@ if ($newStatus === 'approved') {
 
     mysqli_begin_transaction($conn);
     $memberStatement = mysqli_prepare($conn, 'INSERT INTO members (org_id, member_code, first_name, last_name, email, password, phone, code, zone_id, title_id, status, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)');
-    $updateStatement = mysqli_prepare($conn, 'UPDATE admissions SET status = ? WHERE id = ?');
+    $updateSql = 'UPDATE admissions SET status = ? WHERE id = ? AND status = ? AND org_id = ?';
+    $updateStatement = mysqli_prepare($conn, $updateSql);
     if (!$memberStatement || !$updateStatement) {
         mysqli_rollback($conn);
         header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
         exit;
     }
     mysqli_stmt_bind_param($memberStatement, 'isssssssss', $memberOrgId, $memberCode, $firstName, $lastName, $admission['email'], $passwordHash, $admission['phone'], $memberCode, $memberStatus, $joinedDate);
-    mysqli_stmt_bind_param($updateStatement, 'si', $newStatus, $admissionId);
+    mysqli_stmt_bind_param($updateStatement, 'sisi', $newStatus, $admissionId, $currentStatus, $admissionOrgId);
     $memberCreated = mysqli_stmt_execute($memberStatement);
     $statusUpdated = mysqli_stmt_execute($updateStatement);
     if (!$memberCreated || !$statusUpdated || mysqli_stmt_affected_rows($updateStatement) !== 1) {
@@ -126,15 +132,16 @@ if ($newStatus === 'approved') {
     }
     $message = 'Admission approved and member account created.';
 } else {
-    $updateStatement = $newStatus === 'under_review'
-        ? mysqli_prepare($conn, 'UPDATE admissions SET status = ?, cbt_response_deadline = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 36 HOUR) WHERE id = ?')
-        : mysqli_prepare($conn, 'UPDATE admissions SET status = ?, cbt_response_deadline = NULL WHERE id = ?');
+    $updateSql = $newStatus === 'under_review'
+        ? 'UPDATE admissions SET status = ?, cbt_response_deadline = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 36 HOUR), cbt_scheduled_at = NULL WHERE id = ? AND status = ? AND org_id = ?'
+        : 'UPDATE admissions SET status = ?, cbt_response_deadline = NULL, cbt_scheduled_at = NULL WHERE id = ? AND status = ? AND org_id = ?';
+    $updateStatement = mysqli_prepare($conn, $updateSql);
     if (!$updateStatement) {
         header('Location: admission-management.php?status=error&msg=' . urlencode('The admission status service is unavailable.'));
         exit;
     }
-    mysqli_stmt_bind_param($updateStatement, 'si', $newStatus, $admissionId);
-    $success = mysqli_stmt_execute($updateStatement);
+    mysqli_stmt_bind_param($updateStatement, 'sisi', $newStatus, $admissionId, $currentStatus, $admissionOrgId);
+    $success = mysqli_stmt_execute($updateStatement) && mysqli_stmt_affected_rows($updateStatement) === 1;
     if ($success) {
         notify_admission_status($conn, $admissionId, $newStatus, $admission['applicant_name'], $admission['email']);
     }

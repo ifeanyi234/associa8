@@ -1,7 +1,7 @@
 <?php
 session_start();
-if (empty($_SESSION['applicant_email']) || empty($_SESSION['applicant_admission_id'])) {
-    header('Location: cbt-code.php?status=error&msg=' . urlencode('Enter your application email first so we can send your access code.'));
+if (empty($_SESSION['applicant_code_request']) || empty($_SESSION['applicant_email']) || !isset($_SESSION['applicant_admission_id'])) {
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('Enter your application email first so we can request an access code.'));
     exit;
 }
 $status = $_GET['status'] ?? '';
@@ -48,7 +48,7 @@ $message = $_GET['msg'] ?? '';
       <section class="cbt-code-card" aria-labelledby="cbtCodeHeading">
         <div class="cbt-code-icon" aria-hidden="true"><i class="fa-solid fa-key"></i></div>
         <h1 id="cbtCodeHeading">Enter your access code</h1>
-        <p>We sent a six-character access code to <?php echo htmlspecialchars($_SESSION['applicant_email']); ?>.</p>
+        <p>Check your email for an access code. If you don't receive one, confirm you used the email address on your application or contact your organization.</p>
         <form class="cbt-code-form" action="proc-validate-cbt-code.php" method="POST">
           <label for="code1">Access code</label>
           <div class="code-boxes" role="group" aria-label="Six-character access code">

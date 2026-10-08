@@ -1,10 +1,16 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
-$titlesResult = mysqli_query($conn, "SELECT id, title, level FROM titles ORDER BY level");
-$zonesResult = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($orgId === null || $orgId < 1) {
+  header('Location: member-directory.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
+  exit;
+}
+
+$titlesResult = mysqli_query($conn, "SELECT id, title, level FROM titles WHERE org_id = $orgId ORDER BY level");
+$zonesResult = mysqli_query($conn, "SELECT id, name FROM zones WHERE org_id = $orgId ORDER BY name");
 $subzonesByZone = [];
-$subzonesResult = mysqli_query($conn, "SELECT id, zone_id, name FROM subzones ORDER BY name");
+$subzonesResult = mysqli_query($conn, "SELECT sz.id, sz.zone_id, sz.name FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE z.org_id = $orgId ORDER BY sz.name");
 if ($subzonesResult) {
   while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
     $zoneId = (int) $subzone['zone_id'];

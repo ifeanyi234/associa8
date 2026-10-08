@@ -14,12 +14,15 @@ if (!$member) {
 }
 $titlesResult = mysqli_query($conn, 'SELECT id, title, level FROM titles WHERE org_id = ' . (int) $member['org_id'] . ' ORDER BY level, title');
 $zonesResult = mysqli_query($conn, 'SELECT id, name FROM zones WHERE org_id = ' . (int) $member['org_id'] . ' ORDER BY name');
-$subzonesResult = mysqli_query($conn, 'SELECT id, zone_id, name FROM subzones ORDER BY name');
+$subzonesResult = mysqli_query($conn, 'SELECT sz.id, sz.zone_id, sz.name FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE z.org_id = ' . (int) $member['org_id'] . ' ORDER BY sz.name');
 $subzonesByZone = [];
 if ($subzonesResult) {
     while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
         $subzonesByZone[(int) $subzone['zone_id']][] = ['id' => (int) $subzone['id'], 'name' => $subzone['name']];
     }
+}
+if (empty($_SESSION['member_edit_csrf'])) {
+  $_SESSION['member_edit_csrf'] = bin2hex(random_bytes(32));
 }
 $status = $_GET['status'] ?? '';
 $message = $_GET['msg'] ?? '';
@@ -50,6 +53,7 @@ $message = $_GET['msg'] ?? '';
       <section class="dashboard-card structure-form-card">
         <form action="proc-edit-member.php" method="POST" class="structure-form">
           <input type="hidden" name="member_id" value="<?php echo (int) $member['id']; ?>" />
+          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_edit_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
           <div class="form-row-2col"><div class="form-group"><label class="form-label">Member code</label><input class="form-control" value="<?php echo htmlspecialchars($member['member_code']); ?>" readonly /></div><div class="form-group"></div></div>
           <div class="form-row-2col"><div class="form-group"><label class="form-label" for="firstName">First name</label><input class="form-control" id="firstName" name="first_name" value="<?php echo htmlspecialchars($member['first_name']); ?>" required /></div><div class="form-group"><label class="form-label" for="lastName">Last name</label><input class="form-control" id="lastName" name="last_name" value="<?php echo htmlspecialchars($member['last_name']); ?>" required /></div></div>
           <div class="form-row-2col"><div class="form-group"><label class="form-label" for="email">Email</label><input class="form-control" type="email" id="email" name="email" value="<?php echo htmlspecialchars($member['email']); ?>" required /></div><div class="form-group"><label class="form-label" for="phone">Phone</label><input class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($member['phone'] ?? ''); ?>" /></div></div>

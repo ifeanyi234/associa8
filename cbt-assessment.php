@@ -4,18 +4,23 @@ require_once __DIR__ . '/inc/db.php';
 
 $admissionId = (int) ($_SESSION['applicant_admission_id'] ?? 0);
 $examId = (int) ($_SESSION['applicant_exam_id'] ?? 0);
-if ($admissionId < 1 || $examId < 1) {
+$orgId = (int) ($_SESSION['applicant_org_id'] ?? 0);
+if ($admissionId < 1 || $examId < 1 || $orgId < 1) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('Enter your CBT access code before starting the assessment.'));
     exit;
 }
 
-$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.status, a.exam_expires_at, e.id AS exam_id, e.title, e.duration_minutes FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND e.id = ? AND a.org_id IS NOT NULL AND a.status = 'under_review' LIMIT 1");
+$statement = mysqli_prepare($conn, "SELECT a.id, a.org_id, a.status, a.exam_expires_at, e.id AS exam_id, e.title, e.duration_minutes FROM admissions a INNER JOIN cbt_exams e ON e.id = a.cbt_exam_id AND e.org_id = a.org_id WHERE a.id = ? AND a.org_id = ? AND e.id = ? AND a.cbt_attempt_started_at IS NOT NULL AND a.status = 'under_review' LIMIT 1");
 if (!$statement) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment service is unavailable.'));
     exit;
 }
-mysqli_stmt_bind_param($statement, 'ii', $admissionId, $examId);
-mysqli_stmt_execute($statement);
+mysqli_stmt_bind_param($statement, 'iii', $admissionId, $orgId, $examId);
+if (!mysqli_stmt_execute($statement)) {
+    error_log('CBT assessment lookup failed: ' . mysqli_stmt_error($statement));
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment service is unavailable.'));
+    exit;
+}
 $result = mysqli_stmt_get_result($statement);
 $assessment = $result ? mysqli_fetch_assoc($result) : null;
 $assessmentExpiresAt = $assessment ? strtotime($assessment['exam_expires_at'] . ' UTC') : 0;
@@ -25,8 +30,17 @@ if (!$assessment || empty($assessment['exam_expires_at']) || $assessmentExpiresA
 }
 
 $questionStatement = mysqli_prepare($conn, 'SELECT id, question_text, option_a, option_b, option_c, option_d, option_e FROM cbt_questions WHERE exam_id = ? ORDER BY id');
+if (!$questionStatement) {
+    error_log('CBT assessment question prepare failed: ' . mysqli_error($conn));
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment questions are unavailable.'));
+    exit;
+}
 mysqli_stmt_bind_param($questionStatement, 'i', $examId);
-mysqli_stmt_execute($questionStatement);
+if (!mysqli_stmt_execute($questionStatement)) {
+    error_log('CBT assessment question lookup failed: ' . mysqli_stmt_error($questionStatement));
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment questions are unavailable.'));
+    exit;
+}
 $questionResult = mysqli_stmt_get_result($questionStatement);
 $questions = [];
 if ($questionResult) {

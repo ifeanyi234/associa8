@@ -11,7 +11,7 @@ if ($adminRole !== 'super_admin' && $orgId === null) {
 }
 
 $applicantsSql = "SELECT id, applicant_name, email, application_number FROM admissions WHERE status = 'under_review'";
-$examsSql = "SELECT id, title, duration_minutes, pass_mark FROM cbt_exams WHERE status = 'active'";
+$examsSql = "SELECT e.id, e.title, e.duration_minutes, e.pass_mark FROM cbt_exams e WHERE e.status = 'active' AND EXISTS (SELECT 1 FROM cbt_questions q WHERE q.exam_id = e.id) AND NOT EXISTS (SELECT 1 FROM cbt_questions q WHERE q.exam_id = e.id AND (q.question_text = '' OR q.option_a = '' OR q.option_b = '' OR q.option_c = '' OR q.option_d = '' OR q.correct_option NOT IN ('A','B','C','D','E') OR (q.correct_option = 'E' AND q.option_e = '')))";
 if ($adminRole !== 'super_admin') {
     $applicantsSql .= ' AND org_id = ' . (int) $orgId;
     $examsSql .= ' AND org_id = ' . (int) $orgId;
@@ -21,20 +21,23 @@ $examsSql .= ' ORDER BY title';
 
 $applicantsResult = mysqli_query($conn, $applicantsSql);
 $examsResult = mysqli_query($conn, $examsSql);
+if (!$applicantsResult || !$examsResult) {
+    error_log('CBT scheduling page query failed: ' . mysqli_error($conn));
+    http_response_code(500);
+    exit('CBT scheduling data is temporarily unavailable.');
+}
 $applicants = [];
 $exams = [];
 
-if ($applicantsResult) {
-    while ($applicant = mysqli_fetch_assoc($applicantsResult)) {
-        $applicants[] = $applicant;
-    }
+while ($applicant = mysqli_fetch_assoc($applicantsResult)) {
+    $applicants[] = $applicant;
 }
-if ($examsResult) {
-    while ($exam = mysqli_fetch_assoc($examsResult)) {
-        $exams[] = $exam;
-    }
+while ($exam = mysqli_fetch_assoc($examsResult)) {
+    $exams[] = $exam;
 }
 
+$scheduleTimezone = new DateTimeZone('Africa/Lagos');
+$scheduleMinimum = (new DateTimeImmutable('now', $scheduleTimezone))->format('Y-m-d\TH:i');
 $status = $_GET['status'] ?? '';
 $message = $_GET['msg'] ?? '';
 ?>
@@ -68,7 +71,7 @@ $message = $_GET['msg'] ?? '';
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Schedule applicant assessment</h2>
-              <p class="page-subtitle">Assign an active exam and send a time-bound access code.</p>
+              <p class="page-subtitle">Assign a ready exam and choose when the applicant can first request an access code. Times use Africa/Lagos time.</p>
             </div>
             <a href="cbt-applicants.php" class="btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> Applicants</a>
           </div>
@@ -104,8 +107,8 @@ $message = $_GET['msg'] ?? '';
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="scheduledAt">Scheduled time</label>
-                  <input class="form-control" type="datetime-local" id="scheduledAt" name="scheduled_at" min="<?php echo date('Y-m-d\\TH:i'); ?>" required />
-                  <small class="form-help-text">The access code expires after the selected exam duration.</small>
+                  <input class="form-control" type="datetime-local" id="scheduledAt" name="scheduled_at" min="<?php echo htmlspecialchars($scheduleMinimum, ENT_QUOTES, 'UTF-8'); ?>" required />
+                  <small class="form-help-text">The applicant cannot request a code before this time. Their 36-hour response window starts then, and the exam timer starts when they enter the code.</small>
                 </div>
                 <div class="structure-form-actions">
                   <a href="cbt-applicants.php" class="btn-action-dark-outline">Cancel</a>

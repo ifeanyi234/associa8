@@ -187,11 +187,11 @@ if ($documentsResult) {
                       <td class="fw-semibold"><?php echo htmlspecialchars($document['title']); ?></td>
                       <td><?php echo htmlspecialchars($visibilityLabel); ?></td>
                       <td><?php echo htmlspecialchars($document['file_type'] ?: 'Not set'); ?></td>
-                      <td><a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
+                      <td><a href="../document-download.php?id=<?php echo (int) $document['id']; ?>" class="file-path-tag" target="_blank"><?php echo htmlspecialchars(basename($document['file_path'])); ?></a></td>
                       <td><?php echo htmlspecialchars($document['category'] ?: 'General'); ?></td>
                       <td style="text-align: center;">
                         <div style="display: inline-flex; gap: 0.5rem;">
-                          <a href="<?php echo htmlspecialchars($document['file_path']); ?>" class="btn-action-edit" target="_blank">View</a>
+                          <a href="../document-download.php?id=<?php echo (int) $document['id']; ?>" class="btn-action-edit" target="_blank">View</a>
                           <form action="proc-delete-document.php" method="POST" onsubmit="return confirm('Delete this document?');" style="display: inline;">
                             <input type="hidden" name="document_id" value="<?php echo (int) $document['id']; ?>" />
                             <button type="submit" class="btn-action-delete">Delete</button>

@@ -2,7 +2,17 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 $id = (int) ($_GET['id'] ?? 0);
-$zoneResult = mysqli_query($conn, "SELECT id, name, coordinator_name FROM zones WHERE id = $id LIMIT 1");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($id < 1 || ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1))) {
+  header('Location: zones.php?status=error&msg=' . urlencode('The selected zone could not be found.'));
+  exit;
+}
+$zoneSql = "SELECT id, name, coordinator_name FROM zones WHERE id = $id";
+if ($adminRole !== 'super_admin') {
+  $zoneSql .= ' AND org_id = ' . $orgId;
+}
+$zoneResult = mysqli_query($conn, $zoneSql . ' LIMIT 1');
 $zone = $zoneResult ? mysqli_fetch_assoc($zoneResult) : null;
 
 if (!$zone) {

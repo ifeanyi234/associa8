@@ -1,7 +1,12 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
-$zoneOptions = mysqli_query($conn, "SELECT id, name FROM zones ORDER BY name");
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($orgId === null || $orgId < 1) {
+  header('Location: zones.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
+  exit;
+}
+$zoneOptions = mysqli_query($conn, "SELECT id, name FROM zones WHERE org_id = $orgId ORDER BY name");
 $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
 ?>
 <!doctype html>

@@ -27,12 +27,28 @@ Treat dashboard figures, seed records, and controls without a POST handler as pr
 
 1. Put the project in the web server document root.
 2. Create a local database named `associa8` and import `associa8.sql`.
-3. Copy `inc/db.php.example` to the ignored local file `inc/db.php`, then set `ASSOCIA8_DB_HOST`, `ASSOCIA8_DB_NAME`, `ASSOCIA8_DB_USER`, and `ASSOCIA8_DB_PASSWORD` in the environment available to Apache/PHP. Restart Apache after changing Windows environment variables.
+3. Set `ASSOCIA8_DB_HOST`, `ASSOCIA8_DB_NAME`, `ASSOCIA8_DB_USER`, and `ASSOCIA8_DB_PASSWORD` in the environment available to Apache/PHP. For local development only, if none of these variables are set, `inc/db.php` can use the ignored `inc/db.local.php` file; set its values to the credentials for your local database. Restart Apache after changing Windows environment variables.
 4. Install PHP dependencies from the project root with `composer install` if dependencies need to be restored.
 5. Copy `inc/mail-config.php.example` to the ignored local file `inc/mail-config.php`, then set `ASSOCIA8_MAIL_HOST`, `ASSOCIA8_MAIL_USERNAME`, `ASSOCIA8_MAIL_PASSWORD`, and `ASSOCIA8_MAIL_PORT` in the Apache/PHP environment before trying email-dependent workflows. Optional sender values are `ASSOCIA8_MAIL_FROM`, `ASSOCIA8_MAIL_FROM_NAME`, and `ASSOCIA8_MAIL_REPLY_TO`.
 6. Open the application through the local web server, for example `http://localhost/associa8/`.
 
-The actual `inc/db.php` and `inc/mail-config.php` files are intentionally ignored local configuration; do not commit them or put credentials in the example templates. Rotate credentials if real values were ever committed. The SQL dump contains sample data and should not be imported as production customer data. There is no migration runner documented yet; schema changes must be planned and applied consistently to existing databases.
+The actual `inc/db.php`, `inc/db.local.php`, and `inc/mail-config.php` files are intentionally ignored local configuration; do not commit them or put credentials in the example templates. On a live server, configure environment variables in the hosting environment or secret manager rather than reusing local development credentials. Rotate credentials if real values were ever committed. The SQL dump contains sample data and should not be imported as production customer data. There is no migration runner documented yet; schema changes must be planned and applied consistently to existing databases.
+
+### Applying a database migration
+
+For a **new local or production database**, import `associa8.sql` only; it already contains the current schema. Do not run the upgrade scripts after importing that dump.
+
+For an **existing database that already contains Associa8 data**, back it up and run the scripts in `migrations/` in date/name order before deploying code that depends on them. The scripts are designed to be safe to re-run: existing columns/tables/indexes are skipped, and the unique-results script reports duplicates instead of trying an index operation that would fail. The CBT-code migration revokes any old plaintext codes; affected applicants must request a fresh code. These scripts are compatible with the supported MySQL/MariaDB setup, including the local MariaDB 10.4 version.
+
+CBT rate limits currently allow 20 access-code requests per IP per hour, 20 code verifications per IP per 15 minutes, and 5 code verifications per applicant per 15 minutes. Counters retain hashed subjects and are eligible for cleanup after one day.
+
+CBT scores give every question equal weight. Unanswered questions count as incorrect; the score is the percentage correct rounded to the nearest whole number, and an applicant passes when that rounded score is greater than or equal to the exam pass mark. Results are saved together with the admission's `cbt_completed` state in one database transaction. Correct-answer fields are loaded only by the submission handler and are not sent to the applicant's assessment page.
+
+CBT result review is read-only: the recorded score and pass/fail status are calculated automatically from the exam answers and pass mark. Staff can view the result details, but there is no manual score override or separate result approval state. The admission workflow continues separately after CBT completion.
+
+CBT exams created in the admin area start as drafts. Staff can add or remove questions while an exam is a draft and unused; a review page shows the full question set and correct answers before activation. Activation requires at least one complete question and locks the question set. Scheduling and access-code requests also reject active exams with missing or incomplete questions. There are currently no exam edit or delete actions.
+
+CBT appointment times are entered in Africa/Lagos time and stored in UTC. Response deadlines, attempt start/expiry checks, and new result submission timestamps use UTC in the database; staff see appointment and result-submission times in Africa/Lagos time. Applicants cannot request an access code before the saved appointment time. The 36-hour response window starts at that time; the exam timer itself starts when the applicant enters the code. Existing databases need the `20261007_persist_cbt_schedule_time.sql` migration. Older results retain their original database-generated `taken_at` values and may reflect the database server timezone used at the time.
 
 ## Important Limitations
 

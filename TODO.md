@@ -6,6 +6,8 @@ This is the implementation tracker for taking the current prototype to a secure,
 
 **Current baseline:** organization/admin signup, admin and member login routes, a relational schema, organization-scoped code in several admin modules, applicant CBT code/assessment flow, document upload/listing, and a number of member data views already exist. The current state and known code-level gaps are detailed in [PRODUCT-READINESS.md](PRODUCT-READINESS.md). This checklist does not assume those paths are production-safe until the tests below pass.
 
+**Honest delivery status:** the admissions/CBT security work is substantially improved, but the app is still not complete enough to present as a finished product. The most visible unfinished areas are finance, attendance, and event workflows. These are still blockers for a boss-facing demo and must be treated as unfinished until they are tested and functional. Security hardening is important, but it does not replace basic feature completion.
+
 ## Phase 0: Agree On The Product
 
 - [x] Write and approve the MVP user roles: platform operator, organization owner/admin, manager/staff with assigned permissions, member, and applicant.
@@ -72,10 +74,11 @@ This is the implementation tracker for taking the current prototype to a secure,
 - [ ] Apply the relevant guard to every admin and member page, including pages linked directly by URL.
 - [ ] Apply authorization again inside every state-changing handler; never rely on a hidden button or sidebar visibility.
 - [ ] Audit every SELECT, INSERT, UPDATE, DELETE, file download, export, and notification action for organization ownership.
-- [ ] Scope document reads, deletes, and downloads by organization; fix document deletion that currently selects/deletes by ID alone.
-- [ ] Scope suspension member lookup, status update, and history insert by organization; write the suspension `org_id`.
-- [ ] Validate that member creation zone, sub-zone, and title all belong to the active organization.
-- [ ] Validate that member edits cannot attach a foreign organization's title, zone, or sub-zone.
+- [x] Scope document reads, deletes, and downloads by organization; fix document deletion that currently selects/deletes by ID alone.
+- [x] Scope suspension member lookup, status update, and history insert by organization; write the suspension `org_id`.
+- [x] Validate that member creation zone, sub-zone, and title all belong to the active organization.
+- [x] Validate that member edits cannot attach a foreign organization's title, zone, or sub-zone.
+- [x] Scope member edit form data and update operations to the member's organization.
 - [ ] Scope event lists and RSVP actions to the organization and event's organization.
 - [ ] Scope portal setting reads and writes to the organization.
 - [ ] Scope finance reads/writes to the member and organization using a trusted relationship.
@@ -91,7 +94,7 @@ This is the implementation tracker for taking the current prototype to a secure,
 - [ ] Select one canonical staff identity model and migrate/retire the unused competing account flow.
 - [ ] Ensure a staff login always resolves its linked admin profile and organization through explicit foreign keys.
 - [ ] Reject login for disabled/unverified staff accounts and members under the agreed account policy.
-- [ ] Regenerate the session ID after successful admin authentication.
+- [x] Regenerate the session ID after successful admin authentication.
 - [ ] Set session cookies `HttpOnly`, `Secure` in production, and an appropriate `SameSite` policy.
 - [ ] Set session lifetime, idle timeout, logout invalidation, and concurrent-session policy.
 - [ ] Add rate limiting and/or progressive delay for repeated failed login attempts.
@@ -142,13 +145,14 @@ This is the implementation tracker for taking the current prototype to a secure,
 - [ ] Make member code generation organization-aware if that is the agreed rule.
 - [ ] Make member code generation safe under concurrent insertions using a transaction/sequence strategy and a unique constraint.
 - [ ] Enforce member email uniqueness according to the approved organization/global policy.
-- [ ] Complete member add validation and verify organization ownership of zone, sub-zone, and title before insert.
-- [ ] Complete member edit validation, ownership checks, duplicate handling, and success/error feedback.
+- [x] Validate member-add fields and verify organization ownership of zone, sub-zone, and title before insert.
+- [x] Complete member edit validation, ownership checks, duplicate handling, CSRF validation, and success/error feedback.
 - [ ] Confirm member deletion behavior and retention policy; warn about cascading deletion of dependent records.
 - [ ] Implement list search, filters, pagination, and export based on the actual member query.
 - [ ] Remove mock member rows and use an honest empty state when a directory is empty.
 - [ ] Wire title create/edit/delete/reorder actions and enforce organization-scoped level/name uniqueness.
 - [ ] Wire zone and sub-zone create/edit/delete actions, validating the parent zone's organization on every handler.
+- [x] Scope zone/title create/edit forms and handlers to the active organization, validate sub-zone parent ownership, and point title creation at its existing handler.
 - [ ] Remove placeholder zone rows and `#` action links.
 - [ ] Scope suspension/reinstatement lookup and mutation by organization and validate allowed status transitions.
 - [ ] Persist `org_id` on suspension records and expose a correctly scoped history.
@@ -178,26 +182,28 @@ This is the implementation tracker for taking the current prototype to a secure,
 
 ## Phase 9: Make CBT Scheduling And Assessment Reliable
 
-- [ ] Add a persisted scheduled date/time field or remove the misleading schedule-time input; make stored time authoritative.
-- [ ] Fix the undefined `$expiresSqlValue` in `admin/proc-schedule-cbt.php` and test the scheduled email end to end.
-- [ ] Define timezone storage/display rules for schedule, portal window, response deadline, and attempt expiration.
+- [x] Persist the scheduled date/time in UTC, show it in Africa/Lagos time, and prevent code requests before the appointment; the 36-hour response window starts at the appointment.
+- [ ] Test the CBT scheduled email end to end.
+- [x] Use UTC for CBT appointment, response-window, attempt, and new result-submission timestamps; display staff-facing appointment/result times in Africa/Lagos time.
 - [ ] Define whether global admission/CBT start/end settings gate applicant access; enforce those rules on the server.
 - [ ] Ensure exam creation/update and question create/edit/delete handlers require organization ownership.
-- [ ] Prevent deleting or changing an exam in a way that corrupts active attempts/results.
-- [ ] Validate question text, answer options, correct answer, pass mark, duration, and minimum exam readiness.
-- [ ] Add a preview/review step before an exam becomes active.
-- [ ] Make exam assignment deterministic and persist the selected exam before issuing a code.
-- [ ] Generate cryptographically secure access codes, store them safely, rate-limit requests, and define code expiry/reuse behavior.
-- [ ] Avoid revealing whether an email belongs to a particular applicant more than the product permits.
-- [ ] Make code issuance idempotent and recoverable when SMTP fails after the code record is written.
-- [ ] Ensure one applicant cannot start multiple concurrent or repeated attempts unless explicitly allowed.
-- [ ] Enforce timer, eligibility, attempt count, and deadline on the server, not only in JavaScript/session UI.
-- [ ] Ensure answer submission accepts only question IDs and options belonging to the assigned exam.
-- [ ] Add a unique database constraint/transaction lock preventing duplicate results under concurrent submissions.
-- [ ] Confirm score rounding, skipped-answer behavior, pass-mark comparison, and result persistence rules.
-- [ ] Keep correct answers inaccessible in applicant-facing HTML/JSON before submission.
-- [ ] Replace mock applicant/result rows and placeholder links with real records or empty states.
-- [ ] Add a result detail view and a documented result review/approval policy.
+- [x] Prevent deleting questions from active exams or exams assigned to applicants/results; no exam edit/delete handler exists yet.
+- [x] Create exams as drafts and allow activation only after the question set is complete; lock the set after activation.
+- [x] Validate question text, answer options, correct answer, pass mark, duration, and minimum exam readiness.
+- [x] Add a preview/review step showing all questions and correct answers before an exam becomes active.
+- [x] Make exam assignment deterministic and persist the selected exam before issuing a code.
+- [x] Generate cryptographically secure access codes, store them safely, and define code expiry/reuse behavior.
+- [x] Rate-limit CBT access-code requests and verification attempts.
+- [x] Avoid revealing whether an email belongs to a particular applicant more than the product permits in CBT code-request responses.
+- [x] Make code issuance recoverable when SMTP fails after the code record is written; failed delivery requires requesting a replacement code.
+- [x] Ensure one applicant cannot start multiple concurrent or repeated attempts unless explicitly allowed.
+- [x] Enforce timer, eligibility, attempt count, and deadline on the server, not only in JavaScript/session UI.
+- [x] Ensure answer submission accepts only question IDs and options belonging to the assigned exam.
+- [x] Add a unique database constraint and transaction lock preventing duplicate results under concurrent submissions.
+- [x] Confirm score rounding, skipped-answer behavior, pass-mark comparison, and result persistence rules.
+- [x] Keep correct answers inaccessible in applicant-facing HTML/JSON before submission.
+- [x] Replace mock CBT applicant/result rows and placeholder links with real records or empty states.
+- [x] Add a read-only result detail view and document that scores/statuses are system-calculated with no manual override or separate approval state.
 - [ ] Test valid/invalid codes, expiry, early/late access, no questions, malformed answers, duplicate submits, database rollback, and mail failure.
 
 ## Phase 10: Secure Document Lifecycle

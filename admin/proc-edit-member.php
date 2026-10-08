@@ -7,6 +7,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$csrfToken = $_POST['csrf_token'] ?? '';
+$sessionToken = $_SESSION['member_edit_csrf'] ?? '';
+if (!is_string($csrfToken) || !is_string($sessionToken) || $sessionToken === '' || !hash_equals($sessionToken, $csrfToken)) {
+    header('Location: member-directory.php?status=error&msg=' . urlencode('The edit request expired. Please try again.'));
+    exit;
+}
+
 $memberId = (int) ($_POST['member_id'] ?? 0);
 $firstName = trim($_POST['first_name'] ?? '');
 $lastName = trim($_POST['last_name'] ?? '');
@@ -19,11 +26,11 @@ $joinedDate = $_POST['joined_date'] ?? '';
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-if ($memberId < 1 || $firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate)) {
+if ($memberId < 1 || $firstName === '' || strlen($firstName) > 50 || $lastName === '' || strlen($lastName) > 50 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100 || strlen($phone) > 20 || $titleId < 0 || $zoneId < 0 || $subzoneId < 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate) || !checkdate((int) substr($joinedDate, 5, 2), (int) substr($joinedDate, 8, 2), (int) substr($joinedDate, 0, 4))) {
     header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('Enter valid member details.'));
     exit;
 }
-if ($adminRole !== 'super_admin' && $orgId === null) {
+if ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1)) {
     header('Location: member-directory.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
     exit;
 }
@@ -36,6 +43,19 @@ if (!$member) {
     exit;
 }
 $memberOrgId = (int) $member['org_id'];
+
+$duplicateEmail = mysqli_prepare($conn, 'SELECT id FROM members WHERE email = ? AND id <> ? LIMIT 1');
+if (!$duplicateEmail) {
+    header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('The member could not be updated.'));
+    exit;
+}
+mysqli_stmt_bind_param($duplicateEmail, 'si', $email, $memberId);
+mysqli_stmt_execute($duplicateEmail);
+$duplicateEmailResult = mysqli_stmt_get_result($duplicateEmail);
+if ($duplicateEmailResult && mysqli_num_rows($duplicateEmailResult) > 0) {
+    header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('That email address is already assigned to another member.'));
+    exit;
+}
 
 if ($zoneId > 0) {
     $zoneCheck = mysqli_query($conn, 'SELECT id FROM zones WHERE id = ' . $zoneId . ' AND org_id = ' . $memberOrgId . ' LIMIT 1');
@@ -78,5 +98,8 @@ if ($adminRole === 'super_admin') {
 }
 $success = mysqli_stmt_execute($statement);
 $message = $success ? 'Member updated successfully.' : 'Could not update the member. The email may already exist.';
+if ($success) {
+    unset($_SESSION['member_edit_csrf']);
+}
 header('Location: edit-member.php?id=' . $memberId . '&status=' . ($success ? 'success' : 'error') . '&msg=' . urlencode($message));
 exit;

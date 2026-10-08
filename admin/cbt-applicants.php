@@ -5,7 +5,7 @@ require_once "../inc/db.php";
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-$applicantsSql = "SELECT id, application_number, applicant_name, email, phone, status, applied_at FROM admissions WHERE status = 'under_review'";
+$applicantsSql = "SELECT id, application_number, applicant_name, email, phone, status, applied_at, cbt_scheduled_at FROM admissions WHERE status = 'under_review'";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $applicantsSql .= " AND org_id = " . (int) $orgId;
 }
@@ -13,12 +13,33 @@ $applicantsSql .= " ORDER BY applied_at DESC";
 $applicantsResult = mysqli_query($conn, $applicantsSql);
 
 $applicants = [];
-if ($applicantsResult) { 
-  while ($applicant = mysqli_fetch_assoc($applicantsResult)) { 
-    $applicants[] = $applicant; 
-  } 
+if (!$applicantsResult) {
+  error_log('CBT applicants query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT applicants are temporarily unavailable.');
+}
+while ($applicant = mysqli_fetch_assoc($applicantsResult)) {
+    $applicants[] = $applicant;
 }
 
+$admissionStatsSql = 'SELECT status, COUNT(*) AS total FROM admissions';
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $admissionStatsSql .= ' WHERE org_id = ' . (int) $orgId;
+}
+$admissionStatsSql .= ' GROUP BY status';
+$admissionStatsResult = mysqli_query($conn, $admissionStatsSql);
+$admissionStats = ['pending' => 0, 'under_review' => 0, 'cbt_completed' => 0, 'approved' => 0, 'rejected' => 0];
+if (!$admissionStatsResult) {
+  error_log('CBT applicant statistics query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT applicant statistics are temporarily unavailable.');
+}
+while ($stat = mysqli_fetch_assoc($admissionStatsResult)) {
+  if (array_key_exists($stat['status'], $admissionStats)) {
+    $admissionStats[$stat['status']] = (int) $stat['total'];
+  }
+}
+$totalApplications = array_sum($admissionStats);
 ?>
 <!doctype html>
 <html lang="en">
@@ -118,19 +139,19 @@ if ($applicantsResult) {
           <!-- Summary Stat Cards Grid -->
           <section class="stats-grid mb-4">
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo count($applicants); ?></div>
-    <div class="suspension-stat-label">Application Review</div>
+    <div class="suspension-stat-value"><?php echo $totalApplications; ?></div>
+    <div class="suspension-stat-label">Total Applications</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'under_review')); ?></div>
+    <div class="suspension-stat-value"><?php echo $admissionStats['under_review']; ?></div>
     <div class="suspension-stat-label">CBT Review</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'pending')); ?></div>
+    <div class="suspension-stat-value"><?php echo $admissionStats['pending']; ?></div>
     <div class="suspension-stat-label">Onboarding</div>
   </div>
   <div class="suspension-stat-card">
-    <div class="suspension-stat-value text-primary"><?php echo count(array_filter($applicants, fn($applicant) => $applicant['status'] === 'approved')); ?></div>
+    <div class="suspension-stat-value text-primary"><?php echo $admissionStats['approved']; ?></div>
     <div class="suspension-stat-label">Approved</div>
   </div>
 </section>
@@ -145,7 +166,8 @@ if ($applicantsResult) {
                   <th>Application No.</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>Expire Date</th>
+                  <th>Applied Date</th>
+                  <th>CBT Scheduled</th>
                   <th style="text-align: right;">Action</th>
                 </tr>
               </thead>
@@ -158,66 +180,13 @@ if ($applicantsResult) {
                       <td><?php echo htmlspecialchars($applicant['application_number']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['email']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['phone']); ?></td>
-                      <td><?php echo htmlspecialchars($applicant['applied_at']); ?></td>
+                      <td><?php echo htmlspecialchars($applicant['applied_at'], ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo $applicant['cbt_scheduled_at'] === null ? 'Not scheduled' : htmlspecialchars((new DateTimeImmutable($applicant['cbt_scheduled_at'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Africa/Lagos'))->format('Y-m-d H:i') . ' (Africa/Lagos)', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td style="text-align: right;"><span class="badge-pill status-under-review"><?php echo ucwords(str_replace('_', ' ', $applicant['status'])); ?></span></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
-                <tr>
-                  <td>01</td>
-                  <td>Joseph Raymond</td>
-                  <td>APP-PLACEHOLDER</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>10-06-26</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>02</td>
-                  <td>Joseph Raymond</td>
-                  <td>APP-PLACEHOLDER</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>10-06-26</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>03</td>
-                  <td>Joseph Raymond</td>
-                  <td>APP-PLACEHOLDER</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>10-06-26</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>04</td>
-                  <td>Joseph Raymond</td>
-                  <td>APP-PLACEHOLDER</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>10-06-26</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>05</td>
-                  <td>Joseph Raymond</td>
-                  <td>APP-PLACEHOLDER</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>10-06-26</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
+                <tr><td colspan="8" class="zone-empty-state">There are no applicants currently under review for CBT.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>

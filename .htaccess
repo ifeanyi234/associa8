@@ -1,6 +1,9 @@
 RewriteEngine On
 RewriteBase /associa8/
 
+# Uploaded documents must be served through the authorization-checked download route.
+RewriteRule ^admin/uploads/documents/ - [F,L,NC]
+
 # Only redirect GET/HEAD requests, never POST (POST redirects lose form data)
 RewriteCond %{REQUEST_METHOD} ^(GET|HEAD)$
 RewriteCond %{THE_REQUEST} \s/associa8/([^\s?]+)\.php[\s?] [NC]

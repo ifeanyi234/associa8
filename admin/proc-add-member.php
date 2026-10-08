@@ -15,25 +15,31 @@ $joinedDate = $_POST['joined_date'] ?? '';
 $titleId = (int) ($_POST['title_id'] ?? 0);
 $zoneId = (int) ($_POST['zone_id'] ?? 0);
 $subzoneId = (int) ($_POST['subzone_id'] ?? 0);
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $titleId < 1 || $zoneId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate)) {
+if ($orgId === null || $orgId < 1 || $firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || $titleId < 1 || $zoneId < 1 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate)) {
     header('Location: add-member.php?status=error&msg=' . urlencode('Complete all member fields with valid values.'));
     exit;
 }
 
-if ($subzoneId > 0) {
-    $subzoneCheck = mysqli_query($conn, "SELECT id FROM subzones WHERE id = $subzoneId AND zone_id = $zoneId LIMIT 1");
-    if (!$subzoneCheck || mysqli_num_rows($subzoneCheck) === 0) {
-        header('Location: add-member.php?status=error&msg=' . urlencode('The selected sub-zone does not belong to the chosen zone.'));
-        exit;
-    }
+if (!checkdate((int) substr($joinedDate, 5, 2), (int) substr($joinedDate, 8, 2), (int) substr($joinedDate, 0, 4))) {
+    header('Location: add-member.php?status=error&msg=' . urlencode('Enter a valid joined date.'));
+    exit;
 }
 
-$adminRole = $_SESSION['admin_role'] ?? 'admin';
-$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
-if ($adminRole !== 'super_admin' && $orgId === null) {
-    header('Location: add-member.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
+$zoneCheck = mysqli_query($conn, "SELECT id FROM zones WHERE id = $zoneId AND org_id = $orgId LIMIT 1");
+$titleCheck = mysqli_query($conn, "SELECT id FROM titles WHERE id = $titleId AND org_id = $orgId LIMIT 1");
+if (!$zoneCheck || mysqli_num_rows($zoneCheck) === 0 || !$titleCheck || mysqli_num_rows($titleCheck) === 0) {
+    header('Location: add-member.php?status=error&msg=' . urlencode('The selected title or zone does not belong to your organization.'));
     exit;
+}
+
+if ($subzoneId > 0) {
+    $subzoneCheck = mysqli_query($conn, "SELECT sz.id FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE sz.id = $subzoneId AND sz.zone_id = $zoneId AND z.org_id = $orgId LIMIT 1");
+    if (!$subzoneCheck || mysqli_num_rows($subzoneCheck) === 0) {
+        header('Location: add-member.php?status=error&msg=' . urlencode('The selected sub-zone does not belong to your organization and chosen zone.'));
+        exit;
+    }
 }
 
 $codeResult = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(member_code, 5) AS UNSIGNED)) AS last_number FROM members WHERE member_code REGEXP '^ASC-[0-9]+$'");

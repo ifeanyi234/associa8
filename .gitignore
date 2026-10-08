@@ -1,6 +1,7 @@
 # Sensitive config — never commit real credentials
 inc/mail-config.php
 inc/db.php
+inc/db.local.php
 
 # Composer dependencies (installed via composer install, not committed)
 /vendor/

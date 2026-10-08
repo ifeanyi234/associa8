@@ -2,7 +2,17 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 $id = (int) ($_GET['id'] ?? 0);
-$titleResult = mysqli_query($conn, "SELECT id, title, level, description FROM titles WHERE id = $id LIMIT 1");
+$adminRole = $_SESSION['admin_role'] ?? 'admin';
+$orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if ($id < 1 || ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1))) {
+  header('Location: titles-hierarchy.php?status=error&msg=' . urlencode('The selected title could not be found.'));
+  exit;
+}
+$titleSql = "SELECT id, title, level, description FROM titles WHERE id = $id";
+if ($adminRole !== 'super_admin') {
+  $titleSql .= ' AND org_id = ' . $orgId;
+}
+$titleResult = mysqli_query($conn, $titleSql . ' LIMIT 1');
 $title = $titleResult ? mysqli_fetch_assoc($titleResult) : null;
 
 if (!$title) {

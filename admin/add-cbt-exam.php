@@ -54,19 +54,11 @@ require_once "../inc/db.php";
                     <input class="form-control" type="number" id="duration" name="duration_minutes" min="1" value="60" required />
                   </div>
                 </div>
-                <div class="form-row-2col">
-                  <div class="form-group">
-                    <label class="form-label" for="passMark">Pass mark</label>
-                    <input class="form-control" type="number" id="passMark" name="pass_mark" min="0" max="100" value="50" required />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label" for="status">Status</label>
-                    <select class="form-select" id="status" name="status">
-                      <option value="draft">Draft</option>
-                      <option value="active">Active</option>
-                    </select>
-                  </div>
+                <div class="form-group">
+                  <label class="form-label" for="passMark">Pass mark</label>
+                  <input class="form-control" type="number" id="passMark" name="pass_mark" min="0" max="100" value="50" required />
                 </div>
+                <p class="page-subtitle">New exams start as drafts. Add questions, then activate the exam when it is ready.</p>
                 <div class="structure-form-actions">
                   <a href="cbt-questions.php" class="btn-action-dark-outline">Cancel</a>
                   <button class="btn-navy-filled" type="submit">
@@ -85,4 +77,3 @@ require_once "../inc/db.php";
 </script>
   </body>
 </html>
-

@@ -19,7 +19,7 @@ if ($admissionStatsResult) {
   } 
 }
 
-$admissionsSql = "SELECT a.id, a.application_number, a.applicant_name, a.email, a.guarantor_name, a.guarantor_relationship, a.status, a.applied_at, r.score, r.status AS result_status FROM admissions a LEFT JOIN cbt_results r ON r.admission_id = a.id";
+$admissionsSql = "SELECT a.id, a.application_number, a.applicant_name, a.email, a.guarantor_name, a.guarantor_relationship, a.status, a.applied_at, r.score, r.status AS result_status FROM admissions a LEFT JOIN cbt_results r ON r.admission_id = a.id AND r.org_id = a.org_id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $admissionsSql .= " WHERE a.org_id = " . (int) $orgId;
 }

@@ -5,18 +5,21 @@ require_once "../inc/db.php";
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 
-$resultsSql = "SELECT r.id, r.score, r.status, r.taken_at, COALESCE(m.first_name, SUBSTRING_INDEX(a.applicant_name, ' ', 1)) AS first_name, COALESCE(m.last_name, TRIM(SUBSTRING(a.applicant_name, LENGTH(SUBSTRING_INDEX(a.applicant_name, ' ', 1)) + 1))) AS last_name, COALESCE(m.email, a.email) AS email, COALESCE(m.phone, a.phone) AS phone, e.title AS exam_title FROM cbt_results r LEFT JOIN members m ON m.id = r.member_id LEFT JOIN admissions a ON a.id = r.admission_id INNER JOIN cbt_exams e ON e.id = r.exam_id";
+$resultsSql = "SELECT r.id, r.score, r.status, r.taken_at, COALESCE(m.first_name, SUBSTRING_INDEX(a.applicant_name, ' ', 1)) AS first_name, COALESCE(m.last_name, TRIM(SUBSTRING(a.applicant_name, LENGTH(SUBSTRING_INDEX(a.applicant_name, ' ', 1)) + 1))) AS last_name, COALESCE(m.email, a.email) AS email, COALESCE(m.phone, a.phone) AS phone, e.title AS exam_title FROM cbt_results r LEFT JOIN members m ON m.id = r.member_id AND m.org_id = r.org_id LEFT JOIN admissions a ON a.id = r.admission_id AND a.org_id = r.org_id INNER JOIN cbt_exams e ON e.id = r.exam_id AND e.org_id = r.org_id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
-  $resultsSql .= " WHERE r.org_id = " . (int) $orgId . " AND e.org_id = " . (int) $orgId . " AND (m.org_id = " . (int) $orgId . " OR a.org_id = " . (int) $orgId . ")";
+  $resultsSql .= " WHERE r.org_id = " . (int) $orgId;
 }
 $resultsSql .= " ORDER BY r.taken_at DESC";
 $resultsResult = mysqli_query($conn, $resultsSql);
 
 $results = [];
-if ($resultsResult) { 
-  while ($result = mysqli_fetch_assoc($resultsResult)) {
-    $results[] = $result; 
-  } 
+if (!$resultsResult) {
+  error_log('CBT results query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('CBT results are temporarily unavailable.');
+}
+while ($result = mysqli_fetch_assoc($resultsResult)) {
+  $results[] = $result;
 }
 
 ?>
@@ -127,7 +130,8 @@ if ($resultsResult) {
                   <th>Phone</th>
                   <th>Score</th>
                   <th>Status</th>
-                  <th style="text-align: right;">Exam</th>
+                  <th>Exam</th>
+                  <th style="text-align: right;">Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -144,70 +148,12 @@ if ($resultsResult) {
                         <span class="badge-pill <?php echo $result['status'] === 'passed' ? 'status-active' : 'status-inactive'; ?>"><?php echo ucfirst($result['status']); ?>
                         </span>
                       </td>
-                      <td style="text-align: right;"><?php echo htmlspecialchars($result['exam_title']); ?></td>
+                      <td><?php echo htmlspecialchars($result['exam_title']); ?></td>
+                      <td style="text-align: right;"><a class="btn-outline-primary" href="cbt-result-detail.php?result_id=<?php echo (int) $result['id']; ?>">View result</a></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
-                <tr>
-                  <td>01</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>45</td>
-                  <td>Finished</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>02</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>50</td>
-                  <td>Finished</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>03</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>65</td>
-                  <td>Finished</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>04</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>80</td>
-                  <td>Finished</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
-                <tr>
-                  <td>05</td>
-                  <td>Joseph</td>
-                  <td>Raymond</td>
-                  <td>j-ray@gmail.com</td>
-                  <td>081234565789</td>
-                  <td>90</td>
-                  <td>Finished</td>
-                  <td style="text-align: right;">
-                    <a href="#" style="color: #64748b; text-decoration: none; font-weight: 500;">View all</a>
-                  </td>
-                </tr>
+                <tr><td colspan="9" class="zone-empty-state">No CBT results have been recorded yet.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>

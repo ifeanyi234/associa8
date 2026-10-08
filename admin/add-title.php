@@ -70,7 +70,7 @@ $message = $_GET['msg'] ?? '';
                 <p>Titles are used to organize member grades and responsibilities.</p>
               </div>
             </div>
-            <form action="proc-structure.php" method="POST" class="structure-form">
+            <form action="proc-add-title.php" method="POST" class="structure-form">
               <input type="hidden" name="type" value="title" />
               <div class="form-row-2col">
                 <div class="form-group">

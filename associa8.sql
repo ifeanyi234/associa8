@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 05, 2026 at 01:59 PM
+-- Generation Time: Oct 07, 2026 at 03:58 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -114,9 +114,12 @@ CREATE TABLE `admissions` (
   `guarantor_relationship` varchar(50) DEFAULT NULL,
   `status` enum('pending','under_review','cbt_completed','approved','rejected') DEFAULT 'pending',
   `exam_code` varchar(10) DEFAULT NULL,
+  `exam_code_hash` varchar(255) DEFAULT NULL,
   `cbt_response_deadline` datetime DEFAULT NULL,
   `exam_expires_at` datetime DEFAULT NULL,
+  `cbt_attempt_started_at` datetime DEFAULT NULL,
   `cbt_exam_id` int(10) UNSIGNED DEFAULT NULL,
+  `cbt_scheduled_at` datetime DEFAULT NULL,
   `reviewed_by` int(10) UNSIGNED DEFAULT NULL,
   `applied_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -125,20 +128,20 @@ CREATE TABLE `admissions` (
 -- Dumping data for table `admissions`
 --
 
-INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `exam_code`, `cbt_response_deadline`, `exam_expires_at`, `cbt_exam_id`, `reviewed_by`, `applied_at`) VALUES
-(1, 1, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, '2026-09-25 04:52:03', NULL, NULL, NULL, '2026-09-06 18:58:00'),
-(2, 1, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:53:54'),
-(3, 1, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:56:27'),
-(4, 1, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-14 13:20:54'),
-(5, 1, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:43:11'),
-(6, 1, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:45:15'),
-(7, 1, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:50:27'),
-(9, 1, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, '2026-09-17 10:55:18'),
-(10, 1, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', 'AD0B93', '2026-09-25 23:09:04', '2026-09-24 13:09:33', 3, NULL, '2026-09-17 11:51:47'),
-(11, 1, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'cbt_completed', '4D9C3D', '2026-09-25 23:07:30', '2026-09-24 13:07:50', 3, NULL, '2026-09-20 20:56:18'),
-(12, 1, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', '24F1F3', '2026-09-25 23:01:26', '2026-09-24 13:04:31', 3, NULL, '2026-09-20 20:58:45'),
-(13, 1, 'APP-2026-012', 'Jacob Ramsey', 'jacobramsey@yahoo.com', '04033333333', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', '61C6E8', '2026-09-25 04:47:46', '2026-09-23 18:51:09', 3, NULL, '2026-09-22 12:35:12'),
-(14, 1, 'APP-2026-013', 'Ifeanyi wisdom', 'eifeanyi320@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', '66FF24', '2026-09-26 22:34:12', '2026-09-25 12:39:01', 3, NULL, '2026-09-25 11:33:46');
+INSERT INTO `admissions` (`id`, `org_id`, `application_number`, `applicant_name`, `email`, `phone`, `guarantor_name`, `guarantor_email`, `guarantor_phone`, `guarantor_relationship`, `status`, `exam_code`, `exam_code_hash`, `cbt_response_deadline`, `exam_expires_at`, `cbt_attempt_started_at`, `cbt_exam_id`, `reviewed_by`, `applied_at`) VALUES
+(1, 1, 'APP-2026-001', 'Chioma Ihugba', 'chiomaihugba@gmail.com', '04033333333', '', NULL, NULL, NULL, 'under_review', NULL, NULL, '2026-09-25 04:52:03', NULL, NULL, NULL, NULL, '2026-09-06 18:58:00'),
+(2, 1, 'APP-2026-002', 'Osemudiamhen Moses Osas', 'osasmoses@proton.me', '08043281337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:53:54'),
+(3, 1, 'APP-2026-003', 'Sodipe Tumininu Esther', 'queentutu234@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:56:27'),
+(4, 1, 'APP-2026-004', 'Ezeh Ifeanyi Wisdom', 'ei711283@gmail.com', '07043277337', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 13:20:54'),
+(5, 1, 'APP-2026-005', 'Somto Ihugba', 'somtoihugba@yahoo.com', '08037613490', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, '$2y$10$5.968Hbp4B4BNcXy7rfcdeykocVrS2Q8QtnJh0tlyiookKJyIq6Fe', '2026-10-09 01:41:28', '2026-10-09 01:41:28', NULL, 3, NULL, '2026-09-15 14:43:11'),
+(6, 1, 'APP-2026-006', 'Daniel Solomon', 'danielsolomon@gmail.com', '09167773267', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:45:15'),
+(7, 1, 'APP-2026-007', 'Ogandu Stephanie Chinemerem', 'sheisstephanie222@gmail.com', '07046834219', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 14:50:27'),
+(9, 1, 'APP-2026-008', 'Ezeh Chinaza Elizabeth', 'chinazaez@gmail.com', '08099559999', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'pending', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-17 10:55:18'),
+(10, 1, 'APP-2026-009', 'Folarin Balogun', 'folabalogun@gmail.com', '09034245643', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, NULL, '2026-09-25 23:09:04', '2026-09-24 13:09:33', NULL, 3, NULL, '2026-09-17 11:51:47'),
+(11, 1, 'APP-2026-010', 'Agu Values', 'aguvalues@gmail.com', '09067653281', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'cbt_completed', NULL, NULL, '2026-09-25 23:07:30', '2026-09-24 13:07:50', NULL, 3, NULL, '2026-09-20 20:56:18'),
+(12, 1, 'APP-2026-011', 'Lewyike God\'s-Kingdom', 'lewygk@yahoo.com', '07064532397', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'approved', NULL, NULL, '2026-09-25 23:01:26', '2026-09-24 13:04:31', NULL, 3, NULL, '2026-09-20 20:58:45'),
+(13, 1, 'APP-2026-012', 'Jacob Ramsey', 'jacobramsey@gmail.com', '04033333333', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, '2026-09-25 04:47:46', '2026-09-23 18:51:09', NULL, 3, NULL, '2026-09-22 12:35:12'),
+(14, 1, 'APP-2026-013', 'Ifeanyi wisdom', 'eifeanyi320@gmail.com', '09163398468', 'Olumide Abikoye', 'oabikay@yahoo.com', '09050408571', 'Employer', 'under_review', NULL, NULL, '2026-09-26 22:34:12', '2026-09-25 12:39:01', NULL, 3, NULL, '2026-09-25 11:33:46');
 
 -- --------------------------------------------------------
 
@@ -218,6 +221,26 @@ INSERT INTO `cbt_questions` (`id`, `exam_id`, `question_text`, `option_a`, `opti
 (9, 3, 'In 2009, Hull City’s Jimmy Bullard scored a penalty against Manchester City and led one of the most famous goal celebrations in football history. What did he do?', 'He took off his jersey to reveal a shirt that said \"Hire Me Pep\"', 'He ran to the opposition fans and challenged them to a arm-wrestling contest', 'He sat all his teammates down on the pitch and gave them a mock, angry team talk like manager Phil Brown', 'He pulled out a folding chair and took a quick 30-second nap on the pitch', 'He did the moonwalk all the way back to the center circle', 'C', '2026-09-22 15:57:42'),
 (10, 3, 'During the infamous \"Battle of Old Trafford\" between Arsenal and Manchester United in 2003, what did Arsenal defender Martin Keown do immediately after Ruud van Nistelrooy missed a last-minute penalty?', 'He offered Van Nistelrooy a gentle hug to cheer him up', 'He executed a backflip directly over the referee', 'He sprinted to the corner flag and snapped it in half', 'He jumped straight over Van Nistelrooy, screamed in his face, and smashed him on the back of the head', 'He ran off the pitch and sat in the dugout', 'D', '2026-09-22 15:59:57'),
 (11, 3, 'In February 2016, Manchester United manager Louis van Gaal got so fed up with Arsenal players diving that he decided to demonstrate it to the fourth official. What did he do on the touchline?', 'He threw his clipboards and glasses directly at the referee', 'He started rolling on the grass for two full minutes', 'He called his assistant manager over and tackled him to the ground', 'He challenged the linesman to a footrace along the touchline', 'He dramatically threw himself backward onto his back, lying flat on the floor live on TV', 'E', '2026-09-22 16:01:44');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cbt_rate_limits`
+--
+
+CREATE TABLE `cbt_rate_limits` (
+  `action_key` varchar(40) NOT NULL,
+  `subject_hash` char(64) NOT NULL,
+  `window_started_at` datetime NOT NULL,
+  `attempts` int(10) UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `cbt_rate_limits`
+--
+
+INSERT INTO `cbt_rate_limits` (`action_key`, `subject_hash`, `window_started_at`, `attempts`) VALUES
+('cbt_code_request_ip', 'eff8e7ca506627fe15dda5e0e512fcaad70b6d520f37cc76597fdb4f2d83a1a3', '2026-10-07 13:50:02', 1);
 
 -- --------------------------------------------------------
 
@@ -487,7 +510,8 @@ INSERT INTO `notifications` (`id`, `member_id`, `admission_id`, `type`, `title`,
 (11, NULL, 10, 'cbt_completed', 'Application status: Cbt Completed', 'Your CBT assessment is complete. Score: 60%. Result: Failed. Final admission approval is still pending.', 0, '2026-09-24 13:33:34'),
 (12, NULL, 10, 'approved', 'Application status: Approved', 'Your Associa8 application is now approved.', 0, '2026-09-24 14:01:42'),
 (13, NULL, 14, 'pending', 'Application status: Pending', 'Your Associa8 application is now pending.', 0, '2026-09-25 11:33:47'),
-(14, NULL, 14, 'under_review', 'Application status: Under Review', 'Your application is under review. You have 24 hours to request your CBT access code, followed by a 12-hour grace period.', 0, '2026-09-25 11:34:12');
+(14, NULL, 14, 'under_review', 'Application status: Under Review', 'Your application is under review. You have 24 hours to request your CBT access code, followed by a 12-hour grace period.', 0, '2026-09-25 11:34:12'),
+(15, NULL, 5, 'under_review', 'Application status: Under Review', 'Your application is under review. You have 24 hours to request your CBT access code, followed by a 12-hour grace period.', 0, '2026-10-07 14:41:29');
 
 -- --------------------------------------------------------
 
@@ -757,14 +781,21 @@ ALTER TABLE `cbt_questions`
   ADD KEY `exam_id` (`exam_id`);
 
 --
+-- Indexes for table `cbt_rate_limits`
+--
+ALTER TABLE `cbt_rate_limits`
+  ADD PRIMARY KEY (`action_key`,`subject_hash`),
+  ADD KEY `idx_cbt_rate_limits_window` (`window_started_at`);
+
+--
 -- Indexes for table `cbt_results`
 --
 ALTER TABLE `cbt_results`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_cbt_admission_attempt` (`admission_id`),
   ADD KEY `exam_id` (`exam_id`),
   ADD KEY `member_id` (`member_id`),
-  ADD KEY `cbt_results_org_fk` (`org_id`),
-  ADD KEY `cbt_results_admission_idx` (`admission_id`);
+  ADD KEY `cbt_results_org_fk` (`org_id`);
 
 --
 -- Indexes for table `documents`
@@ -963,7 +994,7 @@ ALTER TABLE `cbt_questions`
 -- AUTO_INCREMENT for table `cbt_results`
 --
 ALTER TABLE `cbt_results`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `documents`
@@ -1023,7 +1054,7 @@ ALTER TABLE `message_threads`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `org-info`
