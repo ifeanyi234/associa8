@@ -49,11 +49,13 @@ The diagram is the target journey, not a claim that every edge is complete. Dire
 
 ### 2. Admin and member authentication
 
-**Admin path:** `admin/index.php` posts credentials to `admin/proc-login.php`. The handler verifies a password hash in `acc-info`, finds the admin profile by `admin-info.acc_id`, and stores user, organization, role, zone, and sub-zone values in the session. The account/profile relationship is represented in the schema by `acc_id`; the earlier README claim that login relied on matching auto-increment IDs was obsolete.
+**Admin path:** `admin/index.php` posts a username/email and password to `admin/proc-login.php`. The handler verifies the password hash in `acc-info`, requires an active account linked to `admin-info.acc_id`, and regenerates the session ID. `admin/inc/auth.php` rechecks account status, organization, and role on protected requests, then enforces preset role permissions.
 
 **Member path:** `member-login.php` posts to `proc-member-login.php`; the handler looks up the email, verifies the member password, blocks suspended accounts, sets member/organization/zone session values, regenerates the session ID, and redirects to the member dashboard. `admin/member/inc/auth.php` protects member pages by checking the member session.
 
-**Remaining:** `admin/inc/auth.php` checks only for a logged-in `user_id`; it does not enforce admin role, organization membership, or module permissions. `admin/user-controls.php` and `admin/process-user.php` create users in the separate `users` table, but the login handler authenticates from `acc-info`; those created users are therefore not integrated into the login/authorization path. Module permissions are stored but are not consistently enforced. The default password created by `process-user.php` is shared and predictable. No complete password reset/change, MFA, account invitation, or member first-login credential setup is evident. Admin login should also be reviewed for session-ID regeneration and brute-force protections.
+**Staff access:** an organization administrator invites a person into the organization's existing workspace. The person receives a 48-hour email link, sets their own password, and gets a login account linked to the invited organization's role and data. Invitation tokens are stored hashed; admins can review, resend, or cancel pending invitations. Existing databases need `migrations/20261008_staff_user_control.sql` and `migrations/20261008_staff_invitations.sql`. SMTP must be configured for invitation delivery. The separate `users` table remains for legacy foreign-key references and is not the staff login source.
+
+**Remaining:** test invitation delivery/acceptance and organization role boundaries end to end; implement account password-reset emails and staff-account audit history. Failed-login rate limiting and cookie/idle-timeout policies also remain outstanding.
 
 `logout.php` clears the session and sends the user to the public homepage. Confirm that admin and member logout entry points both terminate the intended session and land on the correct login page.
 
@@ -63,7 +65,7 @@ The diagram is the target journey, not a claim that every edge is complete. Dire
 
 **Release blocker:** a column or foreign key alone does not enforce tenant isolation. The current schema and routes still have gaps:
 
-- `events` has no organization ID, and the member events page queries the shared events table without a tenant filter. Event attendance and RSVPs depend on the event/member relationship, but no event-management flow currently closes that boundary.
+- Events now carry organization ownership in the fresh schema, and event lists, creation, cancellation, and RSVP handlers scope through the authenticated organization. Existing databases need `migrations/20261008_events_tenant_scope.sql`; legacy events remain unassigned and hidden until an administrator explicitly maps them. RSVP and event/member relationships are checked in application handlers but do not yet have composite tenant foreign keys.
 - `portal_settings` has a globally unique `portal_key`; its admin form and handler query/write by key without the signed-in organization, so the schema cannot represent independent settings for each organization as currently indexed.
 - `attendance_logs`, `finance_transactions`, event records, messaging, notifications, activity records, member preferences, and member sessions do not all have direct organization IDs. Any tenant scoping for these must be enforced consistently through trusted foreign-key relationships and joins.
 - `admin/proc-delete-document.php` looks up and deletes by document ID without checking the session organization. `admin/proc-suspension.php` looks up/updates a member by ID without checking the session organization and inserts a suspension without its `org_id`.
@@ -74,9 +76,9 @@ Before launch, inventory every read, insert, update, delete, download, and backg
 
 ### 4. Admin dashboard and staff accounts
 
-`admin/dashboard.php` is a visual dashboard with hardcoded totals, chart data, activity entries, and links. `admin/user-controls.php` reads the `users` table and `admin/process-user.php` can create a user plus module permission rows.
+`admin/dashboard.php` remains a visual dashboard with hardcoded totals, chart data, and activity entries. `admin/user-controls.php` invites people into the existing organization workspace; accepted invitations create their own login linked to that organization's data and role.
 
-**Remaining:** dashboard metrics and activity need to be computed from tenant-scoped data. The `users` authentication/permission model must either be fully integrated with organization accounts and the session guard or removed in favor of one coherent identity model. User editing, disabling, password invitation/reset, and effective permission checks need working flows. Admin role checks should be enforced on every protected handler, not merely hidden in the sidebar.
+**Remaining:** dashboard metrics and activity need to be computed from tenant-scoped data. Password-reset emails and account-change audit history need working flows. Some legacy tables still reference `users`; that table is not used for staff authentication. Continue testing role enforcement on every protected handler and cross-organization request.
 
 ### 5. Membership directory, titles, zones, and suspensions
 
@@ -116,10 +118,10 @@ Before launch, inventory every read, insert, update, delete, download, and backg
 
 - **Directly created members:** `admin/proc-add-member.php` does not set a password, so the new member cannot use the email/password login until a credential setup flow exists.
 - **Profile:** the profile page reads member data, but its “Edit Information” button is not connected to a form or the update processor, so profile editing is not currently reachable through that page. Photo upload and account/security controls are also incomplete. Confirm every profile lookup includes the session organization where practical.
-- **Attendance:** the member page reads attendance history. The admin `admin/attendance.php` page is static sample content; there is no verified admin capture, editing, or reporting workflow.
+- **Attendance:** the member page and admin list read attendance records. The admin list retains its original dashboard design, with entry on a separate `admin/add-attendance.php` page. It supports organization-scoped manual present/late/absent entry, duplicate-per-member-per-local-day checks, and name/member-code/zone plus status filters. It does not yet link entries to events, provide corrections/audit history, pagination/export, or have a verified browser end-to-end test.
 - **Documents:** member visibility is queried, but direct-download authorization and zone ownership need verification as noted above.
-- **Events:** member listing reads shared events and displays RSVP controls, but “Book a Seat” has no submission handler. There is no complete organization-scoped event creation, capacity enforcement, cancellation, or attendance-recording workflow.
-- **Payments:** member payment history reads transaction rows, but “Pay up” is inert. There is no verified admin record-payment handler or payment provider/webhook/reconciliation/receipt flow; `admin/financial.php` is mostly hardcoded demo figures.
+- **Events:** organization-scoped event listing, creation, cancellation, member booking/cancellation, capacity enforcement, waitlisting for full limited-capacity events, and automatic waitlist promotion are implemented. No staff approval step is part of the current waitlist flow. Empty seat limits mean unlimited; existing databases should also apply `migrations/20261008_fix_unlimited_event_capacity.sql` to repair zero values saved by the earlier form and promote affected waitlisted RSVPs. Event editing, staff event-attendance capture, automated notifications, and verified browser end-to-end tests remain outstanding. Legacy event rows must be assigned an organization after migration; until then they are not displayed.
+- **Payments:** member payment history reads transaction rows, but “Pay up” is inert. `admin/financial.php` reads organization-scoped transaction rows and computes real summary totals. Organization admins can record an offline payment; the transaction and an actor/method/reference activity entry are saved together. Dues creation, payment provider/webhook/reconciliation/receipt flow, export, and browser end-to-end testing remain incomplete.
 - **Messages:** a member can view stored threads/replies, but the reply field has no form/handler and the page always selects the first thread. A staff-side compose/send flow is not established.
 - **Notifications:** the dashboard reads notifications, but there is no complete read/unread management or preference delivery flow. Settings switches do not persist preferences.
 - **Settings:** displayed values are database-backed in places, but account edits, password change, MFA, session revocation, notification preferences, regional settings, and deactivation buttons are not connected to handlers.
@@ -153,7 +155,7 @@ The design has useful foreign keys, but not all tenant-owned records have a dire
 - Decide whether admissions are staff-only or public; build and validate the intended applicant intake path.
 - Persist and enforce portal/CBT schedule windows, fix the missing schedule expiry value, and test email-failure recovery.
 - Implement event administration, RSVP/capacity/cancellation, attendance capture, staff messaging and member replies, real finance operations/payment provider integration, receipts/reconciliation, and notification preferences as required by the MVP.
-- Replace hardcoded dashboard/attendance/finance data and placeholder table rows with real tenant-scoped queries or explicit empty states.
+- Replace remaining hardcoded dashboard data with real tenant-scoped queries or explicit empty states; finance and general admin attendance mock rows have been replaced, but their full workflows remain incomplete.
 - Repair contact form delivery, remove dead `#` calls to action, and either complete or remove the admin signup shell.
 
 ### P2: release quality and operations

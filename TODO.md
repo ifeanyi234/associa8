@@ -8,6 +8,8 @@ This is the implementation tracker for taking the current prototype to a secure,
 
 **Honest delivery status:** the admissions/CBT security work is substantially improved, but the app is still not complete enough to present as a finished product. The most visible unfinished areas are finance, attendance, and event workflows. These are still blockers for a boss-facing demo and must be treated as unfinished until they are tested and functional. Security hardening is important, but it does not replace basic feature completion.
 
+**Work in progress (2026-10-08):** the fake finance cards/table have been replaced by organization-scoped transaction data, and organization admins can now record offline payments with an activity-log entry. Admin attendance uses the restored list-page design at `admin/attendance.php` and a separate entry form at `admin/add-attendance.php`, with duplicate checks, status filters, and organization-scoped records. Synthetic finance/attendance records have been seeded in the local database for UI testing. Finance dues setup/online payments and event-linked attendance remain incomplete, and the browser flows still need end-to-end verification.
+
 ## Project Status Snapshot (truth check)
 
 This project is not in a "mostly finished" state. It is a mixed-status product with a secure core in some admission/CBT areas and multiple unfinished business modules still exposed in the UI.
@@ -33,7 +35,7 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 - [ ] Finance pages and any payment summary/dues logic that is still hardcoded or mock-driven
 - [ ] Attendance pages and any real check-in/check-out workflow
 - [ ] Event pages and RSVP booking flow
-- [ ] Module assignment UI [admin/user-controls.php](admin/user-controls.php) must not present unfinished modules as working features
+- [ ] Do not treat a staff role as proof that an unfinished module is ready; keep the role-to-module access list aligned with working features
 
 ### Boss-facing rule
 - A page or module is not complete because it exists in the admin sidebar or user-controls form.
@@ -42,11 +44,11 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ### Immediate execution list
 1. [ ] Audit all visible admin modules and remove or disable any feature that is still static/mock before showing the app to management.
-2. [ ] Fix the Finance module completely: replace static cards and fake values with real tenant-scoped data and authorized workflows.
-3. [ ] Fix the Attendance module completely: real attendance records, validation, duplicate prevention, and organization-scoped reporting.
+2. [ ] Finish the Finance module: dues creation, Paystack verification, receipts, exports, and full workflow tests are still missing; offline payment entry is now implemented but still needs a browser walkthrough and isolation verification.
+3. [ ] Finish the Attendance module: event-linked check-in, corrections/audit history, export/pagination, and end-to-end organization-isolation tests are still missing.
 4. [ ] Fix the Events/RSVP module completely: event ownership, capacity logic, booking/cancellation flow, and member access rules.
-5. [ ] Re-check every permission toggle in [admin/user-controls.php](admin/user-controls.php) against the actual pages behind it.
-6. [ ] Enforce module-level authorization consistently across all admin handlers and page loads, not just the CBT/admissions area.
+5. [ ] Re-check the preset role descriptions in [admin/user-controls.php](admin/user-controls.php) against the enforced access on each page and handler.
+6. [ ] Test module-level authorization across all admin handlers and page loads, including denied direct URL and POST requests.
 7. [ ] Run a full end-to-end walkthrough for each major module using safe test data and record real pass/fail results.
 8. [ ] After the working modules are proven, write the final boss-facing summary with only verified, working features listed.
 
@@ -54,8 +56,8 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 - [x] Write and approve the MVP user roles: platform operator, organization owner/admin, manager/staff with assigned permissions, member, and applicant.
 - [x] Agree on the high-level access boundary: platform operator is cross-organization; organization admin is limited to its organization; staff are limited to assigned modules; members and applicants have limited self-service access.
-- [x] Set permission defaults: org owner/admin has all access in their organization; managers get assigned modules but no staff/role management, organization settings, or refunds; staff get assigned task-level access, with sensitive actions restricted unless granted.
-- [ ] Map those defaults to exact module/action permissions and implement enforcement in every relevant page and handler.
+- [x] Set preset role defaults: organization admins have all organization modules and staff-account controls; managers have members, admissions, documents, events, and attendance; staff have day-to-day member viewing, documents, events, and attendance, without finance, admissions, CBT, or staff-account controls.
+- [x] Map preset roles to server-side module and handler checks; keep staff member-directory actions read-only.
 - [x] Decide whether `super_admin` means platform-wide access or organization-level superuser; it means platform-wide operator access. Organization owners/admins are scoped to their own organization.
 - [x] Decide whether applicants self-apply publicly, are entered by staff, or both: both paths feed one admission workflow.
 - [x] Decide whether members can be created manually, only by approved admissions, or by both paths: both direct creation and admission approval are supported.
@@ -133,23 +135,24 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ## Phase 4: Finish Authentication And Account Lifecycle
 
-- [ ] Select one canonical staff identity model and migrate/retire the unused competing account flow.
-- [ ] Ensure a staff login always resolves its linked admin profile and organization through explicit foreign keys.
-- [ ] Reject login for disabled/unverified staff accounts and members under the agreed account policy.
+- [x] Select the canonical staff login model: `acc-info` credentials linked to `admin-info` organization/role profiles.
+- [x] Ensure staff login resolves its linked admin profile and organization before opening a session.
+- [x] Reject login and invalidate active requests for disabled staff accounts.
 - [x] Regenerate the session ID after successful admin authentication.
 - [ ] Set session cookies `HttpOnly`, `Secure` in production, and an appropriate `SameSite` policy.
 - [ ] Set session lifetime, idle timeout, logout invalidation, and concurrent-session policy.
 - [ ] Add rate limiting and/or progressive delay for repeated failed login attempts.
 - [ ] Add password reset with single-use, expiring, hashed reset tokens and email delivery.
 - [ ] Add authenticated password change requiring the current password and appropriate CSRF protection.
-- [ ] Remove the shared `Welcome123!` password and replace it with one-time invitation/reset links.
+- [ ] Verify organization staff invitations deliver a single-use, expiring link and invitees can set their own password to access the same organization workspace.
+- [ ] Add staff password reset emails using single-use, expiring hashed tokens.
 - [ ] Add member account invitation/activation for members created directly by staff.
 - [ ] Make admission approval account activation recoverable if the approval email is delayed or rejected.
-- [ ] Force a password change on first login when a temporary credential is used, or avoid sending temporary passwords entirely.
 - [ ] Decide whether OTP in organization signup is real verification; implement it securely or remove the unused field and storage.
 - [ ] Add email verification for organization/admin/member identities where required by the product.
 - [ ] Implement MFA only if included in the agreed release; ensure UI state cannot claim it is enabled without server-side enrollment and verification.
-- [ ] Add account disable/reactivation flows with appropriate audit history.
+- [ ] End-to-end test organization-scoped staff invitations, role assignment/change, cancellation/resend, disable, and reactivation.
+- [ ] Add an audit history for staff account creation, role changes, password resets, and disable/reactivation.
 - [ ] Verify admin logout and member logout clear the correct session and redirect to the appropriate login page.
 
 ## Phase 5: Complete Organization Signup And Onboarding
@@ -173,10 +176,10 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 - [ ] Replace the hardcoded dashboard member, finance, attendance, application, chart, and activity figures with tenant-scoped queries.
 - [ ] Add explicit empty, loading, query-error, and permission-denied states to dashboard widgets.
 - [ ] Confirm each dashboard total uses a documented period, status definition, and timezone.
-- [ ] Implement the agreed role and module permission matrix in server-side code.
-- [ ] Restrict user creation, role changes, permission changes, disablement, and resets to authorized admins.
-- [ ] Scope staff accounts and permissions to the organization; do not expose another organization's user records.
-- [ ] Add edit, disable/reactivate, role update, module-permission update, and invite/reset actions for staff if staff accounts are in MVP.
+- [x] Implement the agreed preset role permission matrix in server-side code.
+- [x] Restrict staff invitations, role changes, and disablement to authorized organization/platform admins.
+- [x] Scope organization-admin staff controls to their organization; allow platform admins to choose the target organization.
+- [ ] Test invitation, role update, disable, and reactivate actions for staff.
 - [ ] Log security-sensitive staff and permission changes with actor, organization, target, timestamp, and outcome.
 - [ ] Replace placeholder profile names/roles in the shared admin header with authenticated session data.
 - [ ] Fix logout navigation and every dead admin navigation route or remove the link.
@@ -278,17 +281,17 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ## Phase 12: Implement Events And RSVPs
 
-- [ ] Add organization ownership to events and migrate the schema/data safely.
-- [ ] Build event list/create/edit/cancel/delete views and handlers with role and organization checks.
-- [ ] Validate event date/time/timezone, capacity, visibility, and required fields.
-- [ ] Add tenant-aware indexes and constraints for event/member RSVP uniqueness.
-- [ ] Implement member RSVP and cancellation handlers with CSRF protection.
-- [ ] Enforce event capacity atomically; define waitlist promotion and duplicate RSVP behavior.
-- [ ] Ensure a member can only RSVP to their own organization's event.
-- [ ] Add staff attendee list and attendance recording tied to the event.
-- [ ] Add member-facing event details and accurate booked/waitlisted/cancelled states.
+- [x] Add organization ownership to events in the fresh schema and provide a migration; explicitly map any legacy unassigned events before exposing them.
+- [x] Build organization-scoped event list/create/cancel views and handlers with CSRF protection.
+- [ ] Add event editing and staff attendee list/attendance recording tied to the event.
+- [x] Validate event name, date/time in Africa/Lagos, optional capacity, and organization visibility.
+- [x] Add an organization/date/status index and retain unique member/event RSVP constraints.
+- [x] Implement member RSVP and cancellation handlers with CSRF protection.
+- [x] Enforce capacity under a locked event row; place full bookings on the waitlist, promote the next member after a cancellation, and make repeated bookings safe.
+- [x] Ensure a member can only RSVP to an event belonging to their own organization.
+- [x] Add member-facing event cards with booked, waitlisted, cancelled, and booking-closed states.
 - [ ] Notify members of event changes, reminders, cancellations, and waitlist promotion if required.
-- [ ] Test capacity races, duplicate submissions, cancellation, event edits, and cross-tenant access.
+- [ ] Test capacity races, duplicate submissions, cancellation, legacy-event mapping, and cross-tenant access end to end.
 
 ## Phase 13: Implement Finance And Payments
 

@@ -18,6 +18,7 @@
             </a>
           </li>
 
+          <?php if (admin_has_permission('members_view')): ?>
           <!-- Membership (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -36,6 +37,7 @@
                   </div>
                 </a>
               </li>
+              <?php if (admin_has_permission('members_manage')): ?>
               <li>
                 <a href="titles-hierarchy.php" class="sidebar-link">
                   <div class="sidebar-link-content">
@@ -60,9 +62,12 @@
                   </div>
                 </a>
               </li>
+              <?php endif; ?>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('admission')): ?>
           <!-- Admissions (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -81,6 +86,7 @@
                   </div>
                 </a>
               </li>
+              <?php if (admin_has_permission('admin_only')): ?>
               <li>
                 <a href="portal-settings.php" class="sidebar-link">
                   <div class="sidebar-link-content">
@@ -89,9 +95,12 @@
                   </div>
                 </a>
               </li>
+              <?php endif; ?>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('cbt_management')): ?>
           <!-- CBT Management (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -128,7 +137,9 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('finance')): ?>
           <!-- Financial (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -149,7 +160,9 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('attendance')): ?>
           <!-- Attendance (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -170,7 +183,21 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('events')): ?>
+          <!-- Events -->
+          <li class="sidebar-item">
+            <a href="events.php" class="sidebar-link">
+              <div class="sidebar-link-content">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Events</span>
+              </div>
+            </a>
+          </li>
+          <?php endif; ?>
+
+          <?php if (admin_has_permission('document')): ?>
           <!-- Document (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -199,7 +226,9 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('user_control')): ?>
           <!-- Administration (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -220,7 +249,9 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('admin_only')): ?>
           <!-- Communication (Dropdown) -->
           <li class="sidebar-item dropdown">
             <a href="javascript:void(0)" class="sidebar-link">
@@ -251,6 +282,7 @@
               </div>
             </a>
           </li>
+          <?php endif; ?>
         </ul>
 
         <div class="sidebar-footer">

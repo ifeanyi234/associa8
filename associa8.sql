@@ -31,8 +31,10 @@ CREATE TABLE `acc-info` (
   `id` int(30) NOT NULL,
   `org_id` int(15) NOT NULL,
   `username` varchar(100) NOT NULL,
-  `password` varchar(150) NOT NULL,
-  `otp` varchar(10) NOT NULL
+  `password` varchar(255) NOT NULL,
+  `otp` varchar(10) NOT NULL,
+  `status` enum('active','disabled') NOT NULL DEFAULT 'active',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -70,7 +72,7 @@ CREATE TABLE `admin-info` (
   `first-name` varchar(100) NOT NULL,
   `last-name` varchar(100) NOT NULL,
   `email` varchar(150) NOT NULL,
-  `phone` int(20) NOT NULL,
+  `phone` bigint(20) DEFAULT NULL,
   `job-title` varchar(200) NOT NULL,
   `role` varchar(40) NOT NULL,
   `zone_id` int(10) UNSIGNED DEFAULT NULL,
@@ -309,6 +311,7 @@ INSERT INTO `documents` (`id`, `org_id`, `title`, `owner_name`, `file_path`, `fi
 
 CREATE TABLE `events` (
   `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
   `title` varchar(200) NOT NULL,
   `event_type` varchar(50) DEFAULT NULL,
   `event_date` date NOT NULL,
@@ -316,6 +319,7 @@ CREATE TABLE `events` (
   `venue` varchar(255) DEFAULT NULL,
   `capacity` int(10) UNSIGNED DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `status` enum('scheduled','cancelled') NOT NULL DEFAULT 'scheduled',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -809,7 +813,8 @@ ALTER TABLE `documents`
 -- Indexes for table `events`
 --
 ALTER TABLE `events`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `events_org_date` (`org_id`,`event_date`,`status`);
 
 --
 -- Indexes for table `event_attendance`
@@ -1171,6 +1176,12 @@ ALTER TABLE `documents`
   ADD CONSTRAINT `documents_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `events`
+--
+ALTER TABLE `events`
+  ADD CONSTRAINT `events_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `event_attendance`
 --
 ALTER TABLE `event_attendance`
@@ -1266,6 +1277,31 @@ ALTER TABLE `user_module_permissions`
 --
 ALTER TABLE `zones`
   ADD CONSTRAINT `zones_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
+-- Table structure for table `staff_invitations`
+--
+CREATE TABLE `staff_invitations` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `org_id` int(15) NOT NULL,
+  `invited_by` int(30) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `phone` varchar(16) DEFAULT NULL,
+  `job_title` varchar(200) NOT NULL,
+  `role` varchar(40) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `accepted_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_invitations_email` (`email`),
+  UNIQUE KEY `staff_invitations_token_hash` (`token_hash`),
+  KEY `staff_invitations_org_status` (`org_id`, `accepted_at`, `expires_at`),
+  CONSTRAINT `staff_invitations_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `staff_invitations_inviter_fk` FOREIGN KEY (`invited_by`) REFERENCES `acc-info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

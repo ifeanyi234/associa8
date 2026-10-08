@@ -53,7 +53,7 @@ if ($subzonesResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -141,7 +141,7 @@ if ($subzonesResult) {
               <!-- Visibility -->
               <div style="margin-bottom: 1.75rem;">
                 <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
-                  Visibility
+                  Visibility <?php admin_info_tip('Organization-wide documents are visible throughout the organization. Zone or sub-zone visibility limits them to that group.', 'Document visibility help'); ?>
                 </label>
                 <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
                   <label style="display: inline-flex; align-items: center; gap: 0.5rem;">

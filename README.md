@@ -34,6 +34,10 @@ Treat dashboard figures, seed records, and controls without a POST handler as pr
 
 The actual `inc/db.php`, `inc/db.local.php`, and `inc/mail-config.php` files are intentionally ignored local configuration; do not commit them or put credentials in the example templates. On a live server, configure environment variables in the hosting environment or secret manager rather than reusing local development credentials. Rotate credentials if real values were ever committed. The SQL dump contains sample data and should not be imported as production customer data. There is no migration runner documented yet; schema changes must be planned and applied consistently to existing databases.
 
+### Local finance and attendance demo data
+
+To populate the local `associa8` database with clearly labeled sample records, run `php tests/seed_demo_finance_attendance.php` from the project root. The script refuses non-CLI execution and non-local databases. It adds synthetic `DEMO-FIN-*` members, finance transactions, and general attendance records under organization ID 1; its SQL is safe to rerun and does not overwrite existing rows. Remove only those demo records with `php tests/cleanup_demo_finance_attendance.php`. Do not load these fixtures into a shared or production database.
+
 ### Applying a database migration
 
 For a **new local or production database**, import `associa8.sql` only; it already contains the current schema. Do not run the upgrade scripts after importing that dump.
@@ -53,8 +57,12 @@ CBT appointment times are entered in Africa/Lagos time and stored in UTC. Respon
 ## Important Limitations
 
 - Organization IDs exist in parts of the schema and many admin queries, but organization scoping is not complete across all tables and workflows.
-- The admin session gate checks that a user is logged in; role and module permissions are not consistently enforced by the gate.
-- Finance and admin attendance pages are largely mockups. Event, messaging, member settings, and several admin actions have incomplete write paths.
+- Admin login verifies a separate password hash per account; protected admin pages and handlers enforce the account's active state, organization, and preset role.
+- Organization User Control sends a 48-hour invitation to grant someone access to the organization's existing workspace. The invitee sets their own password; the invitation token is stored hashed and the organization role applies when they sign in. Organization admins can manage their own staff; platform super admins can select an organization. Existing databases need `migrations/20261008_staff_user_control.sql` and `migrations/20261008_staff_invitations.sql`. Invitation mail requires the configured SMTP settings. Password reset email and staff-account audit history are not yet implemented.
+- The finance page reads organization-scoped transaction records and supports administrator-recorded offline payments with an activity-log entry. Dues creation, Paystack checkout/webhooks, refunds, receipts, export, and reconciliation are not implemented end to end.
+- Admin attendance uses a list page and a separate add-attendance page, with organization-scoped manual records and filtering. Attendance is not yet linked to events, and pagination/export/correction workflows remain unfinished.
+- Events now have organization-scoped admin creation/cancellation and member bookings with capacity limits, waitlisting, cancellation, and waitlist promotion. Existing databases need `migrations/20261008_events_tenant_scope.sql`; it leaves pre-existing events unassigned intentionally, so map each legacy event to its correct organization before making it visible. Also apply `migrations/20261008_fix_unlimited_event_capacity.sql` to normalize legacy zero-capacity events to unlimited and promote members who were incorrectly waitlisted. Event editing, staff event-attendance capture, notifications, and browser end-to-end testing remain incomplete.
+- Messaging, member settings, and several admin actions have incomplete write paths.
 - The contact form points to a handler that is not present in the repository, and the separate `admin/signup.php` form is a nonfunctional shell.
 - No automated test suite or CI workflow was found during the repository review. The application has not been verified end to end against a clean database in this documentation update.
 

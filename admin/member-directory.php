@@ -71,7 +71,7 @@ if ($membersResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -127,10 +127,12 @@ if ($membersResult) {
               <h2 class="page-title-main">Member Directory</h2>
               <p class="page-subtitle"><?php echo $memberCount; ?> total members across all zones</p>
             </div>
-            <a href="add-member.php" class="btn-outline-primary">
-              <i class="fa-solid fa-user-plus"></i>
-              <span>Add members</span>
-            </a>
+            <?php if (admin_has_permission('members_manage')): ?>
+              <a href="add-member.php" class="btn-outline-primary">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Add members</span>
+              </a>
+            <?php endif; ?>
           </div>
 
           <!-- Search & Status Filter Toolbar -->
@@ -191,18 +193,22 @@ if ($membersResult) {
                       <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucfirst($member['status']); ?></span></td>
                       <td><span class="badge-pill dues-current">Not available</span></td>
                       <td><?php echo htmlspecialchars($member['joined_date'] ?: 'Not provided'); ?></td>
-                      <td>
-                        <div class="dropdown admission-actions">
-                          <button class="btn-action-trigger" type="button" aria-label="Member actions" aria-expanded="false"><i class="fa-solid fa-ellipsis"></i></button>
-                          <div class="dropdown-menu">
-                            <a class="dropdown-item" href="edit-member.php?id=<?php echo (int) $member['id']; ?>"><i class="fa-solid fa-pen"></i> Edit</a>
-                            <form action="proc-delete-member.php" method="POST" onsubmit="return confirm('Delete this member? This cannot be undone.');">
-                              <input type="hidden" name="member_id" value="<?php echo (int) $member['id']; ?>" />
-                              <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
-                            </form>
+                      <?php if (admin_has_permission('members_manage')): ?>
+                        <td>
+                          <div class="dropdown admission-actions">
+                            <button class="btn-action-trigger" type="button" aria-label="Member actions" aria-expanded="false"><i class="fa-solid fa-ellipsis"></i></button>
+                            <div class="dropdown-menu">
+                              <a class="dropdown-item" href="edit-member.php?id=<?php echo (int) $member['id']; ?>"><i class="fa-solid fa-pen"></i> Edit</a>
+                              <form action="proc-delete-member.php" method="POST" onsubmit="return confirm('Delete this member? This cannot be undone.');">
+                                <input type="hidden" name="member_id" value="<?php echo (int) $member['id']; ?>" />
+                                <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
+                              </form>
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
+                      <?php else: ?>
+                        <td></td>
+                      <?php endif; ?>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>

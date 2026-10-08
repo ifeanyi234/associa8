@@ -14,7 +14,7 @@ require_once "../inc/db.php";
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="../css/preloader.css" />
-<link rel="stylesheet" href="../css/dashboard.css" />
+<link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -50,15 +50,15 @@ require_once "../inc/db.php";
                     <input class="form-control" id="title" name="title" required />
                   </div>
                   <div class="form-group">
-                    <label class="form-label" for="duration">Duration minutes</label>
+                    <label class="form-label" for="duration">Duration minutes <?php admin_info_tip('This is the time limit the applicant gets after starting the exam.', 'Exam duration help'); ?></label>
                     <input class="form-control" type="number" id="duration" name="duration_minutes" min="1" value="60" required />
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="passMark">Pass mark</label>
+                  <label class="form-label" for="passMark">Pass mark <?php admin_info_tip('Enter the minimum score, as a percentage, required to pass.', 'Pass mark help'); ?></label>
                   <input class="form-control" type="number" id="passMark" name="pass_mark" min="0" max="100" value="50" required />
                 </div>
-                <p class="page-subtitle">New exams start as drafts. Add questions, then activate the exam when it is ready.</p>
+                <p class="page-subtitle">Exam setup <?php admin_info_tip('New exams are drafts. Add complete questions, review them, then activate the exam. Activation locks the questions.', 'Exam setup help'); ?></p>
                 <div class="structure-form-actions">
                   <a href="cbt-questions.php" class="btn-action-dark-outline">Cancel</a>
                   <button class="btn-navy-filled" type="submit">

@@ -64,7 +64,7 @@ $takenAt = (new DateTimeImmutable($result['taken_at'], new DateTimeZone('UTC')))
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -104,7 +104,7 @@ $takenAt = (new DateTimeImmutable($result['taken_at'], new DateTimeZone('UTC')))
               <dt>Submitted</dt>
               <dd><?php echo htmlspecialchars($takenAt, ENT_QUOTES, 'UTF-8'); ?> (Africa/Lagos)</dd>
             </dl>
-            <p class="page-subtitle">This is the automatically calculated result. Staff review is read-only and does not change the score, pass/fail status, or admission status.</p>
+            <p class="page-subtitle">Assessment result <?php admin_info_tip('The score and pass/fail result are calculated from the answers and exam pass mark. This review is read-only and does not change the admission status.', 'Assessment result help'); ?></p>
           </section>
         </div>
         <?php include('inc/footer.php'); ?>

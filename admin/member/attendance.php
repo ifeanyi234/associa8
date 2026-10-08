@@ -53,7 +53,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -100,9 +100,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
             <div class="summary-card">
               <div class="summary-card-header">
                 <span class="summary-card-title">Total Records</span>
-                <div class="summary-icon-circle">
-                  <i class="fa-solid fa-circle-info"></i>
-                </div>
+                <?php admin_info_tip('The number of attendance records recorded for you. Contact your organization if a record looks incorrect.', 'Attendance records help'); ?>
               </div>
               <div class="summary-value"><?php echo (int) $attendanceSummary['total']; ?></div>
             </div>
@@ -177,11 +175,12 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
                     <?php
                       $statusText = ucfirst($record['status'] ?? 'present');
                       $badgeClass = $record['status'] === 'present' ? 'status-text-attended' : ($record['status'] === 'late' ? 'status-text-pending' : 'status-text-missed');
+                      $localCheckIn = (new DateTimeImmutable($record['check_in'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Africa/Lagos'));
                     ?>
                     <tr>
-                      <td style="font-weight: 600; color: var(--text-primary);">Attendance Record</td>
-                      <td><?php echo htmlspecialchars(date('F j, Y', strtotime($record['check_in']))); ?></td>
-                      <td><span class="event-type-pill"><?php echo htmlspecialchars($statusText); ?></span></td>
+                      <td style="font-weight: 600; color: var(--text-primary);">General attendance</td>
+                      <td><?php echo htmlspecialchars($localCheckIn->format('F j, Y'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><span class="event-type-pill">General</span></td>
                       <td><span class="<?php echo $badgeClass; ?>"><?php echo $record['status'] === 'present' ? '<i class="fa-solid fa-check"></i>' : ($record['status'] === 'late' ? '<i class="fa-solid fa-clock"></i>' : '<i class="fa-solid fa-xmark"></i>'); ?> <?php echo htmlspecialchars($statusText); ?></span></td>
                       <td style="text-align: right;">
                         <button class="btn-action-trigger" aria-label="Options">
@@ -195,17 +194,6 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
                     <td colspan="5" class="zone-empty-state">No attendance records are available yet for this member.</td>
                   </tr>
                 <?php endif; ?>
-
-                  <td style="font-weight: 600; color: var(--text-primary);">Annual General Meeting 2025</td>
-                  <td>Jan 15, 2025</td>
-                  <td><span class="event-type-pill">Meetings</span></td>
-                  <td><span class="status-text-attended"><i class="fa-solid fa-check"></i> Attended</span></td>
-                  <td style="text-align: right;">
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </section>

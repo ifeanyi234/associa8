@@ -53,7 +53,7 @@ $message = $_GET['msg'] ?? '';
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -71,7 +71,7 @@ $message = $_GET['msg'] ?? '';
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Schedule applicant assessment</h2>
-              <p class="page-subtitle">Assign a ready exam and choose when the applicant can first request an access code. Times use Africa/Lagos time.</p>
+              <p class="page-subtitle">Assign an exam and schedule it <?php admin_info_tip('The applicant cannot request a code before the scheduled time. Their 36-hour response window starts then; the exam timer starts when they enter the code. Times use Africa/Lagos.', 'Assessment scheduling help'); ?></p>
             </div>
             <a href="cbt-applicants.php" class="btn-outline-primary"><i class="fa-solid fa-arrow-left"></i> Applicants</a>
           </div>
@@ -108,7 +108,6 @@ $message = $_GET['msg'] ?? '';
                 <div class="form-group">
                   <label class="form-label" for="scheduledAt">Scheduled time</label>
                   <input class="form-control" type="datetime-local" id="scheduledAt" name="scheduled_at" min="<?php echo htmlspecialchars($scheduleMinimum, ENT_QUOTES, 'UTF-8'); ?>" required />
-                  <small class="form-help-text">The applicant cannot request a code before this time. Their 36-hour response window starts then, and the exam timer starts when they enter the code.</small>
                 </div>
                 <div class="structure-form-actions">
                   <a href="cbt-applicants.php" class="btn-action-dark-outline">Cancel</a>

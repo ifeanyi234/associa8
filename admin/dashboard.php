@@ -29,7 +29,7 @@ require_once "inc/auth.php";
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- ====================
@@ -89,15 +89,21 @@ require_once "inc/auth.php";
             </p>
 
             <div class="banner-actions">
-              <a href="cbt-applicants.php" style="text-decoration: none;" class="btn-banner-action">
-                <i class="fa-solid fa-graduation-cap"></i> Review Applications
-              </a>
-              <a href="financial.php" style="text-decoration: none;" class="btn-banner-action">
-                <i class="fa-solid fa-wallet"></i> View Financials
-              </a>
-              <a href="attendance.php" style="text-decoration: none;" class="btn-banner-action">
-                <i class="fa-regular fa-calendar-days"></i> Attendance Reports
-              </a>
+              <?php if (admin_has_permission('cbt_management')): ?>
+                <a href="cbt-applicants.php" style="text-decoration: none;" class="btn-banner-action">
+                  <i class="fa-solid fa-graduation-cap"></i> Review Applications
+                </a>
+              <?php endif; ?>
+              <?php if (admin_has_permission('finance')): ?>
+                <a href="financial.php" style="text-decoration: none;" class="btn-banner-action">
+                  <i class="fa-solid fa-wallet"></i> View Financials
+                </a>
+              <?php endif; ?>
+              <?php if (admin_has_permission('attendance')): ?>
+                <a href="attendance.php" style="text-decoration: none;" class="btn-banner-action">
+                  <i class="fa-regular fa-calendar-days"></i> Attendance Reports
+                </a>
+              <?php endif; ?>
             </div>
           </section>
 

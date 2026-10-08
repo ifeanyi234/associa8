@@ -1,4 +1,64 @@
-<?php require_once "inc/auth.php"; ?>
+<?php
+require_once "inc/auth.php";
+require_once "../inc/db.php";
+
+$orgId = (int) ($_SESSION['org_id'] ?? 0);
+$canRecordOfflinePayments = in_array((string) ($_SESSION['admin_role'] ?? ''), ['admin', 'super_admin'], true);
+$canViewAllOrganizations = ($_SESSION['admin_role'] ?? '') === 'super_admin' && $orgId < 1;
+$memberScope = $canViewAllOrganizations ? '1 = 1' : 'm.org_id = ' . $orgId;
+$transactions = [];
+$totalCollected = 0.0;
+$pendingAmount = 0.0;
+$successfulCount = 0;
+$pendingCount = 0;
+$transactionQueryFailed = false;
+$financeNotice = $_SESSION['finance_notice'] ?? null;
+unset($_SESSION['finance_notice']);
+
+$sql = "SELECT ft.reference, CONCAT(COALESCE(m.first_name, ''), ' ', COALESCE(m.last_name, '')) AS member_name,
+               ft.type, ft.amount, ft.status, ft.paid_at, ft.created_at
+        FROM finance_transactions ft
+        LEFT JOIN members m ON m.id = ft.member_id
+        WHERE $memberScope
+        ORDER BY COALESCE(ft.paid_at, ft.created_at) DESC, ft.reference DESC";
+$result = mysqli_query($conn, $sql);
+if ($result) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $transactions[] = $row;
+        $status = strtolower((string) $row['status']);
+        $amount = (float) $row['amount'];
+        if ($status === 'successful') {
+            $totalCollected += $amount;
+            $successfulCount++;
+        } elseif ($status === 'pending') {
+            $pendingAmount += $amount;
+            $pendingCount++;
+        }
+    }
+} else {
+    error_log('Finance transaction query failed: ' . mysqli_error($conn));
+    $transactionQueryFailed = true;
+}
+
+$monthLabels = [];
+$monthKeys = [];
+$monthlyCollected = [];
+for ($offset = 5; $offset >= 0; $offset--) {
+    $month = (new DateTimeImmutable('first day of this month'))->modify("-$offset month");
+    $monthLabels[] = $month->format('M Y');
+    $monthKeys[] = $month->format('Y-m');
+    $monthlyCollected[] = 0;
+}
+foreach ($transactions as $transaction) {
+    if (strtolower((string) $transaction['status']) !== 'successful' || empty($transaction['paid_at'])) {
+        continue;
+    }
+    $monthIndex = array_search(substr($transaction['paid_at'], 0, 7), $monthKeys, true);
+    if ($monthIndex !== false) {
+        $monthlyCollected[$monthIndex] += (float) $transaction['amount'];
+    }
+}
+?>
 <!doctype html>
 <html lang="en">
   <head>
@@ -27,7 +87,7 @@
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- PRELOADER -->
@@ -78,17 +138,29 @@
           <div class="page-action-header">
             <div>
               <h2 class="page-title-main">Financial Management</h2>
-              <p class="page-subtitle">Schedules, Applications, CBT, Sponsors & Onboarding</p>
+              <p class="page-subtitle">Review payment activity recorded for your organization.</p>
             </div>
             <div style="display: flex; gap: 0.75rem;">
-              <button class="btn-navy-outline">
+              <button class="btn-navy-outline" type="button" disabled title="Export is not available yet">
                 <i class="fa-solid fa-arrow-up-from-bracket"></i> Export
               </button>
-              <button class="btn-navy-filled">
-                <i class="fa-solid fa-circle-plus"></i> Record New Payment
-              </button>
+              <?php if ($canRecordOfflinePayments): ?>
+                <a class="btn-navy-filled" href="add-payment.php">
+                  <i class="fa-solid fa-circle-plus"></i> Record New Payment
+                </a>
+              <?php else: ?>
+                <button class="btn-navy-filled" type="button" disabled title="Only organization administrators can record offline payments">
+                  <i class="fa-solid fa-circle-plus"></i> Record New Payment
+                </button>
+              <?php endif; ?>
             </div>
           </div>
+
+          <?php if (is_array($financeNotice)): ?>
+            <div class="dashboard-card" role="status" style="margin-bottom: 1rem; color: <?php echo ($financeNotice['type'] ?? '') === 'success' ? '#166534' : '#b91c1c'; ?>;">
+              <?php echo htmlspecialchars((string) ($financeNotice['text'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+          <?php endif; ?>
 
           <!-- Financial Overview Stats Grid (4 Cards) -->
           <section class="stats-grid-4">
@@ -96,36 +168,36 @@
               <div class="stat-card-icon">
                 <i class="fa-solid fa-naira-sign"></i>
               </div>
-              <div class="stat-card-number">18</div>
+              <div class="stat-card-number"><?php echo $transactionQueryFailed ? '—' : '&#8358;' . number_format($totalCollected, 0); ?></div>
               <div class="stat-card-label">Total Collected</div>
-              <div class="stat-subtext">This Fiscal year</div>
+              <div class="stat-subtext">Successful transactions</div>
             </div>
 
             <div class="stat-card-simple">
               <div class="stat-card-icon">
                 <i class="fa-regular fa-clock"></i>
               </div>
-              <div class="stat-card-number">&#8358;312k</div>
-              <div class="stat-card-label">Pending Dues</div>
-              <div class="stat-subtext">122 members in arrears</div>
+              <div class="stat-card-number"><?php echo $transactionQueryFailed ? '—' : '&#8358;' . number_format($pendingAmount, 0); ?></div>
+              <div class="stat-card-label">Pending Payments</div>
+              <div class="stat-subtext"><?php echo $transactionQueryFailed ? 'Data unavailable' : $pendingCount . ' pending transaction' . ($pendingCount === 1 ? '' : 's'); ?></div>
             </div>
 
             <div class="stat-card-simple">
               <div class="stat-card-icon">
                 <i class="fa-solid fa-chart-column"></i>
               </div>
-              <div class="stat-card-number">68%</div>
-              <div class="stat-card-label">Budget Utilized</div>
-              <div class="stat-subtext">&#8358;1.4m of &#8358;2.4m</div>
+              <div class="stat-card-number"><?php echo $transactionQueryFailed ? '—' : $successfulCount; ?></div>
+              <div class="stat-card-label">Successful Payments</div>
+              <div class="stat-subtext">Verified records in the transaction table</div>
             </div>
 
             <div class="stat-card-simple">
               <div class="stat-card-icon">
                 <i class="fa-regular fa-receipt"></i>
               </div>
-              <div class="stat-card-number">1,024</div>
-              <div class="stat-card-label">Receipts Issued</div>
-              <div class="stat-subtext">This year</div>
+              <div class="stat-card-number"><?php echo $transactionQueryFailed ? '—' : count($transactions); ?></div>
+              <div class="stat-card-label">Transaction Records</div>
+              <div class="stat-subtext">All recorded statuses</div>
             </div>
           </section>
 
@@ -142,159 +214,43 @@
             <!-- ============ OVERVIEW TAB ============ -->
             <div class="tab-pane active" id="tab-overview">
               <section class="dashboard-split-grid">
-                <!-- Left Card: Monthly Collection Vs Expected Bar Chart -->
+                <!-- Left Card: Monthly Collection -->
                 <div class="dashboard-card">
                   <div class="dashboard-card-header">
                     <div>
-                      <h3 class="dashboard-card-title">Monthly Collection Vs Expected</h3>
-                      <p class="dashboard-card-subtitle">&#8358; in naira</p>
+                      <h3 class="dashboard-card-title">Monthly Collection</h3>
+                      <p class="dashboard-card-subtitle">Successful payments in naira, last 6 months</p>
                     </div>
                   </div>
-                  <div style="height: 280px; position: relative">
-                    <canvas id="monthlyCollectionChart"></canvas>
-                  </div>
+                  <?php if ($transactionQueryFailed): ?>
+                    <div class="zone-empty-state">Financial records could not be loaded. Please refresh or contact support if the problem continues.</div>
+                  <?php elseif (array_sum($monthlyCollected) > 0): ?>
+                    <div style="height: 280px; position: relative">
+                      <canvas id="monthlyCollectionChart"></canvas>
+                    </div>
+                  <?php else: ?>
+                    <div class="zone-empty-state">No successful payments in the last six months.</div>
+                  <?php endif; ?>
                 </div>
 
-                <!-- Right Card: Budget Allocations Progress Bars -->
+                <!-- Budget figures are not available without a budget data model. -->
                 <div class="dashboard-card">
                   <div class="dashboard-card-header">
                     <h3 class="dashboard-card-title">Budget Allocations</h3>
                   </div>
-                  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                    <!-- Item 1 -->
-                    <div>
-                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                        <span>Programs & Events</span>
-                        <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
-                      </div>
-                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                        <div class="progress-bar-fill" style="width: 72%; background-color: #3b82f6;"></div>
-                      </div>
-                    </div>
-
-                    <!-- Item 2 -->
-                    <div>
-                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                        <span>Administrations</span>
-                        <span style="color: #2563eb;">72% <span style="font-weight: 400; color: #64748b;">(420K - 320K)</span></span>
-                      </div>
-                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                        <div class="progress-bar-fill" style="width: 72%; background-color: #0f172a;"></div>
-                      </div>
-                    </div>
-
-                    <!-- Item 3 -->
-                    <div>
-                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                        <span>Infrastructure</span>
-                        <span style="color: #2563eb;">65% <span style="font-weight: 400; color: #64748b;">(520K - 820K)</span></span>
-                      </div>
-                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                        <div class="progress-bar-fill" style="width: 65%; background-color: #3b82f6;"></div>
-                      </div>
-                    </div>
-
-                    <!-- Item 4 -->
-                    <div>
-                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                        <span>Welfare Dues</span>
-                        <span style="color: #2563eb;">50% <span style="font-weight: 400; color: #64748b;">(180K - 320K)</span></span>
-                      </div>
-                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                        <div class="progress-bar-fill" style="width: 50%; background-color: #3b82f6;"></div>
-                      </div>
-                    </div>
-
-                    <!-- Item 5 -->
-                    <div>
-                      <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
-                        <span>Publications</span>
-                        <span style="color: #2563eb;">43% <span style="font-weight: 400; color: #64748b;">(130K - 300K)</span></span>
-                      </div>
-                      <div class="progress-bar-wrapper" style="margin-top: 0.4rem; height: 8px;">
-                        <div class="progress-bar-fill" style="width: 43%; background-color: #3b82f6;"></div>
-                      </div>
-                    </div>
-                  </div>
+                  <div class="zone-empty-state">Budget tracking is not configured. No budget values are shown until budgets can be entered and verified.</div>
                 </div>
               </section>
             </div>
 
             <!-- ============ DUES & LEVIES TAB ============ -->
             <div class="tab-pane" id="tab-dues-levies">
-              <section class="dashboard-split-grid">
-                <!-- Annual Dues -->
-                <div class="dashboard-card">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                      <h3 class="dashboard-card-title">Annual Dues</h3>
-                      <p class="dashboard-card-subtitle">Per Year</p>
-                    </div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;45,000</div>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
-                    <span>505 / 648 members paid</span>
-                    <span style="font-weight: 600; color: var(--text-primary);">78%</span>
-                  </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 78%; background-color: #3b82f6;"></div>
-                  </div>
+              <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                  <h3 class="dashboard-card-title">Dues & Levies</h3>
                 </div>
-
-                <!-- Development Levy -->
-                <div class="dashboard-card">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                      <h3 class="dashboard-card-title">Development Levy</h3>
-                      <p class="dashboard-card-subtitle">Per Year</p>
-                    </div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;15,000</div>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
-                    <span>420 / 648 members paid</span>
-                    <span style="font-weight: 600; color: var(--text-primary);">65%</span>
-                  </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 65%; background-color: #3b82f6;"></div>
-                  </div>
-                </div>
-
-                <!-- Special Project Levy -->
-                <div class="dashboard-card">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                      <h3 class="dashboard-card-title">Special Project Levy</h3>
-                      <p class="dashboard-card-subtitle">One - Time</p>
-                    </div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;25,000</div>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
-                    <span>312 / 648 members paid</span>
-                    <span style="font-weight: 600; color: var(--text-primary);">48%</span>
-                  </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 48%; background-color: #3b82f6;"></div>
-                  </div>
-                </div>
-
-                <!-- Welfare Fund -->
-                <div class="dashboard-card">
-                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                      <h3 class="dashboard-card-title">Welfare Fund</h3>
-                      <p class="dashboard-card-subtitle">Per Quarter</p>
-                    </div>
-                    <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-primary);">&#8358;5,000</div>
-                  </div>
-                  <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); margin-top: 1.25rem;">
-                    <span>600 / 648 members paid</span>
-                    <span style="font-weight: 600; color: var(--text-primary);">93%</span>
-                  </div>
-                  <div class="progress-bar-wrapper" style="margin-top: 0.5rem; height: 8px;">
-                    <div class="progress-bar-fill" style="width: 93%; background-color: #3b82f6;"></div>
-                  </div>
-                </div>
-              </section>
+                <div class="zone-empty-state">Dues and levy obligations are not configured yet. The current transaction table records payments only, so member balances and paid percentages cannot be calculated accurately.</div>
+              </div>
             </div>
 
             <!-- ============ PAYMENT TAB ============ -->
@@ -313,51 +269,29 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td><span class="tx-ref-code">Pay - 2024 - 1180</span></td>
-                      <td class="fw-semibold">James Raymond</td>
-                      <td>Annual Dues</td>
-                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
-                      <td>2026 - 06 - 26</td>
-                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
-                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
-                    </tr>
-                    <tr>
-                      <td><span class="tx-ref-code">Pay - 2024 - 1181</span></td>
-                      <td class="fw-semibold">Joy Peters</td>
-                      <td>Develop. Levy</td>
-                      <td class="amount-cell amount-neutral">&#8358;15,000</td>
-                      <td>2026 - 06 - 26</td>
-                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
-                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
-                    </tr>
-                    <tr>
-                      <td><span class="tx-ref-code">Pay - 2024 - 1182</span></td>
-                      <td class="fw-semibold">James Raymond</td>
-                      <td>Annual Dues</td>
-                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
-                      <td>2026 - 06 - 26</td>
-                      <td><span class="badge-finance badge-finance-pending">Pending</span></td>
-                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
-                    </tr>
-                    <tr>
-                      <td><span class="tx-ref-code">Pay - 2024 - 1183</span></td>
-                      <td class="fw-semibold">Adamu Philips</td>
-                      <td>Special Levy</td>
-                      <td class="amount-cell amount-neutral">&#8358;25,000</td>
-                      <td>2026 - 06 - 26</td>
-                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
-                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
-                    </tr>
-                    <tr>
-                      <td><span class="tx-ref-code">Pay - 2024 - 1184</span></td>
-                      <td class="fw-semibold">James Raymond</td>
-                      <td>Annual Dues</td>
-                      <td class="amount-cell amount-neutral">&#8358;45,000</td>
-                      <td>2026 - 06 - 26</td>
-                      <td><span class="badge-finance badge-finance-paid">Confirmed</span></td>
-                      <td style="text-align: right;"><button class="btn-row-action" type="button" aria-label="Receipts"><i class="fa-regular fa-file-lines"></i> Receipts</button></td>
-                    </tr>
+                    <?php if ($transactionQueryFailed): ?>
+                      <tr><td colspan="7" class="zone-empty-state">Financial records could not be loaded. Please refresh or contact support if the problem continues.</td></tr>
+                    <?php elseif ($transactions): ?>
+                      <?php foreach ($transactions as $transaction): ?>
+                        <?php
+                          $status = strtolower((string) $transaction['status']);
+                          $statusLabel = $status === 'successful' ? 'Confirmed' : ucfirst($status);
+                          $statusClass = $status === 'successful' ? 'badge-finance-paid' : ($status === 'pending' ? 'badge-finance-pending' : 'badge-finance-failed');
+                          $paymentDate = $transaction['paid_at'] ?: $transaction['created_at'];
+                        ?>
+                        <tr>
+                          <td><span class="tx-ref-code"><?php echo htmlspecialchars($transaction['reference'], ENT_QUOTES, 'UTF-8'); ?></span></td>
+                          <td class="fw-semibold"><?php echo htmlspecialchars(trim((string) $transaction['member_name']) ?: 'Unknown member', ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', (string) $transaction['type'])), ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td class="amount-cell amount-neutral">&#8358;<?php echo number_format((float) $transaction['amount'], 0); ?></td>
+                          <td><?php echo htmlspecialchars(date('Y - m - d', strtotime($paymentDate)), ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td><span class="badge-finance <?php echo htmlspecialchars($statusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                          <td style="text-align: right;"><span class="text-muted">—</span></td>
+                        </tr>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <tr><td colspan="7" class="zone-empty-state">No transactions have been recorded for this organization yet.</td></tr>
+                    <?php endif; ?>
                   </tbody>
                 </table>
               </div>
@@ -367,30 +301,9 @@
             <div class="tab-pane" id="tab-budget-tracking">
               <div class="dashboard-card">
                 <div class="dashboard-card-header">
-                  <h3 class="dashboard-card-title">FYB 2026 Budget</h3>
-                  <button class="btn-outline-primary" type="button">
-                    <i class="fa-solid fa-file-export"></i>
-                    <span>Generate Report</span>
-                  </button>
+                  <h3 class="dashboard-card-title">Budget Tracking</h3>
                 </div>
-                <div style="display: flex; justify-content: space-around; text-align: center; padding: 1.5rem 0;">
-                  <div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Total Budget</div>
-                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">&#8358;2.4M</div>
-                  </div>
-                  <div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Total Spent</div>
-                    <div style="font-size: 1.75rem; font-weight: 700; color: #2563eb;">&#8358;1.64M</div>
-                  </div>
-                  <div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">Balance</div>
-                    <div style="font-size: 1.75rem; font-weight: 700; color: var(--text-primary);">&#8358;750k</div>
-                  </div>
-                </div>
-                <div class="progress-bar-wrapper" style="height: 10px;">
-                  <div class="progress-bar-fill" style="width: 68%; background-color: #2563eb;"></div>
-                </div>
-                <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 0.6rem;">68% annual budget utilized</div>
+                <div class="zone-empty-state">No budget has been entered for this organization. Budget totals and utilization will appear here when budget management is available.</div>
               </div>
             </div>
 
@@ -487,59 +400,39 @@ filterPills.forEach((pill) => {
         }
       });
 
-      // Monthly Collection Vs Expected Bar Chart Initialization
-      const ctxCollection = document.getElementById("monthlyCollectionChart").getContext("2d");
-      new Chart(ctxCollection, {
-        type: "bar",
-        data: {
-          labels: ["Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"],
-          datasets: [
-            {
-              label: "Excepted",
-              data: [120, 115, 110, 100, 95, 105, 95],
-              backgroundColor: "#60a5fa",
-              borderRadius: 3,
-              barThickness: 16
-            },
-            {
+      // Chart uses actual successful transaction totals; expected amounts are not tracked yet.
+      const collectionCanvas = document.getElementById("monthlyCollectionChart");
+      if (collectionCanvas) {
+        new Chart(collectionCanvas.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: <?php echo json_encode($monthLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
+            datasets: [{
               label: "Collected",
-              data: [85, 50, 85, 12, 70, 50, 50],
+              data: <?php echo json_encode($monthlyCollected); ?>,
               backgroundColor: "#22c55e",
               borderRadius: 3,
               barThickness: 16
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: {
-                usePointStyle: true,
-                boxWidth: 8
-              }
-            }
+            }]
           },
-          scales: {
-            y: {
-              min: 0,
-              max: 120,
-              ticks: {
-                stepSize: 30,
-                callback: (value) => (value === 0 ? "0" : value + "k")
-              },
-              grid: {
-                borderDash: [4, 4]
-              }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8 } },
+              tooltip: { callbacks: { label: (context) => "₦" + Number(context.raw).toLocaleString() } }
             },
-            x: {
-              grid: { display: false }
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: { callback: (value) => "₦" + Number(value).toLocaleString() },
+                grid: { borderDash: [4, 4] }
+              },
+              x: { grid: { display: false } }
             }
           }
-        }
-      });
+        });
+      }
     </script>
     <script src="../js/preloader.js"></script>
   </body>

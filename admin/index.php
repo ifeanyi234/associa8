@@ -64,12 +64,12 @@ if(isset($_GET['error'])) {
           >
             <!-- Username Input -->
             <div class="form-group">
-              <label for="username">Username</label>
+              <label for="username">Username or email</label>
               <input
                 type="text"
                 id="username"
                 name="username"
-                placeholder="Enter username"
+                placeholder="Enter username or email"
                 required
                 autocomplete="username"
               />

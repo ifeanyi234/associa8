@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS `staff_invitations` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `org_id` int(15) NOT NULL,
+  `invited_by` int(30) NOT NULL,
+  `first_name` varchar(100) NOT NULL,
+  `last_name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `phone` varchar(16) DEFAULT NULL,
+  `job_title` varchar(200) NOT NULL,
+  `role` varchar(40) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `accepted_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `staff_invitations_email` (`email`),
+  UNIQUE KEY `staff_invitations_token_hash` (`token_hash`),
+  KEY `staff_invitations_org_status` (`org_id`, `accepted_at`, `expires_at`),
+  CONSTRAINT `staff_invitations_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `staff_invitations_inviter_fk` FOREIGN KEY (`invited_by`) REFERENCES `acc-info` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

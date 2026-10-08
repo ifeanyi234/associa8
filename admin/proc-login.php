@@ -1,56 +1,61 @@
 <?php
-session_start();
-require_once ("../inc/db.php");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once __DIR__ . '/../inc/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($conn, trim($_POST["username"] ?? ""));
-    $password = $_POST["password"] ?? "";
-
-    $sql = "SELECT * FROM `acc-info` WHERE `username` = '$username' LIMIT 1";
-    $result = mysqli_query($conn, $sql);
-
-    if ($result && mysqli_num_rows($result) === 1) {
-        $user = mysqli_fetch_assoc($result);
-
-        if (password_verify($password, $user['password'])) {
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-
-            $admin = mysqli_query($conn, "SELECT org_id, role, zone_id, subzone_id FROM `admin-info` WHERE acc_id = " . (int) $user['id'] . " LIMIT 1");
-            if ($admin && $adminRow = mysqli_fetch_assoc($admin)) {
-                $validRoles = ['super_admin', 'admin', 'manager', 'staff'];
-                if (!isset($adminRow['role']) || !in_array($adminRow['role'], $validRoles, true)) {
-                    session_unset();
-                    session_destroy();
-                    header("Location: index.php?error=2");
-                    exit;
-                }
-
-                $_SESSION['org_id'] = isset($adminRow['org_id']) && $adminRow['org_id'] !== null ? (int) $adminRow['org_id'] : null;
-                $_SESSION['admin_role'] = $adminRow['role'];
-                $_SESSION['admin_zone_id'] = isset($adminRow['zone_id']) && $adminRow['zone_id'] !== null ? (int) $adminRow['zone_id'] : null;
-                $_SESSION['admin_subzone_id'] = isset($adminRow['subzone_id']) && $adminRow['subzone_id'] !== null ? (int) $adminRow['subzone_id'] : null;
-
-                if ($_SESSION['admin_role'] !== 'super_admin' && (!is_numeric($_SESSION['org_id']) || (int) $_SESSION['org_id'] <= 0)) {
-                    session_unset();
-                    session_destroy();
-                    header("Location: index.php?error=2");
-                    exit;
-                }
-
-                header("Location: dashboard.php");
-                exit;
-            }
-
-            session_unset();
-            session_destroy();
-            header("Location: index.php?error=2");
-            exit;
-        }
-    }
-
-    header("Location: index.php?error=1");
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
     exit;
 }
-?>
+$username = trim((string) ($_POST['username'] ?? ''));
+$password = (string) ($_POST['password'] ?? '');
+if ($username === '' || $password === '') {
+    header('Location: index.php?error=1');
+    exit;
+}
+
+$statement = mysqli_prepare(
+    $conn,
+    "SELECT a.id, a.org_id, a.username, a.password, ai.role, ai.zone_id, ai.subzone_id
+     FROM `acc-info` a
+     INNER JOIN `admin-info` ai ON ai.acc_id = a.id AND ai.org_id = a.org_id
+     WHERE (a.username = ? OR ai.email = ?) AND a.status = 'active'
+     ORDER BY (a.username = ?) DESC
+     LIMIT 1"
+);
+if (!$statement) {
+    error_log('Admin login lookup could not be prepared: ' . mysqli_error($conn));
+    header('Location: index.php?error=1');
+    exit;
+}
+mysqli_stmt_bind_param($statement, 'sss', $username, $username, $username);
+if (!mysqli_stmt_execute($statement)) {
+    error_log('Admin login lookup failed: ' . mysqli_stmt_error($statement));
+    mysqli_stmt_close($statement);
+    header('Location: index.php?error=1');
+    exit;
+}
+$result = mysqli_stmt_get_result($statement);
+$account = $result ? mysqli_fetch_assoc($result) : null;
+mysqli_stmt_close($statement);
+$validRoles = ['super_admin', 'admin', 'manager', 'staff'];
+
+if (!$account || !password_verify($password, (string) $account['password']) || !in_array($account['role'], $validRoles, true)) {
+    header('Location: index.php?error=1');
+    exit;
+}
+if ($account['role'] !== 'super_admin' && (int) $account['org_id'] < 1) {
+    header('Location: index.php?error=1');
+    exit;
+}
+
+session_regenerate_id(true);
+$_SESSION['user_id'] = (int) $account['id'];
+$_SESSION['username'] = (string) $account['username'];
+$_SESSION['org_id'] = (int) $account['org_id'];
+$_SESSION['admin_role'] = (string) $account['role'];
+$_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
+$_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
+header('Location: dashboard.php');
+exit;

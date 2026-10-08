@@ -14,7 +14,7 @@ require_once "../inc/db.php";
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
 <link rel="stylesheet" href="../css/preloader.css" />
-<link rel="stylesheet" href="../css/dashboard.css" />
+<link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -61,7 +61,7 @@ require_once "../inc/db.php";
 </div>
 <div>
 <h3>Applicant information</h3>
-<p>The application starts in pending review.</p>
+<p>Applicant information <?php admin_info_tip('Saving this form adds the application to the pending review queue. You can update its status from Admission Management.', 'Application status help'); ?></p>
 </div>
 </div>
           <form action="proc-add-admission.php" method="POST" class="structure-form">
@@ -123,4 +123,3 @@ require_once "../inc/db.php";
 </script>
   </body>
 </html>
-

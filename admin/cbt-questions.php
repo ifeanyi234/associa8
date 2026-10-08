@@ -99,7 +99,7 @@ while ($exam = mysqli_fetch_assoc($examsResult)) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -191,7 +191,7 @@ while ($exam = mysqli_fetch_assoc($examsResult)) {
 
 <section class="dashboard-card mb-4">
   <h2 class="page-title-main" style="font-size: 1.1rem;">Exams</h2>
-  <p class="page-subtitle">Exams start as drafts. Add complete questions before activating;,<br> active exam questions cannot be changed.</p>
+  <p class="page-subtitle">Exams <?php admin_info_tip('Exams begin as drafts. Add and review complete questions before activating. Once active, questions cannot be changed.', 'Exam status help'); ?></p>
   <?php if ($exams): ?>
     <?php foreach ($exams as $exam): ?>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid #e2e8f0;">
@@ -205,7 +205,7 @@ while ($exam = mysqli_fetch_assoc($examsResult)) {
             <?php if ((int) $exam['can_activate'] === 1): ?>
               <a class="btn-navy-filled" href="cbt-exam-preview.php?exam_id=<?php echo (int) $exam['id']; ?>">Review and activate</a>
             <?php else: ?>
-              <span class="page-subtitle">Needs at least one complete question; activation locks the questions.</span>
+              <span class="page-subtitle">Needs a complete question <?php admin_info_tip('The exam needs at least one complete question before it can be activated. Activation locks the question set.', 'Activation requirements help'); ?></span>
             <?php endif; ?>
           <?php endif; ?>
         </div>

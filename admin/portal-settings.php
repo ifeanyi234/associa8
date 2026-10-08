@@ -38,7 +38,7 @@ $portalDateValue = function ($value) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -89,7 +89,7 @@ $portalDateValue = function ($value) {
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Portal Settings</h2>
-              <p class="page-subtitle">Reset Every Admission Date & Time</p>
+              <p class="page-subtitle">Admission dates <?php admin_info_tip('These dates control when the admission portal opens and closes. Check the configured timezone before saving.', 'Admission portal dates help'); ?></p>
             </div>
           </div>
 

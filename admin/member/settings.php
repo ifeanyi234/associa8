@@ -29,7 +29,7 @@ $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['las
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>

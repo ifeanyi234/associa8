@@ -3123,6 +3123,75 @@ body.app-modal-open {
 
 /* 17. FORMS */
 
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.info-tip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.9rem;
+  cursor: help;
+}
+
+.info-tip-trigger:hover,
+.info-tip-trigger:focus-visible {
+  color: var(--primary-blue, #1d4ed8);
+  outline: 2px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
+}
+
+.info-tip-content {
+  position: absolute;
+  z-index: 100;
+  left: 50%;
+  bottom: calc(100% + 0.55rem);
+  width: min(19rem, calc(100vw - 2rem));
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.5rem;
+  background: #132742;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  box-shadow: 0 8px 24px rgba(10, 34, 68, 0.2);
+  visibility: hidden;
+  opacity: 0;
+  transform: translate(-50%, 0.25rem);
+  transition: none;
+  pointer-events: none;
+}
+
+.info-tip-content::after {
+  position: absolute;
+  left: calc(50% - 0.4rem);
+  top: 100%;
+  width: 0;
+  height: 0;
+  border: 0.4rem solid transparent;
+  border-top-color: #132742;
+  content: "";
+}
+
+.info-tip:hover .info-tip-content,
+.info-tip:focus-within .info-tip-content {
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: translate(-50%, 0) !important;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

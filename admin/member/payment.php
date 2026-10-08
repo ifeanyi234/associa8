@@ -48,7 +48,7 @@ if ($outstandingResult) {
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -95,9 +95,7 @@ if ($outstandingResult) {
             <div class="summary-card">
               <div class="summary-card-header">
                 <span class="summary-card-title">Outstanding Dues</span>
-                <div class="summary-icon-circle">
-                  <i class="fa-solid fa-circle-info"></i>
-                </div>
+                <?php admin_info_tip('This total includes payment records still marked pending. Check with your organization if you think a payment is missing.', 'Outstanding dues help'); ?>
               </div>
               <div class="summary-value">&#8358;<?php echo number_format($outstanding, 0); ?></div>
               <div class="summary-sublabel"><?php echo $outstanding > 0 ? 'Payment still due' : 'No pending dues'; ?></div>
@@ -107,6 +105,7 @@ if ($outstandingResult) {
             <div class="summary-card">
               <div class="summary-card-header">
                 <span class="summary-card-title">Paid This Year</span>
+                <?php admin_info_tip('This total includes successful payments recorded during the current calendar year.', 'Payments this year help'); ?>
                 <div class="summary-icon-circle">
                   <i class="fa-solid fa-check"></i>
                 </div>

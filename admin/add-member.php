@@ -33,7 +33,7 @@ if ($subzonesResult) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../css/preloader.css" />
-<link rel="stylesheet" href="../css/dashboard.css" />
+<link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -91,7 +91,7 @@ if ($subzonesResult) {
 </div>
 <div>
 <h3>Member information</h3>
-<p>Required setup records are loaded from your titles and zones.</p>
+<p>Member information <?php admin_info_tip('Create titles and zones before adding a member. Their title sets their place in the membership hierarchy; zone and sub-zone assign their location.', 'Member assignment help'); ?></p>
 </div>
 </div>
             <form action="proc-add-member.php" method="POST" class="structure-form">
@@ -236,4 +236,3 @@ if ($subzonesResult) {
 </script>
   </body>
 </html>
-

@@ -35,7 +35,7 @@ $message = $_GET['msg'] ?? '';
   <title>Edit Member - Associa8</title>
   <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
   <link rel="stylesheet" href="../css/preloader.css" />
-  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" />
