@@ -11,8 +11,7 @@ function invitationActionRedirect(string $type, string $message): void
 }
 
 if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-    http_response_code(403);
-    exit('Only organization administrators can manage invitations.');
+    admin_render_access_denied('Only organization administrators can manage staff invitations.');
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: user-controls.php');
@@ -112,7 +111,7 @@ $basePath = rtrim(dirname(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/admin/p
 $inviteUrl = $scheme . '://' . $host . $basePath . '/admin/accept-staff-invitation.php?token=' . rawurlencode($plainToken);
 $body = '<p>Hello ' . htmlspecialchars((string) $invitation['first_name'], ENT_QUOTES, 'UTF-8') . ',</p>'
     . '<p>You have been invited to access the <strong>' . htmlspecialchars((string) $invitation['organization_name'], ENT_QUOTES, 'UTF-8') . '</strong> organization workspace on Associa8.</p>'
-    . '<p>Your assigned access role is <strong>' . htmlspecialchars(ucfirst((string) $invitation['role']), ENT_QUOTES, 'UTF-8') . '</strong>. The organization administrator set this role; you cannot change it from the invitation.</p>'
+    . '<p>Your assigned access role is <strong>' . htmlspecialchars(ucfirst((string) $invitation['role']), ENT_QUOTES, 'UTF-8') . '</strong>. The organization administrator set this role;</p>'
     . '<p>Accept the invitation and choose your own password. This link expires in 48 hours.</p>'
     . '<p><a href="' . htmlspecialchars($inviteUrl, ENT_QUOTES, 'UTF-8') . '">Accept invitation and set password</a></p>'
     . '<p>If you were not expecting this invitation, you can ignore this email.</p>';

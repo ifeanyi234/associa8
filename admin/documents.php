@@ -192,7 +192,7 @@ if ($documentsResult) {
                       <td style="text-align: center;">
                         <div style="display: inline-flex; gap: 0.5rem;">
                           <a href="../document-download.php?id=<?php echo (int) $document['id']; ?>" class="btn-action-edit" target="_blank">View</a>
-                          <form action="proc-delete-document.php" method="POST" onsubmit="return confirm('Delete this document?');" style="display: inline;">
+                          <form action="proc-delete-document.php" method="POST" data-app-modal-confirm="Delete this document?" data-confirm-title="Delete document" data-confirm-detail="This action cannot be undone." style="display: inline;">
                             <input type="hidden" name="document_id" value="<?php echo (int) $document['id']; ?>" />
                             <button type="submit" class="btn-action-delete">Delete</button>
                           </form>

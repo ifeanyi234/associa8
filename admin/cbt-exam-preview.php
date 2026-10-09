@@ -164,7 +164,7 @@ $canActivate = $exam['status'] === 'draft'
             <div class="structure-form-actions" style="margin-top:20px;">
               <a href="cbt-questions.php" class="btn-action-dark-outline">Back to exams</a>
               <?php if ($canActivate): ?>
-                <form action="proc-activate-cbt-exam.php" method="POST" onsubmit="return confirm('Activate this exam? Applicants will see these questions, and you will not be able to change them.');">
+                <form action="proc-activate-cbt-exam.php" method="POST" data-app-modal-confirm="Activate this exam? Applicants will see these questions, and you will not be able to change them." data-confirm-title="Activate this exam" data-confirm-detail="The exam questions will be locked after activation.">
                   <input type="hidden" name="exam_id" value="<?php echo (int) $exam['id']; ?>" />
                   <button class="btn-navy-filled" type="submit">Confirm and activate</button>
                 </form>

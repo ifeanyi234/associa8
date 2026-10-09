@@ -3,14 +3,12 @@ require_once "inc/auth.php";
 require_once "../inc/db.php";
 
 if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-  http_response_code(403);
-  exit('Only organization administrators can manage staff accounts.');
+  admin_render_access_denied('Only organization administrators can manage staff access.');
 }
 $isPlatformAdmin = ($_SESSION['admin_role'] ?? '') === 'super_admin';
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 if ($orgId < 1) {
-  http_response_code(403);
-  exit('Your account is not connected to an organization.');
+  admin_render_access_denied('Your account is not connected to an organization. Contact your administrator for help.');
 }
 $organizationNameStmt = mysqli_prepare($conn, 'SELECT name FROM `org-info` WHERE id = ? LIMIT 1');
 if (!$organizationNameStmt) {
@@ -29,8 +27,7 @@ $organizationNameResult = mysqli_stmt_get_result($organizationNameStmt);
 $organizationRow = $organizationNameResult ? mysqli_fetch_assoc($organizationNameResult) : null;
 mysqli_stmt_close($organizationNameStmt);
 if (!$organizationRow || trim((string) $organizationRow['name']) === '') {
-  http_response_code(403);
-  exit('Your organization account could not be found.');
+  admin_render_access_denied('Your organization workspace could not be found. Contact your administrator for help.');
 }
 $organizationName = (string) $organizationRow['name'];
 $notice = $_SESSION['user_control_notice'] ?? null;
@@ -232,14 +229,11 @@ mysqli_stmt_close($invitationStmt);
           <label for="phone" class="form-label">Phone (optional)</label>
           <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. +2348012345678" maxlength="16" />
         </div>
-        <div class="form-group">
-          <label for="jobTitle" class="form-label">Job title (optional)</label>
-          <input type="text" id="jobTitle" name="job_title" class="form-control" maxlength="200" placeholder="e.g. Membership officer" />
-        </div>
+        <div></div>
       </div>
       <!-- Submit Button -->
       <div class="form-actions">
-        <?php admin_info_tip("We will email them a secure invitation to this organization's existing workspace. They choose their own password. The link expires after 48 hours.", 'Invitation help'); ?>
+        <?php admin_info_tip("You assign their access role before sending the invitation. We will email them a secure invitation to this organization's existing workspace. They choose their own password. The link expires after 48 hours.", 'Invitation help'); ?>
         <button type="submit" class="btn-primary-filled">Send Invitation</button>
       </div>
     </form>

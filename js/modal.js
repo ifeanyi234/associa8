@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const details = modal.querySelector(".app-modal-details");
   const closeButtons = modal.querySelectorAll("[data-modal-close]");
   const confirmButton = modal.querySelector("[data-modal-confirm-action]");
+  const confirmedForms = new WeakSet();
   let lastTrigger = null;
   let confirmAction = null;
 
@@ -58,6 +59,38 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && modal.classList.contains("is-open")) close();
   });
+
+  document.addEventListener(
+    "submit",
+    (event) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-app-modal-confirm")) return;
+      if (confirmedForms.has(form)) {
+        confirmedForms.delete(form);
+        return;
+      }
+
+      event.preventDefault();
+      const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
+      open({
+        type: "warning",
+        heading: form.dataset.confirmTitle || "Please confirm",
+        body: form.dataset.appModalConfirm,
+        detail: form.dataset.confirmDetail || "Please confirm to continue.",
+        confirm: true,
+        trigger: submitter,
+        onConfirm: () => {
+          confirmedForms.add(form);
+          try {
+            form.requestSubmit(submitter || undefined);
+          } finally {
+            confirmedForms.delete(form);
+          }
+        },
+      });
+    },
+    true,
+  );
 
   window.AppModal = { open, close };
 });

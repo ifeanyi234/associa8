@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/info-tip.php';
+require_once __DIR__ . '/access-denied.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -17,9 +18,10 @@ $accountId = (int) $_SESSION['user_id'];
 $accountStmt = mysqli_prepare(
     $conn,
     "SELECT a.org_id, a.username, ai.role, ai.`first-name` AS first_name, ai.`last-name` AS last_name,
-            ai.zone_id, ai.subzone_id
+            ai.zone_id, ai.subzone_id, o.name AS organization_name
      FROM `acc-info` a
      INNER JOIN `admin-info` ai ON ai.acc_id = a.id AND ai.org_id = a.org_id
+     LEFT JOIN `org-info` o ON o.id = a.org_id
      WHERE a.id = ? AND a.status = 'active'
      LIMIT 1"
 );
@@ -56,6 +58,7 @@ $_SESSION['username'] = (string) $account['username'];
 $_SESSION['org_id'] = (int) $account['org_id'];
 $_SESSION['admin_role'] = (string) $account['role'];
 $_SESSION['admin_name'] = trim((string) $account['first_name'] . ' ' . (string) $account['last_name']);
+$_SESSION['admin_organization_name'] = trim((string) ($account['organization_name'] ?? ''));
 $_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
 $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
 
@@ -140,6 +143,5 @@ $adminRoutePermissions = [
 $routeName = basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? ''));
 $requiredPermission = $adminRoutePermissions[$routeName] ?? 'admin_only';
 if (!admin_has_permission($requiredPermission)) {
-    http_response_code(403);
-    exit('You do not have permission to access this page.');
+    admin_render_access_denied();
 }

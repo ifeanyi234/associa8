@@ -199,7 +199,7 @@ if ($membersResult) {
                             <button class="btn-action-trigger" type="button" aria-label="Member actions" aria-expanded="false"><i class="fa-solid fa-ellipsis"></i></button>
                             <div class="dropdown-menu">
                               <a class="dropdown-item" href="edit-member.php?id=<?php echo (int) $member['id']; ?>"><i class="fa-solid fa-pen"></i> Edit</a>
-                              <form action="proc-delete-member.php" method="POST" onsubmit="return confirm('Delete this member? This cannot be undone.');">
+                              <form action="proc-delete-member.php" method="POST" data-app-modal-confirm="Delete this member? This cannot be undone." data-confirm-title="Delete member" data-confirm-detail="This action cannot be undone.">
                                 <input type="hidden" name="member_id" value="<?php echo (int) $member['id']; ?>" />
                                 <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
                               </form>

@@ -25,7 +25,7 @@ if(isset($_GET['error'])) {
     <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
 
     <!-- Global Stylesheet -->
-    <link rel="stylesheet" href="../css/styles.css" />
+    <link rel="stylesheet" href="../css/styles.css?v=20261009-password-toggle-1" />
   </head>
   <body class="auth-body">
     <div class="auth-wrapper">
@@ -143,21 +143,6 @@ if(isset($_GET['error'])) {
     </div>
 
     <!-- Interactive Password Toggle Script -->
-    <script>
-      const togglePasswordBtn = document.getElementById("togglePasswordBtn");
-      const passwordInput = document.getElementById("password");
-      const eyeIcon = document.getElementById("eyeIcon");
-
-      if (togglePasswordBtn && passwordInput && eyeIcon) {
-        togglePasswordBtn.addEventListener("click", () => {
-          const isPassword = passwordInput.getAttribute("type") === "password";
-          passwordInput.setAttribute("type", isPassword ? "text" : "password");
-          eyeIcon.setAttribute(
-            "icon",
-            isPassword ? "mdi:eye-outline" : "mdi:eye-off-outline",
-          );
-        });
-      }
-    </script>
+    <script src="../js/password-visibility.js?v=20261009-password-toggle-2"></script>
   </body>
 </html>

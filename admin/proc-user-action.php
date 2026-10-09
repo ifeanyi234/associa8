@@ -10,8 +10,7 @@ function userActionRedirect(string $type, string $message): void
 }
 
 if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-    http_response_code(403);
-    exit('Only organization administrators can manage staff accounts.');
+    admin_render_access_denied('Only organization administrators can manage staff access.');
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: user-controls.php');

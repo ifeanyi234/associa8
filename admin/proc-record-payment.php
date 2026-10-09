@@ -11,8 +11,7 @@ function paymentRedirect(string $type, string $text): void
 
 $adminRole = (string) ($_SESSION['admin_role'] ?? '');
 if (!in_array($adminRole, ['admin', 'super_admin'], true)) {
-    http_response_code(403);
-    exit('Only organization administrators can record offline payments.');
+    admin_render_access_denied('Only organization administrators can record offline payments.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

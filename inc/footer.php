@@ -79,4 +79,4 @@
     </div>
   </div>
 </div>
-<script src="/associa8/js/modal.js?v=20260826-3"></script>
+<script src="/associa8/js/modal.js?v=20261009-1"></script>

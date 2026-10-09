@@ -74,7 +74,7 @@ $message = $_GET['msg'] ?? '';
         </div>
       </div>
     </div>
-    <script src="/associa8/js/modal.js?v=20260826-3"></script>
+    <script src="/associa8/js/modal.js?v=20261009-1"></script>
     <script>
       window.addEventListener("DOMContentLoaded", () => {
         const boxes = [...document.querySelectorAll(".code-box")];

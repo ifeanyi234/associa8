@@ -241,7 +241,7 @@ while ($exam = mysqli_fetch_assoc($examsResult)) {
                     <div style="display: flex; gap: 10px; align-items: center;">
                       <span style="background: #0f2744; color: #fff; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">Ans: <?php echo htmlspecialchars($question['correct_option']); ?></span>
                       <?php if ((int) $question['can_delete'] === 1): ?>
-                        <form action="proc-delete-cbt-question.php" method="POST" onsubmit="return confirm('Delete this question?');">
+                        <form action="proc-delete-cbt-question.php" method="POST" data-app-modal-confirm="Delete this question?" data-confirm-title="Delete question" data-confirm-detail="This action cannot be undone.">
                           <input type="hidden" name="question_id" value="<?php echo (int) $question['id']; ?>" />
                           <button type="submit" style="background: #ef4444; color: #fff; border: none; padding: 6px 16px; border-radius: 4px; font-size: 0.85rem; font-weight: 600; cursor: pointer;">Delete</button>
                         </form>

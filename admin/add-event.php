@@ -4,8 +4,7 @@ require_once '../inc/db.php';
 
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 if ($orgId < 1) {
-    http_response_code(403);
-    exit('Select an organization before creating events.');
+    admin_render_access_denied('Your account is not connected to an organization. Contact your administrator for help.');
 }
 $notice = $_SESSION['event_notice'] ?? null;
 unset($_SESSION['event_notice']);

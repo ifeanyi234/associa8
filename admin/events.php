@@ -4,8 +4,7 @@ require_once '../inc/db.php';
 
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 if ($orgId < 1) {
-    http_response_code(403);
-    exit('Select an organization before managing events.');
+    admin_render_access_denied('Your account is not connected to an organization. Contact your administrator for help.');
 }
 
 $events = [];
@@ -128,7 +127,7 @@ if (empty($_SESSION['event_csrf'])) {
                         <td style="padding: 1rem;"><?php echo htmlspecialchars(ucfirst($event['status']), ENT_QUOTES, 'UTF-8'); ?></td>
                         <td style="padding: 1rem;">
                           <?php if ($event['status'] === 'scheduled'): ?>
-                            <form action="proc-event-action.php" method="post" onsubmit="return confirm('Cancel this event? Members will no longer be able to book it.');">
+                            <form action="proc-event-action.php" method="post" data-app-modal-confirm="Cancel this event? Members will no longer be able to book it." data-confirm-title="Cancel event">
                               <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                               <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
                               <input type="hidden" name="action" value="cancel" />

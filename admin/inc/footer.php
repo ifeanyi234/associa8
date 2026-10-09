@@ -23,5 +23,13 @@
     </div>
   </div>
 </div>
-<script src="/associa8/js/modal.js?v=20260826-3"></script>
+<script src="/associa8/js/modal.js?v=20261009-1"></script>
+<script>
+  window.Associa8AdminIdentity = <?php echo json_encode([
+      'organizationName' => (string) ($_SESSION['admin_organization_name'] ?? ''),
+      'accountName' => (string) ($_SESSION['admin_name'] ?? ''),
+      'role' => (string) ($_SESSION['admin_role'] ?? ''),
+  ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+</script>
+<script src="/associa8/js/admin-identity.js?v=20261009-3"></script>
 <script src="/associa8/js/dashboard-tools.js"></script>

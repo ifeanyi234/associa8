@@ -11,8 +11,7 @@ function userControlRedirect(string $type, string $message): void
 }
 
 if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-    http_response_code(403);
-    exit('Only organization administrators can manage staff access.');
+    admin_render_access_denied('Only organization administrators can manage staff access.');
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: user-controls.php');
@@ -70,9 +69,9 @@ if (!$organization) {
 
 $existingAccountStmt = mysqli_prepare(
     $conn,
-    'SELECT 1 FROM `acc-info` a
-     LEFT JOIN `admin-info` ai ON ai.acc_id = a.id
-     WHERE a.username = ? OR ai.email = ?
+    'SELECT 1 FROM `acc-info` WHERE username = ?
+     UNION ALL
+     SELECT 1 FROM `admin-info` WHERE email = ?
      LIMIT 1'
 );
 if (!$existingAccountStmt) {
@@ -89,7 +88,7 @@ $existingAccountResult = mysqli_stmt_get_result($existingAccountStmt);
 $accountExists = $existingAccountResult && mysqli_num_rows($existingAccountResult) > 0;
 mysqli_stmt_close($existingAccountStmt);
 if ($accountExists) {
-    userControlRedirect('error', 'That email already has an Associa8 account.');
+    userControlRedirect('error', 'That email already has an organization staff profile or login. Resolve the existing profile before sending another invitation.');
 }
 
 $expiredInviteStmt = mysqli_prepare(
@@ -150,7 +149,7 @@ $safeRole = htmlspecialchars(ucfirst(str_replace('_', ' ', $role)), ENT_QUOTES, 
 $safeUrl = htmlspecialchars($inviteUrl, ENT_QUOTES, 'UTF-8');
 $body = '<p>Hello ' . $safeName . ',</p>'
     . '<p>You have been invited to access the <strong>' . $safeOrg . '</strong> organization workspace on Associa8.</p>'
-    . '<p>Your assigned access role is <strong>' . $safeRole . '</strong>. The organization administrator set this role; you cannot change it from the invitation.</p>'
+    . '<p>Your assigned access role is <strong>' . $safeRole . '</strong>. The organization administrator set this role;</p>'
     . '<p>Accept the invitation and choose your own password using the link below. This link expires in 48 hours.</p>'
     . '<p><a href="' . $safeUrl . '">Accept invitation and set password</a></p>'
     . '<p>If you were not expecting this invitation, you can ignore this email.</p>';

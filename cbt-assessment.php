@@ -63,6 +63,7 @@ if (!$questions) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="stylesheet" href="css/styles.css" />
     <style>
       .assessment-page { min-height: 100vh; padding: 7rem 1.25rem 3rem; background: #f8f9fc; user-select: none; -webkit-user-select: none; }
@@ -136,6 +137,7 @@ if (!$questions) {
       let currentQuestion = Number.parseInt(localStorage.getItem(questionStorageKey) || "0", 10);
       if (!Number.isInteger(currentQuestion)) currentQuestion = 0;
       let submitted = false;
+      let confirmedSubmission = false;
       document.querySelectorAll('input[type="radio"][name^="answers["]').forEach((input) => {
         const answerId = input.name.match(/answers\[(\d+)\]/)?.[1];
         if (answerId && savedAnswers[answerId] === input.value) input.checked = true;
@@ -181,8 +183,28 @@ if (!$questions) {
         }
       });
       form.addEventListener("submit", (event) => {
-        if (!submitted && !window.confirm("Are you sure you want to submit your assessment? You cannot change your answers after submitting.")) {
+        if (!submitted && !confirmedSubmission) {
           event.preventDefault();
+          if (!window.AppModal) {
+            console.error("Assessment confirmation dialog is unavailable.");
+            return;
+          }
+          window.AppModal.open({
+            type: "warning",
+            heading: "Submit your assessment?",
+            body: "You cannot change your answers after submitting.",
+            detail: "Please review your answers before confirming.",
+            confirm: true,
+            trigger: event.submitter,
+            onConfirm: () => {
+              confirmedSubmission = true;
+              try {
+                form.requestSubmit(event.submitter || undefined);
+              } finally {
+                confirmedSubmission = false;
+              }
+            },
+          });
           return;
         }
         submitted = true;
@@ -206,5 +228,22 @@ if (!$questions) {
       updateCountdown();
       setInterval(updateCountdown, 1000);
     </script>
+    <div class="app-modal app-modal-info" id="appModal" aria-hidden="true">
+      <div class="app-modal-backdrop" data-modal-close></div>
+      <div class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="appModalTitle" tabindex="-1">
+        <button class="app-modal-close" type="button" data-modal-close aria-label="Close dialog">
+          <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+        <div class="app-modal-icon" aria-hidden="true"></div>
+        <h2 class="app-modal-title" id="appModalTitle"></h2>
+        <p class="app-modal-message"></p>
+        <p class="app-modal-details" hidden></p>
+        <div class="app-modal-actions">
+          <button class="app-modal-button app-modal-cancel" type="button" data-modal-close>Review answers</button>
+          <button class="app-modal-button app-modal-confirm" type="button" data-modal-confirm-action hidden>Submit assessment</button>
+        </div>
+      </div>
+    </div>
+    <script src="/associa8/js/modal.js?v=20261009-1"></script>
   </body>
 </html>

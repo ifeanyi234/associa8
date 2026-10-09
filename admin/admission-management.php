@@ -197,18 +197,18 @@ if ($admissionsResult) {
                             </button>
                             <div class="dropdown-menu">
                               <?php if ($admission['status'] === 'pending'): ?>
-                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Move this applicant to CBT review?');">
+                                <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Move this applicant to CBT review?" data-confirm-title="Move applicant to CBT review">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="under_review" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-forward"></i> Move to CBT</button>
                                 </form>
                               <?php else: ?>
-                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Approve this applicant and create a member account?');">
+                                <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Approve this applicant and create a member account?" data-confirm-title="Approve applicant" data-confirm-detail="This will create a member account for the applicant.">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="approved" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
                                 </form>
-                                <form action="proc-update-admission-status.php" method="POST" onsubmit="return confirm('Reject this applicant?');">
+                                <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Reject this applicant?" data-confirm-title="Reject applicant">
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="rejected" />
                                   <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
