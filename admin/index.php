@@ -1,9 +1,25 @@
 <?php
 session_start();
 
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+if (isset($_COOKIE['associa8_admin_remember'])) {
+    require_once __DIR__ . '/../inc/db.php';
+    require_once __DIR__ . '/../inc/admin-remember-me.php';
+    if (admin_restore_remembered_session($conn)) {
+        header('Location: dashboard.php');
+        exit;
+    }
+}
+
 $loginError = '';
-if(isset($_GET['error'])) {
-    $loginError = "Incorrect username or password. Please try again.";
+if (isset($_GET['error'])) {
+    $errorCode = (int) $_GET['error'];
+    $loginError = $errorCode === 2
+        ? 'We could not save your remembered sign-in. Please try again.'
+        : 'Incorrect username or password. Please try again.';
 }
 ?>
 <!doctype html>
@@ -104,7 +120,7 @@ if(isset($_GET['error'])) {
             <!-- Options Row -->
             <div class="auth-options">
               <label class="remember-me">
-                <input type="checkbox" id="remember" name="remember" />
+                <input type="checkbox" id="remember" name="remember" value="1" />
                 <span class="checkbox-custom"></span>
                 <span>Remember Me</span>
               </label>

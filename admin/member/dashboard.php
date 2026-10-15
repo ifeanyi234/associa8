@@ -3,8 +3,27 @@ require_once 'inc/auth.php';
 require_once '../../inc/db.php';
 
 $memberId = (int) $_SESSION['member_id'];
-$memberResult = mysqli_query($conn, "SELECT * FROM members WHERE id = $memberId LIMIT 1");
-$member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
+$memberOrgId = (int) $_SESSION['member_org_id'];
+$memberQuery = mysqli_prepare($conn, 'SELECT * FROM members WHERE id = ? AND org_id = ? LIMIT 1');
+if (!$memberQuery) {
+  error_log('Member dashboard profile lookup could not be prepared: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Your dashboard could not be loaded right now.');
+}
+mysqli_stmt_bind_param($memberQuery, 'ii', $memberId, $memberOrgId);
+if (!mysqli_stmt_execute($memberQuery)) {
+  error_log('Member dashboard profile lookup failed: ' . mysqli_stmt_error($memberQuery));
+  mysqli_stmt_close($memberQuery);
+  http_response_code(500);
+  exit('Your dashboard could not be loaded right now.');
+}
+$memberResult = mysqli_stmt_get_result($memberQuery);
+$member = $memberResult ? mysqli_fetch_assoc($memberResult) : null;
+mysqli_stmt_close($memberQuery);
+if (!$member) {
+  http_response_code(404);
+  exit('Your member profile could not be found.');
+}
 $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
 $memberCode = $member['member_code'] ?? 'N/A';
 $memberStatus = ucfirst($member['status'] ?? 'Active');
@@ -72,7 +91,7 @@ if ($notificationsResult) {
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -107,7 +126,13 @@ if ($notificationsResult) {
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
+              <div class="avatar-badge member-avatar" aria-label="<?php echo htmlspecialchars($memberAvatarLabel, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php if ($memberPhotoPath !== ''): ?>
+                  <img src="<?php echo htmlspecialchars($memberPhotoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="" />
+                <?php else: ?>
+                  <?php echo htmlspecialchars($memberInitials); ?>
+                <?php endif; ?>
+              </div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars($memberStatus); ?></span>
             </div>
           </div>

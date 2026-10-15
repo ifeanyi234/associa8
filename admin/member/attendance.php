@@ -53,7 +53,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -88,7 +88,13 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
+              <div class="avatar-badge member-avatar" aria-label="<?php echo htmlspecialchars($memberAvatarLabel, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php if ($memberPhotoPath !== ''): ?>
+                  <img src="<?php echo htmlspecialchars($memberPhotoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="" />
+                <?php else: ?>
+                  <?php echo htmlspecialchars($memberInitials); ?>
+                <?php endif; ?>
+              </div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>

@@ -5,7 +5,18 @@ require_once '../inc/db.php';
 function eventFormRedirect(string $type, string $text): void
 {
     $_SESSION['event_notice'] = ['type' => $type, 'text' => $text];
-    header('Location: ' . ($type === 'success' ? 'events.php' : 'add-event.php'));
+    if ($type === 'success') {
+        unset($_SESSION['event_form_values']);
+        header('Location: events.php');
+    } else {
+        $formValues = [];
+        foreach (['title', 'event_type', 'event_date', 'event_time', 'venue', 'capacity', 'description'] as $field) {
+            $value = $_POST[$field] ?? '';
+            $formValues[$field] = is_string($value) ? $value : '';
+        }
+        $_SESSION['event_form_values'] = $formValues;
+        header('Location: events.php?create=1');
+    }
     exit;
 }
 

@@ -62,6 +62,25 @@ CREATE TABLE `activity_log` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admin_remember_tokens`
+--
+
+CREATE TABLE `admin_remember_tokens` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `account_id` int(30) NOT NULL,
+  `token_hash` char(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `last_active_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `admin_remember_tokens_token_hash` (`token_hash`),
+  KEY `admin_remember_tokens_account_id` (`account_id`),
+  KEY `admin_remember_tokens_expires_at` (`expires_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `admin-info`
 --
 
@@ -444,7 +463,9 @@ CREATE TABLE `member_sessions` (
   `device_label` varchar(150) DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `last_active_at` datetime DEFAULT current_timestamp(),
-  `created_at` datetime DEFAULT current_timestamp()
+  `created_at` datetime DEFAULT current_timestamp(),
+  `token_hash` char(64) DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -456,9 +477,12 @@ CREATE TABLE `member_sessions` (
 CREATE TABLE `message_replies` (
   `id` int(10) UNSIGNED NOT NULL,
   `thread_id` int(10) UNSIGNED NOT NULL,
-  `member_id` int(10) UNSIGNED NOT NULL,
+  `member_id` int(10) UNSIGNED DEFAULT NULL,
+  `admin_account_id` int(30) DEFAULT NULL,
+  `sender_type` enum('member','staff') NOT NULL DEFAULT 'member',
+  `sender_name` varchar(150) DEFAULT NULL,
   `body` text NOT NULL,
-  `sent_at` datetime DEFAULT current_timestamp()
+  `sent_at` datetime(6) DEFAULT current_timestamp(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -470,13 +494,16 @@ CREATE TABLE `message_replies` (
 CREATE TABLE `message_threads` (
   `id` int(10) UNSIGNED NOT NULL,
   `member_id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
   `sender_name` varchar(150) NOT NULL,
   `sender_avatar_initials` varchar(5) DEFAULT NULL,
   `subject` varchar(255) NOT NULL,
   `body` text NOT NULL,
   `tag` varchar(50) DEFAULT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
-  `sent_at` datetime DEFAULT current_timestamp()
+  `member_last_read_at` datetime(6) DEFAULT NULL,
+  `staff_last_read_at` datetime(6) DEFAULT NULL,
+  `sent_at` datetime(6) DEFAULT current_timestamp(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -528,7 +555,7 @@ CREATE TABLE `org-info` (
   `name` varchar(100) NOT NULL,
   `type` varchar(80) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `phone` int(20) DEFAULT NULL,
+  `phone` varchar(30) DEFAULT NULL,
   `country` varchar(50) NOT NULL,
   `state` varchar(40) NOT NULL,
   `pricing` varchar(50) NOT NULL,
@@ -864,6 +891,8 @@ ALTER TABLE `member_notification_preferences`
 --
 ALTER TABLE `member_sessions`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `member_sessions_token_hash` (`token_hash`),
+  ADD KEY `member_sessions_expires_at` (`expires_at`),
   ADD KEY `member_id` (`member_id`);
 
 --
@@ -872,14 +901,17 @@ ALTER TABLE `member_sessions`
 ALTER TABLE `message_replies`
   ADD PRIMARY KEY (`id`),
   ADD KEY `thread_id` (`thread_id`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `message_replies_thread_sent` (`thread_id`,`sent_at`),
+  ADD KEY `message_replies_admin_account` (`admin_account_id`);
 
 --
 -- Indexes for table `message_threads`
 --
 ALTER TABLE `message_threads`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `message_threads_org_sent` (`org_id`,`sent_at`);
 
 --
 -- Indexes for table `notifications`
@@ -1120,6 +1152,12 @@ ALTER TABLE `acc-info`
   ADD CONSTRAINT `acc_info_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `admin_remember_tokens`
+--
+ALTER TABLE `admin_remember_tokens`
+  ADD CONSTRAINT `admin_remember_tokens_account_fk` FOREIGN KEY (`account_id`) REFERENCES `acc-info` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `activity_log`
 --
 ALTER TABLE `activity_log`
@@ -1226,13 +1264,15 @@ ALTER TABLE `member_sessions`
 --
 ALTER TABLE `message_replies`
   ADD CONSTRAINT `message_replies_ibfk_1` FOREIGN KEY (`thread_id`) REFERENCES `message_threads` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `message_replies_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `message_replies_ibfk_2` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `message_replies_admin_account_fk` FOREIGN KEY (`admin_account_id`) REFERENCES `acc-info` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `message_threads`
 --
 ALTER TABLE `message_threads`
-  ADD CONSTRAINT `message_threads_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `message_threads_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `message_threads_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `notifications`

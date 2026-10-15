@@ -202,23 +202,10 @@ if ($attendanceStmt) {
         <?php include('inc/footer.php'); ?>
       </main>
     </div>
+    <script src="../js/admin-sidebar.js"></script>
     <script>
-      const sidebarEl = document.getElementById('adminSidebar');
-      const sidebarOverlay = document.getElementById('sidebarOverlay');
-      const sidebarToggle = document.getElementById('sidebarToggle');
       const attendanceFilterToggle = document.getElementById('attendanceFilterToggle');
       const attendanceStatusFilter = document.getElementById('attendanceStatusFilter');
-      function closeSidebar() {
-        if (sidebarEl) sidebarEl.classList.remove('open');
-        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-      }
-      if (sidebarToggle && sidebarEl) {
-        sidebarToggle.addEventListener('click', function () {
-          sidebarEl.classList.toggle('open');
-          if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
-        });
-      }
-      if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
       if (attendanceFilterToggle && attendanceStatusFilter) {
         attendanceFilterToggle.addEventListener('click', function () {
           const isExpanded = attendanceFilterToggle.getAttribute('aria-expanded') === 'true';
@@ -226,9 +213,6 @@ if ($attendanceStmt) {
           attendanceStatusFilter.style.display = isExpanded ? 'none' : 'block';
         });
       }
-      document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') closeSidebar();
-      });
     </script>
     <script src="../js/preloader.js"></script>
   </body>

@@ -29,7 +29,7 @@ const applyAdminIdentity = () => {
     element.textContent = roleLabels[role] || "Current access";
     element.setAttribute("title", roleDetails[role] || "Your organization's assigned access level.");
   });
-  document.querySelectorAll(".avatar-badge").forEach((element) => {
+  document.querySelectorAll(".avatar-badge:not(.member-avatar)").forEach((element) => {
     element.textContent = initials.toUpperCase();
     element.setAttribute("aria-label", organizationName);
   });

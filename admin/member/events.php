@@ -56,7 +56,7 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php'); ?>
@@ -76,7 +76,13 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
             </div>
             <button class="notification-btn" aria-label="Notifications"><i class="fa-solid fa-bell"></i><span class="notification-badge"></span></button>
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials, ENT_QUOTES, 'UTF-8'); ?></div>
+              <div class="avatar-badge member-avatar" aria-label="<?php echo htmlspecialchars($memberAvatarLabel, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php if ($memberPhotoPath !== ''): ?>
+                  <img src="<?php echo htmlspecialchars($memberPhotoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="" />
+                <?php else: ?>
+                  <?php echo htmlspecialchars($memberInitials, ENT_QUOTES, 'UTF-8'); ?>
+                <?php endif; ?>
+              </div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;">Active</span>
             </div>
           </div>
@@ -106,10 +112,25 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
                     $hasSeatLimit = (int) $event['capacity'] > 0;
                     $capacityFull = $hasSeatLimit && (int) $event['booked_count'] >= (int) $event['capacity'];
                     ?>
+                    <?php $eventDialogId = 'memberEventDialog' . (int) $event['id']; ?>
                     <article class="event-card">
                       <div>
                         <span class="event-card-tag"><?php echo htmlspecialchars($event['event_type'] ?: 'Event', ENT_QUOTES, 'UTF-8'); ?></span>
                         <div class="event-card-title"><?php echo htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div class="event-card-meta">
+                          <span class="event-card-meta-item"><i class="fa-regular fa-calendar"></i> <?php echo htmlspecialchars(date('D, j M Y', strtotime($event['event_date'])), ENT_QUOTES, 'UTF-8'); ?></span>
+                          <span class="event-card-meta-item"><i class="fa-regular fa-clock"></i> <?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])) . ' (Lagos)', ENT_QUOTES, 'UTF-8') : 'Time TBA'; ?></span>
+                        </div>
+                      </div>
+                      <button class="btn-book-seat" type="button" data-open-member-event="<?php echo htmlspecialchars($eventDialogId, ENT_QUOTES, 'UTF-8'); ?>">View event</button>
+                    </article>
+                    <dialog class="admin-form-dialog" id="<?php echo htmlspecialchars($eventDialogId, ENT_QUOTES, 'UTF-8'); ?>" aria-labelledby="<?php echo htmlspecialchars($eventDialogId, ENT_QUOTES, 'UTF-8'); ?>Title">
+                      <div class="admin-form-dialog-header">
+                        <h2 id="<?php echo htmlspecialchars($eventDialogId, ENT_QUOTES, 'UTF-8'); ?>Title"><?php echo htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                        <button class="admin-form-dialog-close" type="button" data-close-member-event aria-label="Close event details"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                      </div>
+                      <div class="admin-form-dialog-content">
+                        <span class="event-card-tag"><?php echo htmlspecialchars($event['event_type'] ?: 'Event', ENT_QUOTES, 'UTF-8'); ?></span>
                         <div class="event-card-meta">
                           <span class="event-card-meta-item"><i class="fa-regular fa-calendar"></i> <?php echo htmlspecialchars(date('l, jS M Y', strtotime($event['event_date'])), ENT_QUOTES, 'UTF-8'); ?></span>
                           <span class="event-card-meta-item"><i class="fa-regular fa-clock"></i> <?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])) . ' (Lagos)', ENT_QUOTES, 'UTF-8') : 'Time TBA'; ?></span>
@@ -118,34 +139,36 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
                           <?php if ((int) $event['waitlist_count'] > 0): ?><span class="event-card-meta-item"><?php echo (int) $event['waitlist_count']; ?> on waitlist</span><?php endif; ?>
                         </div>
                         <?php if (!empty($event['description'])): ?><p><?php echo nl2br(htmlspecialchars($event['description'], ENT_QUOTES, 'UTF-8')); ?></p><?php endif; ?>
+                        <div class="admin-form-dialog-actions">
+                          <?php if ($event['status'] === 'cancelled'): ?>
+                            <span class="btn-book-seat" aria-label="Event cancelled">Cancelled</span>
+                          <?php elseif ($event['member_status'] === 'booked'): ?>
+                            <form action="proc-event-rsvp.php" method="post">
+                              <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                              <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
+                              <input type="hidden" name="action" value="cancel" />
+                              <button class="btn-book-seat" type="submit">Booked · Cancel</button>
+                            </form>
+                          <?php elseif ($event['member_status'] === 'waitlisted'): ?>
+                            <form action="proc-event-rsvp.php" method="post">
+                              <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                              <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
+                              <input type="hidden" name="action" value="cancel" />
+                              <button class="btn-book-seat" type="submit">Waitlisted · Leave</button>
+                            </form>
+                          <?php elseif ($canBook): ?>
+                            <form action="proc-event-rsvp.php" method="post">
+                              <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                              <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
+                              <input type="hidden" name="action" value="book" />
+                              <button class="btn-book-seat" type="submit"><?php echo $capacityFull ? 'Join Waitlist' : 'Book a Seat'; ?></button>
+                            </form>
+                          <?php else: ?>
+                            <span class="btn-book-seat">Booking closed</span>
+                          <?php endif; ?>
+                        </div>
                       </div>
-                      <?php if ($event['status'] === 'cancelled'): ?>
-                        <span class="btn-book-seat" aria-label="Event cancelled">Cancelled</span>
-                      <?php elseif ($event['member_status'] === 'booked'): ?>
-                        <form action="proc-event-rsvp.php" method="post">
-                          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-                          <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
-                          <input type="hidden" name="action" value="cancel" />
-                          <button class="btn-book-seat" type="submit">Booked · Cancel</button>
-                        </form>
-                      <?php elseif ($event['member_status'] === 'waitlisted'): ?>
-                        <form action="proc-event-rsvp.php" method="post">
-                          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-                          <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
-                          <input type="hidden" name="action" value="cancel" />
-                          <button class="btn-book-seat" type="submit">Waitlisted · Leave</button>
-                        </form>
-                      <?php elseif ($canBook): ?>
-                        <form action="proc-event-rsvp.php" method="post">
-                          <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-                          <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
-                          <input type="hidden" name="action" value="book" />
-                          <button class="btn-book-seat" type="submit"><?php echo $capacityFull ? 'Join Waitlist' : 'Book a Seat'; ?></button>
-                        </form>
-                      <?php else: ?>
-                        <span class="btn-book-seat">Booking closed</span>
-                      <?php endif; ?>
-                    </article>
+                    </dialog>
                   <?php endforeach; ?>
                 <?php else: ?>
                   <div class="zone-empty-state">No upcoming events have been published yet.</div>
@@ -158,13 +181,26 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
               <div class="events-list">
                 <?php if ($pastEvents): ?>
                   <?php foreach ($pastEvents as $event): ?>
+                    <?php $pastEventDialogId = 'pastEventDialog' . (int) $event['id']; ?>
                     <div class="past-event-row">
                       <div class="past-event-row-left">
                         <span class="event-type-pill"><?php echo htmlspecialchars($event['event_type'] ?: 'Event', ENT_QUOTES, 'UTF-8'); ?></span>
                         <span class="past-event-title"><?php echo htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8'); ?></span>
                       </div>
                       <span class="past-event-date"><?php echo htmlspecialchars(date('D, d M Y', strtotime($event['event_date'])), ENT_QUOTES, 'UTF-8'); ?></span>
+                      <button class="btn-navy-outline" type="button" data-open-member-event="<?php echo htmlspecialchars($pastEventDialogId, ENT_QUOTES, 'UTF-8'); ?>">Details</button>
                     </div>
+                    <dialog class="admin-form-dialog" id="<?php echo htmlspecialchars($pastEventDialogId, ENT_QUOTES, 'UTF-8'); ?>" aria-labelledby="<?php echo htmlspecialchars($pastEventDialogId, ENT_QUOTES, 'UTF-8'); ?>Title">
+                      <div class="admin-form-dialog-header">
+                        <h2 id="<?php echo htmlspecialchars($pastEventDialogId, ENT_QUOTES, 'UTF-8'); ?>Title"><?php echo htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                        <button class="admin-form-dialog-close" type="button" data-close-member-event aria-label="Close event details"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                      </div>
+                      <div class="admin-form-dialog-content">
+                        <p><?php echo htmlspecialchars(date('l, jS M Y', strtotime($event['event_date'])), ENT_QUOTES, 'UTF-8'); ?> · <?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])) . ' (Lagos)', ENT_QUOTES, 'UTF-8') : 'Time TBA'; ?></p>
+                        <p><?php echo htmlspecialchars($event['venue'] ?: 'Venue TBA', ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php if (!empty($event['description'])): ?><p><?php echo nl2br(htmlspecialchars($event['description'], ENT_QUOTES, 'UTF-8')); ?></p><?php endif; ?>
+                      </div>
+                    </dialog>
                   <?php endforeach; ?>
                 <?php else: ?>
                   <div class="zone-empty-state">No past events are available yet.</div>
@@ -176,23 +212,19 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
         <?php include('../inc/footer.php'); ?>
       </main>
     </div>
+    <script src="../../js/admin-sidebar.js"></script>
     <script>
-      const sidebarEl = document.getElementById("adminSidebar");
-      const sidebarOverlay = document.getElementById("sidebarOverlay");
-      const sidebarToggle = document.getElementById("sidebarToggle");
-      const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
-      function closeSidebar() {
-        sidebarEl.classList.remove("open");
-        if (sidebarOverlay) sidebarOverlay.classList.remove("active");
-      }
-      function openSidebar() {
-        sidebarEl.classList.add("open");
-        if (sidebarOverlay) sidebarOverlay.classList.add("active");
-      }
-      if (sidebarToggle) sidebarToggle.addEventListener("click", () => sidebarEl.classList.contains("open") ? closeSidebar() : openSidebar());
-      if (sidebarCloseBtn) sidebarCloseBtn.addEventListener("click", closeSidebar);
-      if (sidebarOverlay) sidebarOverlay.addEventListener("click", closeSidebar);
-      document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeSidebar(); });
+      document.querySelectorAll("[data-open-member-event]").forEach((button) => {
+        button.addEventListener("click", () => document.getElementById(button.dataset.openMemberEvent)?.showModal());
+      });
+      document.querySelectorAll("[data-close-member-event]").forEach((button) => {
+        button.addEventListener("click", () => button.closest("dialog")?.close());
+      });
+      document.querySelectorAll(".admin-form-dialog").forEach((dialog) => {
+        dialog.addEventListener("click", (event) => {
+          if (event.target === dialog) dialog.close();
+        });
+      });
     </script>
     <script src="../../js/preloader.js"></script>
   </body>

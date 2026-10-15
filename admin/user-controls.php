@@ -179,6 +179,7 @@ mysqli_stmt_close($invitationStmt);
       <h2 class="page-title-main">User Control</h2>
       <p class="page-subtitle">Invite people to this organization's workspace. They choose their own password, and their role controls what they can access.</p>
     </div>
+    <button class="btn-primary-filled" id="openUserInviteDialog" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Invite staff</button>
   </div>
 
   <?php if (is_array($notice)): ?>
@@ -189,11 +190,14 @@ mysqli_stmt_close($invitationStmt);
     </div>
   <?php endif; ?>
 
-  <!-- User Form Card -->
-  <div class="dashboard-card">
+  <dialog class="admin-form-dialog" id="userInviteDialog" aria-labelledby="userInviteDialogTitle">
+    <div class="admin-form-dialog-header">
+      <h2 id="userInviteDialogTitle">Invite someone to your organization</h2>
+      <button class="admin-form-dialog-close" type="button" data-close-user-invite aria-label="Close invitation form"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="admin-form-dialog-content">
     <form action="process-user.php" method="POST" id="userControlForm">
       <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-      <!-- First Name & Last Name -->
       <div class="form-row-2col mb-3">
         <div class="form-group">
           <label for="firstName" class="form-label">First Name</label>
@@ -229,15 +233,18 @@ mysqli_stmt_close($invitationStmt);
           <label for="phone" class="form-label">Phone (optional)</label>
           <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. +2348012345678" maxlength="16" />
         </div>
-        <div></div>
+        <div class="form-group">
+          <label for="jobTitle" class="form-label">Job title (optional)</label>
+          <input type="text" id="jobTitle" name="job_title" class="form-control" maxlength="200" />
+        </div>
       </div>
-      <!-- Submit Button -->
       <div class="form-actions">
         <?php admin_info_tip("You assign their access role before sending the invitation. We will email them a secure invitation to this organization's existing workspace. They choose their own password. The link expires after 48 hours.", 'Invitation help'); ?>
         <button type="submit" class="btn-primary-filled">Send Invitation</button>
       </div>
     </form>
-  </div>
+    </div>
+  </dialog>
 
   <div class="dashboard-card" style="margin-top: 1.5rem;">
     <div class="page-action-header mb-3">
@@ -368,6 +375,19 @@ mysqli_stmt_close($invitationStmt);
         border: 1px solid rgba(239, 68, 68, 0.2);
       }
     </style>
+    <script>
+      const userInviteDialog = document.getElementById("userInviteDialog");
+      document.getElementById("openUserInviteDialog")?.addEventListener("click", () => userInviteDialog?.showModal());
+      document.querySelectorAll("[data-close-user-invite]").forEach((button) => {
+        button.addEventListener("click", () => userInviteDialog?.close());
+      });
+      userInviteDialog?.addEventListener("click", (event) => {
+        if (event.target === userInviteDialog) userInviteDialog.close();
+      });
+      if (<?php echo json_encode(is_array($notice) && ($notice['type'] ?? '') !== 'success'); ?>) {
+        userInviteDialog?.showModal();
+      }
+    </script>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");

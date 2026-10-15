@@ -31,5 +31,5 @@
       'role' => (string) ($_SESSION['admin_role'] ?? ''),
   ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 </script>
-<script src="/associa8/js/admin-identity.js?v=20261009-3"></script>
+<script src="/associa8/js/admin-identity.js?v=20261009-4"></script>
 <script src="/associa8/js/dashboard-tools.js"></script>

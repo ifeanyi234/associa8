@@ -329,18 +329,18 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ## Phase 15: Complete Messaging And Notifications
 
-- [ ] Define who can send a message, which members can receive it, and whether replies are supported.
-- [ ] Build staff message compose/send UI and server-side handler scoped to the organization.
-- [ ] Build member reply form and handler tied to a thread owned by that member.
-- [ ] Support selecting a thread; do not always show only the first thread.
-- [ ] Mark threads/messages read only after authorized viewing and display accurate unread counts.
-- [ ] Add message validation, length limits, output escaping, CSRF protection, and rate limits.
-- [ ] Decide whether messages are in-app only or also email/SMS; implement delivery and retry tracking accordingly.
+- [x] Define messaging as member-started private conversations, with replies from the member and the shared organization staff inbox; keep delivery in-app for the first version.
+- [x] Build organization-scoped staff inbox and server-side reply handler.
+- [x] Build member thread creation and reply handlers tied to the authenticated member and organization.
+- [x] Support selecting a thread instead of always showing only the first thread.
+- [x] Mark conversations read only after authorized viewing and display unread counts for the receiving side.
+- [x] Add message validation, length limits, output escaping, CSRF protection, and per-sender rate limits.
+- [x] Add organization ownership and staff sender metadata to messaging schema; existing databases need `migrations/20261013_messages_workflow.sql`.
 - [ ] Enforce notification ownership through member/admission relationships and the organization.
 - [ ] Add mark-read/unread and notification preference handlers.
 - [ ] Persist email/SMS preferences and respect them in all background sends.
 - [ ] Ensure organization broadcasts cannot include another organization's members.
-- [ ] Test member/thread ID tampering, duplicate sends, unread state, and delivery failures.
+- [ ] Test member/thread ID tampering, duplicate sends, and unread state against an isolated database.
 
 ## Phase 16: Repair Public Website And Conversion Paths
 

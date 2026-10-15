@@ -3,12 +3,35 @@ require_once 'inc/auth.php';
 require_once '../../inc/db.php';
 
 $memberId = (int) $_SESSION['member_id'];
-$memberResult = mysqli_query($conn, "SELECT m.*, t.title AS title_name FROM members m LEFT JOIN titles t ON t.id = m.title_id WHERE m.id = $memberId LIMIT 1");
-$member = $memberResult && mysqli_num_rows($memberResult) > 0 ? mysqli_fetch_assoc($memberResult) : null;
+$memberOrgId = (int) $_SESSION['member_org_id'];
+$memberQuery = mysqli_prepare($conn, 'SELECT m.*, t.title AS title_name FROM members m LEFT JOIN titles t ON t.id = m.title_id WHERE m.id = ? AND m.org_id = ? LIMIT 1');
+if (!$memberQuery) {
+  error_log('Member profile lookup could not be prepared: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Your profile could not be loaded right now.');
+}
+mysqli_stmt_bind_param($memberQuery, 'ii', $memberId, $memberOrgId);
+if (!mysqli_stmt_execute($memberQuery)) {
+  error_log('Member profile lookup failed: ' . mysqli_stmt_error($memberQuery));
+  mysqli_stmt_close($memberQuery);
+  http_response_code(500);
+  exit('Your profile could not be loaded right now.');
+}
+$memberResult = mysqli_stmt_get_result($memberQuery);
+$member = $memberResult ? mysqli_fetch_assoc($memberResult) : null;
+mysqli_stmt_close($memberQuery);
+if (!$member) {
+  http_response_code(404);
+  exit('Your member profile could not be found.');
+}
+$profileFields = ['first_name', 'last_name', 'email', 'phone', 'home_address', 'date_of_birth', 'occupation', 'state_of_origin', 'emergency_contact_name', 'profile_photo_path'];
+$filledProfileFields = count(array_filter($profileFields, static fn (string $field): bool => !empty($member[$field])));
+$profileCompletion = (int) round(($filledProfileFields / count($profileFields)) * 100);
 $memberName = $member ? trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? '')) : 'Member';
 $memberCode = $member['member_code'] ?? 'N/A';
 $fullAddress = trim(($member['home_address'] ?? '') ?: 'Address not available');
 $memberStatus = ucfirst($member['status'] ?? 'active');
+$profileStatus = $_GET['status'] ?? '';
 
 $initials = '';
 foreach (explode(' ', trim($memberName)) as $part) {
@@ -44,7 +67,7 @@ $memberInitials = $initials ?: 'M';
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -79,22 +102,41 @@ $memberInitials = $initials ?: 'M';
             </button>
 
             <div class="admin-user-profile">
-              <div class="avatar-badge"><?php echo htmlspecialchars($memberInitials); ?></div>
+              <div class="avatar-badge member-avatar" aria-label="<?php echo htmlspecialchars($memberAvatarLabel, ENT_QUOTES, 'UTF-8'); ?>">
+                <?php if ($memberPhotoPath !== ''): ?>
+                  <img src="<?php echo htmlspecialchars($memberPhotoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="" />
+                <?php else: ?>
+                  <?php echo htmlspecialchars($memberInitials); ?>
+                <?php endif; ?>
+              </div>
               <span class="badge-pill status-active" style="margin-left: -0.5rem;"><?php echo htmlspecialchars($memberStatus); ?></span>
             </div>
           </div>
         </header>
 
         <div class="dashboard-content">
+          <?php if ($profileStatus === 'photo-error'): ?>
+            <div class="member-profile-notice member-profile-notice-error" role="alert">We could not update your profile photo. Choose a JPEG, PNG, or WebP image under 3 MB and try again.</div>
+          <?php elseif ($profileStatus === 'duplicate'): ?>
+            <div class="member-profile-notice member-profile-notice-error" role="alert">That email address is already being used by another member.</div>
+          <?php elseif ($profileStatus === 'invalid'): ?>
+            <div class="member-profile-notice member-profile-notice-error" role="alert">Some information was missing or invalid. Please review the form and try again.</div>
+          <?php elseif ($profileStatus === 'error'): ?>
+            <div class="member-profile-notice member-profile-notice-error" role="alert">We could not save your changes. Please try again.</div>
+          <?php endif; ?>
           <section class="profile-grid">
             <!-- Photo Card -->
             <div class="profile-photo-card">
               <div class="profile-photo-placeholder">
-                <i class="fa-solid fa-user"></i>
+                <?php if (!empty($member['profile_photo_path'])): ?>
+                  <img src="<?php echo htmlspecialchars((string) $member['profile_photo_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($memberName, ENT_QUOTES, 'UTF-8'); ?> profile photo" />
+                <?php else: ?>
+                  <i class="fa-solid fa-user"></i>
+                <?php endif; ?>
               </div>
               <div class="profile-photo-name"><?php echo htmlspecialchars($memberName); ?></div>
               <div class="profile-photo-id">ID - <?php echo htmlspecialchars($memberCode); ?></div>
-              <button class="btn-summary-action">Upload Photo</button>
+              <a class="btn-summary-action" href="edit-profile.php#profile-photo">Upload Photo</a>
             </div>
 
             <!-- Personal Information Card -->
@@ -151,7 +193,7 @@ $memberInitials = $initials ?: 'M';
                 </div>
               </div>
 
-              <button class="btn-summary-action" style="width: fit-content; padding-left: 1.5rem; padding-right: 1.5rem;">Edit Information</button>
+              <a class="btn-summary-action" href="edit-profile.php" style="width: fit-content; padding-left: 1.5rem; padding-right: 1.5rem;">Edit Information</a>
             </div>
 
             <!-- Membership Card -->
@@ -194,10 +236,10 @@ $memberInitials = $initials ?: 'M';
 
               <div class="checklist-header-row">
                 <span></span>
-                <span class="checklist-percent">78%</span>
+                <span class="checklist-percent"><?php echo $profileCompletion; ?>%</span>
               </div>
               <div class="checklist-progress-wrapper">
-                <div class="checklist-progress-fill" style="width: 78%"></div>
+              <div class="checklist-progress-fill" style="width: <?php echo $profileCompletion; ?>%"></div>
               </div>
 
               <div class="checklist-row">
@@ -273,12 +315,35 @@ $memberInitials = $initials ?: 'M';
               </div>
             </div>
           </section>
+
         </div>
 
         <?php include('../inc/footer.php') ?>
       </main>
     </div>
 
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const status = new URLSearchParams(window.location.search).get("status");
+        const messages = {
+          success: {
+            heading: "Profile updated",
+            body: "Your profile information was updated successfully.",
+          },
+          "photo-success": {
+            heading: "Profile photo updated",
+            body: "Your profile photo was updated successfully.",
+          },
+        };
+        if (!messages[status] || !window.AppModal) return;
+        window.AppModal.open({
+          type: "success",
+          heading: messages[status].heading,
+          body: messages[status].body,
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
     <script>
       const sidebarEl = document.getElementById("adminSidebar");
       const sidebarOverlay = document.getElementById("sidebarOverlay");

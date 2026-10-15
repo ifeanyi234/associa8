@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/inc/db.php';
+require_once __DIR__ . '/inc/member-remember-me.php';
 
 $email = trim($_POST['email'] ?? '');
 $password = (string) ($_POST['password'] ?? '');
@@ -36,11 +37,31 @@ if (!password_verify($password, $storedHash)) {
     exit;
 }
 
+if (!session_regenerate_id(true)) {
+    error_log('Could not regenerate the PHP session after member login.');
+    header('Location: member-login.php?error=4');
+    exit;
+}
+
 $_SESSION['member_id'] = (int) $member['id'];
 $_SESSION['member_org_id'] = isset($member['org_id']) && $member['org_id'] !== null ? (int) $member['org_id'] : null;
 $_SESSION['member_zone_id'] = isset($member['zone_id']) && $member['zone_id'] !== null ? (int) $member['zone_id'] : null;
 $_SESSION['member_subzone_id'] = isset($member['subzone_id']) && $member['subzone_id'] !== null ? (int) $member['subzone_id'] : null;
 $_SESSION['member_name'] = trim(($member['first_name'] ?? '') . ' ' . ($member['last_name'] ?? ''));
+
+if (isset($_POST['remember'])) {
+    if (!member_create_remember_token($conn, (int) $member['id'])) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        header('Location: member-login.php?error=4');
+        exit;
+    }
+} elseif (!member_revoke_remember_token($conn)) {
+    $_SESSION = [];
+    session_regenerate_id(true);
+    header('Location: member-login.php?error=4');
+    exit;
+}
 
 header('Location: admin/member/dashboard.php');
 exit;

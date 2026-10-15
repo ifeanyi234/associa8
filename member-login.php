@@ -9,6 +9,8 @@ if (isset($_GET['error'])) {
         $loginError = 'This member account has not been assigned a password yet. Please contact the association.';
     } elseif ($errorCode === 3) {
         $loginError = 'This member account is suspended and cannot log in.';
+    } elseif ($errorCode === 4) {
+        $loginError = 'We could not save your sign-in session. Please try again.';
     } else {
         $loginError = 'Incorrect email or password. Please try again.';
     }
@@ -90,7 +92,7 @@ if (isset($_GET['error'])) {
 
             <div class="auth-options">
               <label class="remember-me">
-                <input type="checkbox" id="remember" name="remember" />
+                <input type="checkbox" id="remember" name="remember" value="1" />
                 <span class="checkbox-custom"></span>
                 <span>Remember Me</span>
               </label>

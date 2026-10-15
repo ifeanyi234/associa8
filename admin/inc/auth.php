@@ -6,6 +6,12 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../../inc/db.php';
+require_once __DIR__ . '/../../inc/admin-remember-me.php';
+if (!isset($_SESSION['user_id']) && isset($_COOKIE[ADMIN_REMEMBER_COOKIE])) {
+    admin_restore_remembered_session($conn);
+}
+
 if (!isset($_SESSION['user_id']) || !ctype_digit((string) $_SESSION['user_id']) || (int) $_SESSION['user_id'] < 1) {
     session_unset();
     session_destroy();
@@ -13,7 +19,6 @@ if (!isset($_SESSION['user_id']) || !ctype_digit((string) $_SESSION['user_id']) 
     exit;
 }
 
-require_once __DIR__ . '/../../inc/db.php';
 $accountId = (int) $_SESSION['user_id'];
 $accountStmt = mysqli_prepare(
     $conn,
@@ -65,13 +70,13 @@ $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['
 function admin_role_permissions(string $role): array
 {
     if (in_array($role, ['super_admin', 'admin'], true)) {
-        return ['admin_only', 'dashboard', 'members_view', 'members_manage', 'admission', 'cbt_management', 'document', 'attendance', 'finance', 'events', 'user_control'];
+        return ['admin_only', 'dashboard', 'members_view', 'members_manage', 'admission', 'cbt_management', 'document', 'attendance', 'finance', 'events', 'user_control', 'messages'];
     }
     if ($role === 'manager') {
-        return ['dashboard', 'members_view', 'members_manage', 'admission', 'document', 'attendance', 'events'];
+        return ['dashboard', 'members_view', 'members_manage', 'admission', 'document', 'attendance', 'events', 'messages'];
     }
     if ($role === 'staff') {
-        return ['dashboard', 'members_view', 'document', 'attendance', 'events'];
+        return ['dashboard', 'members_view', 'document', 'attendance', 'events', 'messages'];
     }
     return [];
 }
@@ -94,6 +99,10 @@ $adminRoutePermissions = [
     'add-admission.php' => 'admission',
     'proc-add-admission.php' => 'admission',
     'proc-update-admission-status.php' => 'admission',
+    'org-settings.php' => 'admin_only',
+    'proc-org-settings.php' => 'admin_only',
+    'messages.php' => 'messages',
+    'proc-message-reply.php' => 'messages',
     'portal-settings.php' => 'admin_only',
     'proc-portal-settings.php' => 'admin_only',
     'cbt-applicants.php' => 'cbt_management',

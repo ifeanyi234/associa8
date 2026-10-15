@@ -6,6 +6,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!sidebar) return;
 
+  const currentPage = window.location.pathname.split("/").pop();
+  const activeLink = Array.from(sidebar.querySelectorAll("a[href]")).find((link) => {
+    const href = link.getAttribute("href");
+    return href && href !== "#" && !href.startsWith("javascript:") && link.pathname.split("/").pop() === currentPage;
+  });
+  if (activeLink) {
+    activeLink.classList.add("active");
+    activeLink.setAttribute("aria-current", "page");
+    const parentDropdown = activeLink.closest(".sidebar-item.dropdown");
+    if (parentDropdown) {
+      parentDropdown.classList.add("open");
+      const submenu = parentDropdown.querySelector(".sidebar-submenu");
+      if (submenu) submenu.style.maxHeight = `${submenu.scrollHeight}px`;
+    }
+  }
+
   const closeSidebar = () => {
     sidebar.classList.remove("open");
     overlay?.classList.remove("active");

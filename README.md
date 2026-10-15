@@ -42,9 +42,13 @@ To populate the local `associa8` database with clearly labeled sample records, r
 
 For a **new local or production database**, import `associa8.sql` only; it already contains the current schema. Do not run the upgrade scripts after importing that dump.
 
-For an **existing database that already contains Associa8 data**, back it up and run the scripts in `migrations/` in date/name order before deploying code that depends on them. The scripts are designed to be safe to re-run: existing columns/tables/indexes are skipped, and the unique-results script reports duplicates instead of trying an index operation that would fail. The CBT-code migration revokes any old plaintext codes; affected applicants must request a fresh code. These scripts are compatible with the supported MySQL/MariaDB setup, including the local MariaDB 10.4 version.
+For an **existing database that already contains Associa8 data**, back it up and run the scripts in `migrations/` in date/name order before deploying code that depends on them. Some migrations are safe to re-run where their guards allow it; do not assume every script is repeatable. The unique-results script reports duplicates instead of trying an index operation that would fail. The CBT-code migration revokes any old plaintext codes; affected applicants must request a fresh code. These scripts are compatible with the supported MySQL/MariaDB setup, including the local MariaDB 10.4 version.
 
 CBT rate limits currently allow 20 access-code requests per IP per hour, 20 code verifications per IP per 15 minutes, and 5 code verifications per applicant per 15 minutes. Counters retain hashed subjects and are eligible for cleanup after one day.
+
+Member and admin login's “Remember Me” option stores a hashed, revocable browser token for 30 days. Existing databases need the one-time `migrations/20261013_member_remember_me.sql` and `migrations/20261013_admin_remember_me.sql` schema updates before using the respective options. Accounts without Remember Me use the normal browser session, and logout revokes a remembered browser token.
+
+Messaging is an in-app private conversation between a member and the member's organization. Active organization admins, managers, and staff share the inbox and can reply; email/SMS delivery is not part of this workflow. Existing databases need the one-time `migrations/20261013_messages_workflow.sql` schema update before using messaging.
 
 CBT scores give every question equal weight. Unanswered questions count as incorrect; the score is the percentage correct rounded to the nearest whole number, and an applicant passes when that rounded score is greater than or equal to the exam pass mark. Results are saved together with the admission's `cbt_completed` state in one database transaction. Correct-answer fields are loaded only by the submission handler and are not sent to the applicant's assessment page.
 

@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/../inc/db.php';
+require_once __DIR__ . '/../inc/admin-remember-me.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: index.php');
@@ -50,12 +51,29 @@ if ($account['role'] !== 'super_admin' && (int) $account['org_id'] < 1) {
     exit;
 }
 
-session_regenerate_id(true);
+if (!session_regenerate_id(true)) {
+    error_log('Could not regenerate the PHP session after admin login.');
+    header('Location: index.php?error=2');
+    exit;
+}
 $_SESSION['user_id'] = (int) $account['id'];
 $_SESSION['username'] = (string) $account['username'];
 $_SESSION['org_id'] = (int) $account['org_id'];
 $_SESSION['admin_role'] = (string) $account['role'];
 $_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
 $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
+if (isset($_POST['remember'])) {
+    if (!admin_create_remember_token($conn, (int) $account['id'])) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        header('Location: index.php?error=2');
+        exit;
+    }
+} elseif (isset($_COOKIE[ADMIN_REMEMBER_COOKIE]) && !admin_revoke_remember_token($conn)) {
+    $_SESSION = [];
+    session_regenerate_id(true);
+    header('Location: index.php?error=2');
+    exit;
+}
 header('Location: dashboard.php');
 exit;

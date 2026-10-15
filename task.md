@@ -1,5 +1,2 @@
-- password eye component should be visible in every password input across the project (we need consistency).
-- Make sure modal popup is consistent across the project except for instances i said it was actually ok like when they are adding questions it only makes sense to stay on that same page so that.
-- make sure fav-icon is consistent across the page
-- make sure avatar is consistent organisation name
-- make sure the avatar section clearly says the current permission
+- user control why did ou change it to a button/modal display form format? i never complained about that so am confused
+- the message when am the one who sent it why is i on the

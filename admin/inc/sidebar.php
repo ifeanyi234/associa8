@@ -1,3 +1,4 @@
+<?php $currentAdminPage = basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')); ?>
 <aside class="admin-sidebar" id="adminSidebar">
         <div class="sidebar-brand">
           <img
@@ -10,7 +11,7 @@
         <ul class="sidebar-menu">
           <!-- Dashboard (Single Link) -->
           <li class="sidebar-item">
-            <a href="dashboard.php" class="sidebar-link active">
+            <a href="dashboard.php" class="sidebar-link">
               <div class="sidebar-link-content">
                 <i class="fa-solid fa-cube"></i>
                 <span>Dashboard</span>
@@ -164,7 +165,7 @@
 
           <?php if (admin_has_permission('attendance')): ?>
           <!-- Attendance (Dropdown) -->
-          <li class="sidebar-item dropdown">
+          <li class="sidebar-item dropdown <?php echo in_array($currentAdminPage, ['attendance.php', 'add-attendance.php'], true) ? 'open' : ''; ?>">
             <a href="javascript:void(0)" class="sidebar-link">
               <div class="sidebar-link-content">
                 <i class="fa-solid fa-calendar-check"></i>
@@ -174,7 +175,7 @@
             </a>
             <ul class="sidebar-submenu">
               <li>
-                <a href="attendance.php" class="sidebar-link">
+                <a href="attendance.php" class="sidebar-link <?php echo $currentAdminPage === 'attendance.php' ? 'active' : ''; ?>" <?php echo $currentAdminPage === 'attendance.php' ? 'aria-current="page"' : ''; ?>>
                   <div class="sidebar-link-content">
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Attendance Manager</span>
@@ -188,7 +189,7 @@
           <?php if (admin_has_permission('events')): ?>
           <!-- Events -->
           <li class="sidebar-item">
-            <a href="events.php" class="sidebar-link">
+            <a href="events.php" class="sidebar-link <?php echo $currentAdminPage === 'events.php' ? 'active' : ''; ?>" <?php echo $currentAdminPage === 'events.php' ? 'aria-current="page"' : ''; ?>>
               <div class="sidebar-link-content">
                 <i class="fa-solid fa-calendar-days"></i>
                 <span>Events</span>
@@ -251,9 +252,9 @@
           </li>
           <?php endif; ?>
 
-          <?php if (admin_has_permission('admin_only')): ?>
+          <?php if (admin_has_permission('messages')): ?>
           <!-- Communication (Dropdown) -->
-          <li class="sidebar-item dropdown">
+          <li class="sidebar-item dropdown <?php echo $currentAdminPage === 'messages.php' ? 'open' : ''; ?>">
             <a href="javascript:void(0)" class="sidebar-link">
               <div class="sidebar-link-content">
                 <i class="fa-solid fa-comment-dots"></i>
@@ -263,7 +264,7 @@
             </a>
             <ul class="sidebar-submenu">
               <li>
-                <a href="#" class="sidebar-link">
+                <a href="messages.php" class="sidebar-link <?php echo $currentAdminPage === 'messages.php' ? 'active' : ''; ?>" <?php echo $currentAdminPage === 'messages.php' ? 'aria-current="page"' : ''; ?>>
                   <div class="sidebar-link-content">
                     <i class="fa-solid fa-comments"></i>
                     <span>All Channel</span>
@@ -272,10 +273,12 @@
               </li>
             </ul>
           </li>
+          <?php endif; ?>
 
+          <?php if (admin_has_permission('admin_only')): ?>
           <!-- Org Settings (Single Link) -->
           <li class="sidebar-item">
-            <a href="#" class="sidebar-link">
+            <a href="org-settings.php" class="sidebar-link <?php echo $currentAdminPage === 'org-settings.php' ? 'active' : ''; ?>" <?php echo $currentAdminPage === 'org-settings.php' ? 'aria-current="page"' : ''; ?>>
               <div class="sidebar-link-content">
                 <i class="fa-solid fa-gear"></i>
                 <span>Org Settings</span>
