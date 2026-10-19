@@ -38,32 +38,17 @@ $newPassword = $_POST['new_password'] ?? '';
 $confirmPassword = $_POST['confirm_password'] ?? '';
 $allowedTypes = ['association', 'church', 'ngo', 'club', 'corporate'];
 $phoneIsValid = $phone === '' || (strlen($phone) <= 30 && preg_match('/^\+?[0-9(). -]*[0-9][0-9(). -]*$/D', $phone) === 1);
-$adminPhoneIsValid = $adminPhone === '' || preg_match('/^[0-9]{1,19}$/D', $adminPhone) === 1;
-if ($adminPhoneIsValid && $adminPhone !== '') {
-    $normalizedAdminPhone = ltrim($adminPhone, '0');
+$adminPhoneIsValid = $adminPhone === '' || (strlen($adminPhone) <= 30 && preg_match('/^\+?[0-9(). -]*[0-9][0-9(). -]*$/D', $adminPhone) === 1);
+$normalizedAdminPhone = $adminPhone === '' ? '' : preg_replace('/\D+/', '', $adminPhone);
+if ($adminPhoneIsValid && $normalizedAdminPhone !== '') {
+    $normalizedAdminPhone = ltrim($normalizedAdminPhone, '0');
     $normalizedAdminPhone = $normalizedAdminPhone === '' ? '0' : $normalizedAdminPhone;
     $maxPhone = (string) PHP_INT_MAX;
-    $adminPhoneIsValid = strlen($normalizedAdminPhone) < strlen($maxPhone)
-        || (strlen($normalizedAdminPhone) === strlen($maxPhone) && strcmp($normalizedAdminPhone, $maxPhone) <= 0);
+    $adminPhoneIsValid = strlen($normalizedAdminPhone) <= 19
+        && (strlen($normalizedAdminPhone) < strlen($maxPhone)
+            || (strlen($normalizedAdminPhone) === strlen($maxPhone) && strcmp($normalizedAdminPhone, $maxPhone) <= 0));
 }
 $passwordChangeRequested = $newPassword !== '' || $confirmPassword !== '' || $currentPassword !== '';
-
-if ($name === '' || strlen($name) > 100 || !in_array($type, $allowedTypes, true)
-    || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100
-    || !$phoneIsValid || $country === '' || strlen($country) > 50
-    || $state === '' || strlen($state) > 40
-    || $firstName === '' || strlen($firstName) > 100
-    || $lastName === '' || strlen($lastName) > 100
-    || !filter_var($adminEmail, FILTER_VALIDATE_EMAIL) || strlen($adminEmail) > 150
-    || !$adminPhoneIsValid || $jobTitle === '' || strlen($jobTitle) > 200
-    || $username === '' || strlen($username) > 100
-    || !is_string($currentPassword) || !is_string($newPassword) || !is_string($confirmPassword)
-    || ($passwordChangeRequested && (strlen($newPassword) < 12 || strlen($newPassword) > 72
-        || $currentPassword === '' || !hash_equals($newPassword, $confirmPassword)))) {
-    header('Location: org-settings.php?status=' . ($passwordChangeRequested ? 'password' : 'invalid'));
-    exit;
-}
-
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 $accountId = (int) ($_SESSION['user_id'] ?? 0);
 if ($orgId < 1 || $accountId < 1) {
@@ -71,24 +56,67 @@ if ($orgId < 1 || $accountId < 1) {
     exit('Organization settings are not available for this account.');
 }
 
+$invalidFields = [];
+if ($name === '' || strlen($name) > 100) {
+    $invalidFields[] = 'organization_name';
+}
+if (!in_array($type, $allowedTypes, true)) {
+    $invalidFields[] = 'organization_type';
+}
+if (!$phoneIsValid) {
+    $invalidFields[] = 'organization_phone';
+}
+if ($country === '' || strlen($country) > 50) {
+    $invalidFields[] = 'country';
+}
+if ($state === '' || strlen($state) > 40) {
+    $invalidFields[] = 'state';
+}
+if ($firstName === '' || strlen($firstName) > 100) {
+    $invalidFields[] = 'first_name';
+}
+if ($lastName === '' || strlen($lastName) > 100) {
+    $invalidFields[] = 'last_name';
+}
+if (!$adminPhoneIsValid) {
+    $invalidFields[] = 'admin_phone';
+}
+if (strlen($jobTitle) > 200) {
+    $invalidFields[] = 'job_title';
+}
+if ($username === '' || strlen($username) > 100) {
+    $invalidFields[] = 'username';
+}
+if (!is_string($currentPassword) || !is_string($newPassword) || !is_string($confirmPassword)
+    || ($passwordChangeRequested && (strlen($newPassword) < 12 || strlen($newPassword) > 72
+        || $currentPassword === '' || !hash_equals($newPassword, $confirmPassword)))) {
+    header('Location: org-settings.php?status=' . ($passwordChangeRequested ? 'password' : 'invalid'));
+    exit;
+}
+if ($invalidFields) {
+    header('Location: org-settings.php?status=invalid&fields=' . rawurlencode(implode(',', $invalidFields)));
+    exit;
+}
+
 if (!mysqli_begin_transaction($conn)) {
     error_log('Organization settings transaction could not be started: ' . mysqli_error($conn));
     header('Location: org-settings.php?status=error');
     exit;
 }
-$rollbackAndRedirect = static function (string $status) use ($conn): void {
+$rollbackAndRedirect = static function (string $status, string $query = '') use ($conn): void {
     if (!mysqli_rollback($conn)) {
         error_log('Organization settings transaction rollback failed: ' . mysqli_error($conn));
     }
-    header('Location: org-settings.php?status=' . rawurlencode($status));
+    header('Location: org-settings.php?status=' . rawurlencode($status) . $query);
     exit;
 };
 
 $identityStmt = mysqli_prepare(
     $conn,
-    "SELECT a.password, ai.id AS admin_id
+    "SELECT a.password, ai.id AS admin_id, ai.email AS admin_email, o.email AS organization_email
      FROM `acc-info` a
      INNER JOIN `admin-info` ai ON ai.acc_id = a.id AND ai.org_id = a.org_id
+     INNER JOIN `org-info` o ON o.id = a.org_id
      WHERE a.id = ? AND a.org_id = ? AND a.status = 'active'
      ORDER BY ai.id ASC
      LIMIT 1
@@ -111,6 +139,19 @@ if (!$identity) {
     $rollbackAndRedirect('error');
 }
 $adminId = (int) $identity['admin_id'];
+
+$invalidEmailFields = [];
+if ((!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100)
+    && $email !== trim((string) $identity['organization_email'])) {
+    $invalidEmailFields[] = 'organization_email';
+}
+if ((!filter_var($adminEmail, FILTER_VALIDATE_EMAIL) || strlen($adminEmail) > 150)
+    && $adminEmail !== trim((string) $identity['admin_email'])) {
+    $invalidEmailFields[] = 'admin_email';
+}
+if ($invalidEmailFields) {
+    $rollbackAndRedirect('invalid', '&fields=' . rawurlencode(implode(',', $invalidEmailFields)));
+}
 
 if ($passwordChangeRequested && !password_verify($currentPassword, (string) $identity['password'])) {
     $rollbackAndRedirect('password');
@@ -192,7 +233,7 @@ mysqli_stmt_bind_param(
     $firstName,
     $lastName,
     $adminEmail,
-    $adminPhone,
+    $normalizedAdminPhone,
     $jobTitle,
     $adminId,
     $orgId,

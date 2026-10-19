@@ -87,7 +87,7 @@ foreach ($transactions as $transaction) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <!-- PRELOADER -->
@@ -156,8 +156,8 @@ foreach ($transactions as $transaction) {
             </div>
           </div>
 
-          <?php if (is_array($financeNotice)): ?>
-            <div class="dashboard-card" role="status" style="margin-bottom: 1rem; color: <?php echo ($financeNotice['type'] ?? '') === 'success' ? '#166534' : '#b91c1c'; ?>;">
+          <?php if (is_array($financeNotice) && ($financeNotice['type'] ?? '') !== 'success'): ?>
+            <div class="dashboard-card" role="status" style="margin-bottom: 1rem; color: #b91c1c;">
               <?php echo htmlspecialchars((string) ($financeNotice['text'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
             </div>
           <?php endif; ?>
@@ -314,6 +314,18 @@ foreach ($transactions as $transaction) {
         <?php include('inc/footer.php') ?>
       </main>
     </div>
+
+    <?php if (is_array($financeNotice) && ($financeNotice['type'] ?? '') === 'success'): ?>
+      <script>
+        window.addEventListener("DOMContentLoaded", () => {
+          window.AppModal?.open({
+            type: "success",
+            heading: "Payment recorded",
+            body: <?php echo json_encode((string) ($financeNotice['text'] ?? 'Payment recorded.'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+          });
+        });
+      </script>
+    <?php endif; ?>
 
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

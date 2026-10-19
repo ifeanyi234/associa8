@@ -48,6 +48,8 @@ CBT rate limits currently allow 20 access-code requests per IP per hour, 20 code
 
 Member and admin login's “Remember Me” option stores a hashed, revocable browser token for 30 days. Existing databases need the one-time `migrations/20261013_member_remember_me.sql` and `migrations/20261013_admin_remember_me.sql` schema updates before using the respective options. Accounts without Remember Me use the normal browser session, and logout revokes a remembered browser token.
 
+Zones and sub-zones can each have optional annual dues. A member's annual total is the sum of the dues for their assigned zone and sub-zone. Successful membership-dues payments with a `paid_at` timestamp in the current Africa/Lagos calendar year count toward the total; outstanding dues are the remainder, never a negative amount. Existing databases need `migrations/20261016_annual_zone_dues.sql`.
+
 Messaging is an in-app private conversation between a member and the member's organization. Active organization admins, managers, and staff share the inbox and can reply; email/SMS delivery is not part of this workflow. Existing databases need the one-time `migrations/20261013_messages_workflow.sql` schema update before using messaging.
 
 CBT scores give every question equal weight. Unanswered questions count as incorrect; the score is the percentage correct rounded to the nearest whole number, and an applicant passes when that rounded score is greater than or equal to the exam pass mark. Results are saved together with the admission's `cbt_completed` state in one database transaction. Correct-answer fields are loaded only by the submission handler and are not sent to the applicant's assessment page.

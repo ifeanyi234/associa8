@@ -157,7 +157,7 @@ $statusMessages = [
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261013-messages-workflow-1" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261015-member-message-alignment-1" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -248,7 +248,7 @@ $statusMessages = [
                   <div class="message-detail-subject"><?php echo htmlspecialchars((string) $selectedThread['subject'], ENT_QUOTES, 'UTF-8'); ?></div>
                   <div class="message-detail-meta-row"><span>Conversation with your organization’s staff</span><span class="message-detail-tag">Private</span></div>
                 </div>
-                <div class="message-conversation">
+                <div class="message-conversation member-view">
                   <article class="message-bubble member">
                     <div class="message-bubble-meta"><strong>You</strong><time><?php echo htmlspecialchars(date('D, d M Y · H:i', strtotime((string) $selectedThread['sent_at'])), ENT_QUOTES, 'UTF-8'); ?></time></div>
                     <p><?php echo nl2br(htmlspecialchars((string) $selectedThread['body'], ENT_QUOTES, 'UTF-8')); ?></p>

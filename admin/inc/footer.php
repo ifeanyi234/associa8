@@ -23,7 +23,7 @@
     </div>
   </div>
 </div>
-<script src="/associa8/js/modal.js?v=20261009-1"></script>
+<script src="/associa8/js/modal.js?v=20261016-3"></script>
 <script>
   window.Associa8AdminIdentity = <?php echo json_encode([
       'organizationName' => (string) ($_SESSION['admin_organization_name'] ?? ''),

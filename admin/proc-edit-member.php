@@ -101,5 +101,7 @@ $message = $success ? 'Member updated successfully.' : 'Could not update the mem
 if ($success) {
     unset($_SESSION['member_edit_csrf']);
 }
-header('Location: edit-member.php?id=' . $memberId . '&status=' . ($success ? 'success' : 'error') . '&msg=' . urlencode($message));
+header($success
+    ? 'Location: member-directory.php?notice=member_updated&msg=' . urlencode($message)
+    : 'Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode($message));
 exit;

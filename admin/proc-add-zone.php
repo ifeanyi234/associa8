@@ -10,18 +10,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $type = $_POST['type'] ?? '';
 $name = trim($_POST['name'] ?? '');
 $coordinator = trim($_POST['coordinator_name'] ?? '');
+$annualDuesInput = trim((string) ($_POST['annual_dues'] ?? ''));
 $zoneId = (int) ($_POST['zone_id'] ?? 0);
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+$annualDuesIsValid = $annualDuesInput === ''
+    || (preg_match('/^\d{1,10}(?:\.\d{1,2})?$/', $annualDuesInput) && (float) $annualDuesInput <= 9999999999.99);
 
-if ($orgId === null || $orgId < 1 || $name === '' || strlen($name) > 100 || strlen($coordinator) > 150) {
-    header('Location: add-zone.php?status=error&msg=' . urlencode('Enter a name before saving.'));
+if (
+    $orgId === null || $orgId < 1
+    || $name === '' || strlen($name) > 100 || strlen($coordinator) > 150
+    || !$annualDuesIsValid
+) {
+    $message = $annualDuesIsValid
+        ? 'Enter a valid name and coordinator before saving.'
+        : 'Annual dues must be a non-negative amount with no more than two decimal places.';
+    header('Location: add-zone.php?status=error&msg=' . urlencode($message));
     exit;
 }
+$annualDues = $annualDuesInput === '' ? '0.00' : $annualDuesInput;
 
 if ($type === 'zone') {
-    $statement = mysqli_prepare($conn, 'INSERT INTO zones (org_id, name, coordinator_name) VALUES (?, ?, ?)');
+    $statement = mysqli_prepare($conn, 'INSERT INTO zones (org_id, name, coordinator_name, annual_dues) VALUES (?, ?, ?, ?)');
     if ($statement) {
-        mysqli_stmt_bind_param($statement, 'iss', $orgId, $name, $coordinator);
+        mysqli_stmt_bind_param($statement, 'isss', $orgId, $name, $coordinator, $annualDues);
     }
 } elseif ($type === 'subzone' && $zoneId > 0) {
     $zoneCheck = mysqli_query($conn, "SELECT id FROM zones WHERE id = $zoneId AND org_id = $orgId LIMIT 1");
@@ -29,9 +40,9 @@ if ($type === 'zone') {
         header('Location: add-zone.php?status=error&type=subzone&msg=' . urlencode('The selected parent zone does not belong to your organization.'));
         exit;
     }
-    $statement = mysqli_prepare($conn, 'INSERT INTO subzones (zone_id, name, coordinator_name) VALUES (?, ?, ?)');
+    $statement = mysqli_prepare($conn, 'INSERT INTO subzones (zone_id, name, coordinator_name, annual_dues) VALUES (?, ?, ?, ?)');
     if ($statement) {
-        mysqli_stmt_bind_param($statement, 'iss', $zoneId, $name, $coordinator);
+        mysqli_stmt_bind_param($statement, 'isss', $zoneId, $name, $coordinator, $annualDues);
     }
 } else {
     header('Location: add-zone.php?status=error&msg=' . urlencode('Choose a valid zone action.'));

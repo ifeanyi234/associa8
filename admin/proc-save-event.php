@@ -15,7 +15,7 @@ function eventFormRedirect(string $type, string $text): void
             $formValues[$field] = is_string($value) ? $value : '';
         }
         $_SESSION['event_form_values'] = $formValues;
-        header('Location: events.php?create=1');
+        header('Location: add-event.php');
     }
     exit;
 }

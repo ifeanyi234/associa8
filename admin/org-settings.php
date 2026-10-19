@@ -71,6 +71,28 @@ if (!is_string($csrfToken) || $csrfToken === '') {
     $_SESSION['org_settings_csrf'] = $csrfToken;
 }
 $status = $_GET['status'] ?? '';
+$invalidFieldLabels = [
+    'organization_name' => 'organization name',
+    'organization_type' => 'organization type',
+    'organization_email' => 'contact email',
+    'organization_phone' => 'contact phone',
+    'country' => 'country',
+    'state' => 'state / region',
+    'first_name' => 'administrator first name',
+    'last_name' => 'administrator last name',
+    'admin_email' => 'administrator email',
+    'admin_phone' => 'administrator phone',
+    'job_title' => 'job title',
+    'username' => 'username',
+];
+$invalidFields = [];
+if (is_string($_GET['fields'] ?? null)) {
+    foreach (explode(',', $_GET['fields']) as $field) {
+        if (isset($invalidFieldLabels[$field])) {
+            $invalidFields[] = $invalidFieldLabels[$field];
+        }
+    }
+}
 $organizationTypes = [
     'association' => 'Association',
     'church' => 'Church / Religious Institution',
@@ -143,7 +165,7 @@ $organizationTypes = [
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="organization-email">Contact email</label>
-                  <input class="form-control" id="organization-email" name="email" type="email" maxlength="100" required value="<?php echo htmlspecialchars((string) $organization['email'], ENT_QUOTES, 'UTF-8'); ?>" />
+                  <input class="form-control" id="organization-email" name="email" type="text" inputmode="email" autocomplete="email" maxlength="100" required value="<?php echo htmlspecialchars((string) $organization['email'], ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="organization-phone">Contact phone</label>
@@ -171,15 +193,15 @@ $organizationTypes = [
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="admin-email">Administrator email / login email</label>
-                  <input class="form-control" id="admin-email" name="admin_email" type="email" maxlength="150" required value="<?php echo htmlspecialchars((string) $administrator['email'], ENT_QUOTES, 'UTF-8'); ?>" />
+                  <input class="form-control" id="admin-email" name="admin_email" type="text" inputmode="email" autocomplete="email" maxlength="150" required value="<?php echo htmlspecialchars((string) $administrator['email'], ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="admin-phone">Phone</label>
-                  <input class="form-control" id="admin-phone" name="admin_phone" type="tel" maxlength="19" value="<?php echo htmlspecialchars((string) ($administrator['phone'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" />
+                  <input class="form-control" id="admin-phone" name="admin_phone" type="tel" maxlength="30" value="<?php echo htmlspecialchars((string) ($administrator['phone'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="admin-job-title">Job title</label>
-                  <input class="form-control" id="admin-job-title" name="job_title" type="text" maxlength="200" required value="<?php echo htmlspecialchars((string) $administrator['job_title'], ENT_QUOTES, 'UTF-8'); ?>" />
+                  <input class="form-control" id="admin-job-title" name="job_title" type="text" maxlength="200" value="<?php echo htmlspecialchars((string) $administrator['job_title'], ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="admin-role">Role</label>
@@ -237,7 +259,7 @@ $organizationTypes = [
         const copy = success
           ? ["Settings saved", "Your organization, administrator, and login account details were updated."]
           : status === "invalid"
-            ? ["Check the organization details", "Some values are missing or invalid. Review the form and try again."]
+            ? ["Check the organization details", <?php echo json_encode($invalidFields ? 'Review these fields: ' . implode(', ', $invalidFields) . '.' : 'Some values are missing or invalid. Review the form and try again.', JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>]
             : status === "duplicate"
               ? ["Details already in use", "That username or email address is already used by another account."]
             : status === "password"

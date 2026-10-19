@@ -53,7 +53,7 @@ if ($subzonesResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->

@@ -16,17 +16,29 @@ if ($adminRole !== 'super_admin' && $orgId !== null) {
 }
 $memberStatsResult = mysqli_query($conn, $memberStatsSql);
 $memberStats = $memberStatsResult ? mysqli_fetch_assoc($memberStatsResult) : ['total_members' => 0];
-$zonesSql = "SELECT z.id, z.name, z.coordinator_name, (SELECT COUNT(*) FROM members m WHERE m.zone_id = z.id" . ($adminRole !== 'super_admin' && $orgId !== null ? " AND m.org_id = " . (int) $orgId : "") . ") AS member_count, (SELECT COUNT(*) FROM subzones sz WHERE sz.zone_id = z.id) AS subzone_count FROM zones z" . $orgZoneClause . " ORDER BY z.name";
+$zonesSql = "SELECT z.id, z.name, z.coordinator_name, z.annual_dues, (SELECT COUNT(*) FROM members m WHERE m.zone_id = z.id" . ($adminRole !== 'super_admin' && $orgId !== null ? " AND m.org_id = " . (int) $orgId : "") . ") AS member_count, (SELECT COUNT(*) FROM subzones sz WHERE sz.zone_id = z.id) AS subzone_count FROM zones z" . $orgZoneClause . " ORDER BY z.name";
 $zonesResult = mysqli_query($conn, $zonesSql);
 $zones = [];
 if ($zonesResult) {
   while ($zone = mysqli_fetch_assoc($zonesResult)) {
     $zone['subzones'] = [];
-    $subzonesResult = mysqli_query($conn, "SELECT id, name, coordinator_name FROM subzones WHERE zone_id = " . (int) $zone['id'] . " ORDER BY name");
-    if ($subzonesResult) {
-      while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
-        $zone['subzones'][] = $subzone;
-      }
+    $subzonesResult = mysqli_query(
+      $conn,
+      "SELECT sz.id, sz.name, sz.coordinator_name, sz.annual_dues, COUNT(m.id) AS member_count
+       FROM subzones sz
+       INNER JOIN zones z ON z.id = sz.zone_id
+       LEFT JOIN members m ON m.subzone_id = sz.id AND m.zone_id = sz.zone_id AND m.org_id = z.org_id
+       WHERE sz.zone_id = " . (int) $zone['id'] . "
+       GROUP BY sz.id, sz.name, sz.coordinator_name, sz.annual_dues
+       ORDER BY sz.name"
+    );
+    if (!$subzonesResult) {
+      error_log('Sub-zone member count query failed: ' . mysqli_error($conn));
+      http_response_code(500);
+      exit('Sub-zones are temporarily unavailable.');
+    }
+    while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
+      $zone['subzones'][] = $subzone;
     }
     $zones[] = $zone;
   }
@@ -62,7 +74,7 @@ if ($zonesResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     
@@ -113,7 +125,7 @@ if ($zonesResult) {
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Zones & Sub-Zones</h2>
-              <p class="page-subtitle">Manage geographic divisions and coordinators</p>
+              <p class="page-subtitle">Manage geographic divisions, coordinators, and annual dues</p>
             </div>
             <a href="add-zone.php" class="btn-outline-primary">
               <i class="fa-solid fa-plus"></i>
@@ -152,6 +164,7 @@ if ($zonesResult) {
                       <div class="zone-details">
                         <span class="zone-title"><?php echo htmlspecialchars($zone['name']); ?></span>
                         <span class="zone-coordinator">Coordinator: <?php echo htmlspecialchars($zone['coordinator_name'] ?: 'Not assigned'); ?></span>
+                        <span class="zone-coordinator">Annual dues: &#8358;<?php echo number_format((float) $zone['annual_dues'], 2); ?></span>
                       </div>
                     </div>
                     <div class="zone-meta-group">
@@ -187,9 +200,13 @@ if ($zonesResult) {
                                 <div class="subzone-details">
                                   <span class="subzone-title"><?php echo htmlspecialchars($subzone['name']); ?></span>
                                   <span class="subzone-coordinator"><?php echo htmlspecialchars($subzone['coordinator_name'] ?: 'No coordinator assigned'); ?></span>
+                                  <span class="subzone-coordinator">Annual dues: &#8358;<?php echo number_format((float) $subzone['annual_dues'], 2); ?></span>
                                 </div>
                               </div>
-                              <div class="subzone-count"><i class="fa-solid fa-users"></i><span>0</span></div>
+                              <div class="zone-actions">
+                                <a href="edit-subzone.php?id=<?php echo (int) $subzone['id']; ?>" class="btn-zone-action" aria-label="Edit <?php echo htmlspecialchars($subzone['name'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa-solid fa-pen"></i></a>
+                                <div class="subzone-count"><i class="fa-solid fa-users"></i><span><?php echo (int) $subzone['member_count']; ?></span></div>
+                              </div>
                             </div>
                           <?php endforeach; ?>
                         <?php else: ?>

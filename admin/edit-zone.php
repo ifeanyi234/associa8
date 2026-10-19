@@ -8,7 +8,7 @@ if ($id < 1 || ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1))
   header('Location: zones.php?status=error&msg=' . urlencode('The selected zone could not be found.'));
   exit;
 }
-$zoneSql = "SELECT id, name, coordinator_name FROM zones WHERE id = $id";
+$zoneSql = "SELECT id, name, coordinator_name, annual_dues FROM zones WHERE id = $id";
 if ($adminRole !== 'super_admin') {
   $zoneSql .= ' AND org_id = ' . $orgId;
 }
@@ -32,7 +32,7 @@ if (!$zone) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../css/preloader.css" />
-<link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+<link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -74,7 +74,7 @@ if (!$zone) {
           <div class="page-action-header mb-4">
 <div>
 <h2 class="page-title-main">Edit Zone</h2>
-<p class="page-subtitle">Update this zone's name and coordinator.</p>
+<p class="page-subtitle">Update this zone's name, coordinator, and optional annual dues.</p>
 </div>
 <a href="zones.php" class="btn-outline-primary">
 <i class="fa-solid fa-arrow-left">
@@ -105,6 +105,10 @@ if (!$zone) {
 <input class="form-control" type="text" id="zoneCoordinator" name="coordinator_name" value="<?php echo htmlspecialchars($zone['coordinator_name'] ?? ''); ?>" />
 </div>
 </div>
+<div class="form-group">
+<label for="zoneAnnualDues" class="form-label">Annual zone dues (NGN, optional)</label>
+<input class="form-control" type="number" id="zoneAnnualDues" name="annual_dues" min="0" max="9999999999.99" step="0.01" value="<?php echo htmlspecialchars((string) $zone['annual_dues'], ENT_QUOTES, 'UTF-8'); ?>" />
+</div>
 <div class="structure-form-actions">
 <a href="zones.php" class="btn-action-dark-outline">Cancel</a>
 <button type="submit" class="btn-navy-filled">
@@ -123,4 +127,3 @@ if (!$zone) {
 </script>
   </body>
 </html>
-

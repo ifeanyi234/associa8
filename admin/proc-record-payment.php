@@ -160,4 +160,4 @@ if (!mysqli_commit($conn)) {
     paymentRedirect('error', 'Payment could not be recorded. Please try again later.');
 }
 
-paymentRedirect('success', 'Offline payment recorded successfully. Reference: ' . $reference);
+paymentRedirect('success', 'Reference: ' . $reference);

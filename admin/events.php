@@ -11,15 +11,6 @@ $events = [];
 $queryFailed = false;
 $notice = $_SESSION['event_notice'] ?? null;
 unset($_SESSION['event_notice']);
-$eventFormValues = $_SESSION['event_form_values'] ?? [];
-unset($_SESSION['event_form_values']);
-if (!is_array($eventFormValues)) {
-    $eventFormValues = [];
-}
-$eventFormValue = static function (string $key) use ($eventFormValues): string {
-    $value = $eventFormValues[$key] ?? '';
-    return is_string($value) ? $value : '';
-};
 
 $stmt = mysqli_prepare(
     $conn,
@@ -91,64 +82,14 @@ if (empty($_SESSION['event_csrf'])) {
               <h2 class="page-title-main">Events</h2>
               <p class="page-subtitle">Create events for your members and track seat bookings.</p>
             </div>
-            <button class="btn-navy-filled" id="openCreateEventDialog" type="button"><i class="fa-solid fa-calendar-plus"></i> Create Event</button>
+            <a class="btn-navy-filled" href="add-event.php"><i class="fa-solid fa-calendar-plus"></i> Create Event</a>
           </div>
 
-          <?php if (is_array($notice)): ?>
-            <div class="inline-form-message <?php echo ($notice['type'] ?? '') === 'success' ? 'success' : 'error'; ?>" role="status">
+          <?php if (is_array($notice) && ($notice['type'] ?? '') !== 'success'): ?>
+            <div class="inline-form-message error" role="status">
               <?php echo htmlspecialchars((string) ($notice['text'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
             </div>
           <?php endif; ?>
-          <dialog class="admin-form-dialog" id="createEventDialog" aria-labelledby="createEventDialogTitle">
-            <div class="admin-form-dialog-header">
-              <h2 id="createEventDialogTitle">Create an event</h2>
-              <button class="admin-form-dialog-close" type="button" data-close-event-dialog aria-label="Close event form"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-            </div>
-            <div class="admin-form-dialog-content">
-              <p class="page-subtitle">Event dates and times are entered in Africa/Lagos time.</p>
-              <form action="proc-save-event.php" method="post" class="structure-form">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-                <div class="form-row-2col">
-                  <div class="form-group">
-                    <label for="event-title" class="form-label">Event name</label>
-                    <input class="form-control" id="event-title" name="title" type="text" maxlength="200" required value="<?php echo htmlspecialchars($eventFormValue('title'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                  <div class="form-group">
-                    <label for="event-type" class="form-label">Event type</label>
-                    <input class="form-control" id="event-type" name="event_type" type="text" maxlength="50" placeholder="Meeting, workshop, service..." value="<?php echo htmlspecialchars($eventFormValue('event_type'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                </div>
-                <div class="form-row-2col">
-                  <div class="form-group">
-                    <label for="event-date" class="form-label">Date (Africa/Lagos)</label>
-                    <input class="form-control" id="event-date" name="event_date" type="date" min="<?php echo (new DateTimeImmutable('now', new DateTimeZone('Africa/Lagos')))->format('Y-m-d'); ?>" required value="<?php echo htmlspecialchars($eventFormValue('event_date'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                  <div class="form-group">
-                    <label for="event-time" class="form-label">Time (Africa/Lagos, optional)</label>
-                    <input class="form-control" id="event-time" name="event_time" type="time" value="<?php echo htmlspecialchars($eventFormValue('event_time'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                </div>
-                <div class="form-row-2col">
-                  <div class="form-group">
-                    <label for="event-venue" class="form-label">Venue</label>
-                    <input class="form-control" id="event-venue" name="venue" type="text" maxlength="255" value="<?php echo htmlspecialchars($eventFormValue('venue'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                  <div class="form-group">
-                    <label for="event-capacity" class="form-label">Seat limit (optional)</label>
-                    <input class="form-control" id="event-capacity" name="capacity" type="number" min="1" max="4294967295" step="1" placeholder="Leave blank for unlimited seats" value="<?php echo htmlspecialchars($eventFormValue('capacity'), ENT_QUOTES, 'UTF-8'); ?>" />
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label for="event-description" class="form-label">Details (optional)</label>
-                  <textarea class="form-control" id="event-description" name="description" rows="5" maxlength="5000"><?php echo htmlspecialchars($eventFormValue('description'), ENT_QUOTES, 'UTF-8'); ?></textarea>
-                </div>
-                <div class="admin-form-dialog-actions">
-                  <button class="btn-action-dark-outline" type="button" data-close-event-dialog>Cancel</button>
-                  <button class="btn-navy-filled" type="submit"><i class="fa-solid fa-check"></i> Save event</button>
-                </div>
-              </form>
-            </div>
-          </dialog>
           <?php if ($queryFailed): ?>
             <div class="dashboard-card" role="alert">Events could not be loaded. Please try again later.</div>
           <?php elseif (!$events): ?>
@@ -176,7 +117,7 @@ if (empty($_SESSION['event_csrf'])) {
                         </td>
                         <td style="padding: 1rem;">
                           <?php echo htmlspecialchars(date('D, d M Y', strtotime($event['event_date'])), ENT_QUOTES, 'UTF-8'); ?>
-                          <div style="color: #64748b;"><?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])), ENT_QUOTES, 'UTF-8') . ' (Lagos)' : 'Time TBA'; ?></div>
+                          <div style="color: #64748b;"><?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])), ENT_QUOTES, 'UTF-8') . ' (local time)' : 'Time TBA'; ?></div>
                         </td>
                         <td style="padding: 1rem;"><?php echo htmlspecialchars($event['venue'] ?: 'Venue TBA', ENT_QUOTES, 'UTF-8'); ?></td>
                         <td style="padding: 1rem;">
@@ -203,35 +144,27 @@ if (empty($_SESSION['event_csrf'])) {
           <?php endif; ?>
         </div>
         <?php include('inc/footer.php'); ?>
+        <?php if (is_array($notice) && ($notice['type'] ?? '') === 'success'): ?>
+          <script>
+            document.addEventListener("DOMContentLoaded", () => {
+              window.AppModal?.open({
+                type: "success",
+                heading: "Success",
+                body: <?php echo json_encode((string) ($notice['text'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+              });
+            });
+          </script>
+        <?php endif; ?>
       </main>
     </div>
     <script src="../js/admin-sidebar.js"></script>
     <script src="../js/preloader.js"></script>
-    <script>
-      const createEventDialog = document.getElementById("createEventDialog");
-      document.getElementById("openCreateEventDialog")?.addEventListener("click", () => createEventDialog?.showModal());
-      document.querySelectorAll("[data-close-event-dialog]").forEach((button) => {
-        button.addEventListener("click", () => createEventDialog?.close());
-      });
-      createEventDialog?.addEventListener("click", (event) => {
-        if (event.target === createEventDialog) createEventDialog.close();
-      });
-      if (new URLSearchParams(window.location.search).get("create") === "1") {
-        createEventDialog?.showModal();
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    </script>
     <style>
       .inline-form-message {
         margin-bottom: 1.25rem;
         padding: .85rem 1rem;
         border-radius: var(--radius-sm);
         font-weight: 700;
-      }
-      .inline-form-message.success {
-        color: #166534;
-        background: #dcfce7;
-        border: 1px solid #bbf7d0;
       }
       .inline-form-message.error {
         color: #991b1b;

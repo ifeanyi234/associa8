@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }[type] || '<span aria-hidden="true">i</span>';
     title.textContent = heading;
     message.textContent = body;
+    message.hidden = !body;
     details.textContent = detail;
     details.hidden = !detail;
     confirmButton.hidden = !confirm;
@@ -64,19 +65,31 @@ document.addEventListener("DOMContentLoaded", () => {
     "submit",
     (event) => {
       const form = event.target;
-      if (!(form instanceof HTMLFormElement) || !form.hasAttribute("data-app-modal-confirm")) return;
+      if (!(form instanceof HTMLFormElement)) return;
+      const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
+      const confirmationElement = submitter?.hasAttribute("data-app-modal-confirm")
+        ? submitter
+        : form.hasAttribute("data-app-modal-confirm")
+          ? form
+          : null;
+      if (!confirmationElement) return;
       if (confirmedForms.has(form)) {
         confirmedForms.delete(form);
         return;
       }
 
       event.preventDefault();
-      const submitter = event.submitter instanceof HTMLElement ? event.submitter : null;
       open({
         type: "warning",
-        heading: form.dataset.confirmTitle || "Please confirm",
-        body: form.dataset.appModalConfirm,
-        detail: form.dataset.confirmDetail || "Please confirm to continue.",
+        heading:
+          submitter?.dataset.confirmTitle ||
+          form.dataset.confirmTitle ||
+          "Please confirm",
+        body: confirmationElement.dataset.appModalConfirm,
+        detail:
+          submitter?.dataset.confirmDetail ||
+          form.dataset.confirmDetail ||
+          "",
         confirm: true,
         trigger: submitter,
         onConfirm: () => {

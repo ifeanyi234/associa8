@@ -7,6 +7,11 @@ $isPlatformAdmin = ($_SESSION['admin_role'] ?? '') === 'super_admin';
 $canViewAllOrganizations = $isPlatformAdmin && $orgId < 1;
 $scopeSql = $canViewAllOrganizations ? '1 = 1' : 'm.org_id = ' . $orgId;
 $members = [];
+$oldStatuses = $_SESSION['attendance_old_statuses'] ?? [];
+if (!is_array($oldStatuses)) {
+    $oldStatuses = [];
+}
+unset($_SESSION['attendance_old_statuses']);
 $notice = $_SESSION['attendance_notice'] ?? null;
 unset($_SESSION['attendance_notice']);
 
@@ -42,7 +47,7 @@ if ($memberResult) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -72,7 +77,7 @@ if ($memberResult) {
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Record Attendance</h2>
-              <p class="page-subtitle">Record a member's attendance <?php admin_info_tip('Only one general attendance record is allowed per member per local calendar day. The date and time use Africa/Lagos time.', 'Attendance recording help'); ?></p>
+              <p class="page-subtitle">Set a status for each member you want to record. <?php admin_info_tip('Only one general attendance record is allowed per member per local calendar day. The date and time use Africa/Lagos time.', 'Attendance recording help'); ?></p>
             </div>
             <a href="attendance.php" class="btn-navy-outline">
               <i class="fa-solid fa-arrow-left"></i> Back to attendance
@@ -95,32 +100,39 @@ if ($memberResult) {
             <?php if ($members): ?>
               <form action="proc-record-attendance.php" method="post" class="structure-form">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['attendance_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
-                <div class="form-row-2col">
-                  <div class="form-group">
-                    <label for="member_id" class="form-label">Member</label>
-                    <select class="form-select" id="member_id" name="member_id" required>
-                      <option value="" selected disabled>Select member</option>
-                      <?php foreach ($members as $member): ?>
-                        <option value="<?php echo (int) $member['id']; ?>">
-                          <?php echo htmlspecialchars($member['member_code'] . ' — ' . $member['first_name'] . ' ' . $member['last_name'], ENT_QUOTES, 'UTF-8'); ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="status" class="form-label">Attendance status</label>
-                    <select class="form-select" id="status" name="status" required>
-                      <option value="present">Present</option>
-                      <option value="late">Late</option>
-                      <option value="absent">Absent</option>
-                    </select>
-                  </div>
-                </div>
+                <input type="hidden" name="roster_count" value="<?php echo count($members); ?>" />
                 <div class="form-row-2col">
                   <div class="form-group">
                     <label for="check_in" class="form-label">Date and time (Africa/Lagos)</label>
                     <input class="form-control" type="datetime-local" id="check_in" name="check_in" value="<?php echo (new DateTimeImmutable('now', new DateTimeZone('Africa/Lagos')))->format('Y-m-d\TH:i'); ?>" required />
                   </div>
+                </div>
+                <div class="form-group">
+                  <label for="attendanceMemberSearch" class="form-label">Find a member</label>
+                  <input class="form-control" type="search" id="attendanceMemberSearch" placeholder="Search by name or member code" />
+                </div>
+                <div class="table-responsive-card">
+                  <table class="admin-table attendance-roster-table">
+                    <thead>
+                      <tr><th>Member</th><th>Attendance status</th></tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($members as $member): ?>
+                        <?php $memberName = $member['first_name'] . ' ' . $member['last_name']; ?>
+                        <tr data-member-search="<?php echo htmlspecialchars(strtolower($member['member_code'] . ' ' . $memberName), ENT_QUOTES, 'UTF-8'); ?>">
+                          <td><?php echo htmlspecialchars($member['member_code'] . ' — ' . $memberName, ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td>
+                            <select class="form-select" name="statuses[<?php echo (int) $member['id']; ?>]" aria-label="Attendance status for <?php echo htmlspecialchars($memberName, ENT_QUOTES, 'UTF-8'); ?>">
+                              <option value="">Not marked</option>
+                              <option value="present" <?php echo ($oldStatuses[(int) $member['id']] ?? '') === 'present' ? 'selected' : ''; ?>>Present</option>
+                              <option value="late" <?php echo ($oldStatuses[(int) $member['id']] ?? '') === 'late' ? 'selected' : ''; ?>>Late</option>
+                              <option value="absent" <?php echo ($oldStatuses[(int) $member['id']] ?? '') === 'absent' ? 'selected' : ''; ?>>Absent</option>
+                            </select>
+                          </td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
                 </div>
                 <div class="structure-form-actions">
                   <a href="attendance.php" class="btn-action-dark-outline">Cancel</a>
@@ -136,6 +148,15 @@ if ($memberResult) {
       </main>
     </div>
     <script src="../js/admin-sidebar.js"></script>
+    <script>
+      const attendanceMemberSearch = document.getElementById('attendanceMemberSearch');
+      attendanceMemberSearch?.addEventListener('input', () => {
+        const query = attendanceMemberSearch.value.trim().toLowerCase();
+        document.querySelectorAll('.attendance-roster-table tbody tr').forEach((row) => {
+          row.hidden = !row.dataset.memberSearch.includes(query);
+        });
+      });
+    </script>
     <script src="../js/preloader.js"></script>
   </body>
 </html>

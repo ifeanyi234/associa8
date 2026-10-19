@@ -614,6 +614,7 @@ CREATE TABLE `subzones` (
   `zone_id` int(10) UNSIGNED NOT NULL,
   `name` varchar(100) NOT NULL,
   `coordinator_name` varchar(150) DEFAULT NULL,
+  `annual_dues` decimal(12,2) unsigned NOT NULL DEFAULT 0.00,
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -740,6 +741,7 @@ CREATE TABLE `zones` (
   `org_id` int(15) NOT NULL,
   `name` varchar(100) NOT NULL,
   `coordinator_name` varchar(150) DEFAULT NULL,
+  `annual_dues` decimal(12,2) unsigned NOT NULL DEFAULT 0.00,
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

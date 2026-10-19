@@ -21,7 +21,7 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -59,7 +59,7 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Create Zone Structure</h2>
-              <p class="page-subtitle">Create a zone first, then add the sub-zones that belong to it.</p>
+              <p class="page-subtitle">Set optional annual dues for a zone and its sub-zones. A member's annual total includes both assigned amounts.</p>
             </div>
             <a href="zones.php" class="btn-outline-primary">
               <i class="fa-solid fa-arrow-left"></i>
@@ -73,7 +73,7 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
                 <div class="structure-form-icon"><i class="fa-solid fa-location-dot"></i></div>
                 <div>
                   <h3>Zone information</h3>
-                  <p>A zone is the top-level geographic division.</p>
+                  <p>A zone is the top-level geographic division and can have its own annual dues.</p>
                 </div>
               </div>
               <form action="proc-add-zone.php" method="POST" class="structure-form">
@@ -88,6 +88,10 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
                     <input class="form-control" type="text" id="zoneCoordinator" name="coordinator_name" placeholder="Enter coordinator name" />
                   </div>
                 </div>
+                <div class="form-group">
+                  <label for="zoneAnnualDues" class="form-label">Annual zone dues (NGN, optional)</label>
+                  <input class="form-control" type="number" id="zoneAnnualDues" name="annual_dues" min="0" max="9999999999.99" step="0.01" placeholder="Leave blank for no zone dues" />
+                </div>
                 <div class="structure-form-actions">
                   <a href="zones.php" class="btn-action-dark-outline">Cancel</a>
                   <button type="submit" class="btn-navy-filled"><i class="fa-solid fa-check"></i> Save zone</button>
@@ -100,7 +104,7 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
                 <div class="structure-form-icon"><i class="fa-solid fa-sitemap"></i></div>
                 <div>
                   <h3>Sub-zone information</h3>
-                  <p>Every sub-zone must be attached to an existing parent zone.</p>
+                  <p>Every sub-zone must be attached to an existing parent zone; optional sub-zone dues are added to the zone dues.</p>
                 </div>
               </div>
               <form action="proc-add-zone.php" method="POST" class="structure-form">
@@ -125,6 +129,10 @@ $selectedZoneId = (int) ($_GET['zone_id'] ?? 0);
                 <div class="form-group">
                   <label for="subzoneCoordinator" class="form-label">Coordinator name</label>
                   <input class="form-control" type="text" id="subzoneCoordinator" name="coordinator_name" placeholder="Enter coordinator name" />
+                </div>
+                <div class="form-group">
+                  <label for="subzoneAnnualDues" class="form-label">Annual sub-zone dues (NGN, optional)</label>
+                  <input class="form-control" type="number" id="subzoneAnnualDues" name="annual_dues" min="0" max="9999999999.99" step="0.01" placeholder="Leave blank for no additional sub-zone dues" />
                 </div>
                 <div class="structure-form-actions">
                   <a href="zones.php" class="btn-action-dark-outline">Cancel</a>

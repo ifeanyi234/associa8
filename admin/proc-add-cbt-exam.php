@@ -17,5 +17,7 @@ $statement = mysqli_prepare($conn, 'INSERT INTO cbt_exams (org_id, title, durati
 if (!$statement) { header('Location: add-cbt-exam.php?status=error&msg=' . urlencode('The CBT exam table is not available.')); exit; }
 mysqli_stmt_bind_param($statement, 'isii', $orgId, $title, $duration, $passMark);
 $success = mysqli_stmt_execute($statement);
-header('Location: cbt-questions.php?status=' . ($success ? 'success' : 'error') . '&msg=' . urlencode($success ? 'CBT exam created as a draft. Add questions, then activate it when it is ready.' : 'Could not create the CBT exam.'));
+header($success
+    ? 'Location: cbt-questions.php?status=success&action=exam_created'
+    : 'Location: cbt-questions.php?status=error&msg=' . urlencode('Could not create the CBT exam.'));
 exit;

@@ -35,7 +35,7 @@ $message = $_GET['msg'] ?? '';
   <title>Edit Member - Associa8</title>
   <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
   <link rel="stylesheet" href="../css/preloader.css" />
-  <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+  <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" />
@@ -86,7 +86,7 @@ window.addEventListener('DOMContentLoaded', () => {
     type: success ? 'success' : 'error',
     heading: success ? 'Member updated successfully' : 'Member could not be updated',
     body: params.get('msg') || (success ? 'The member details were saved.' : 'Please review the member data and try again.'),
-    detail: success ? 'Updated name, title, zone, and profile information are now reflected in the directory.' : 'No changes were saved to this member record.'
+    detail: success ? '' : 'No changes were saved to this member record.'
   });
   window.history.replaceState({}, document.title, window.location.pathname);
 });

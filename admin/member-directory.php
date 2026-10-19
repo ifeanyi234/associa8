@@ -1,6 +1,7 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once __DIR__ . '/member/inc/annual-dues.php';
 
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
@@ -33,10 +34,16 @@ $filteredCount = $filteredCountResult ? (int) mysqli_fetch_assoc($filteredCountR
 $totalPages = max(1, (int) ceil($filteredCount / $itemsPerPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $itemsPerPage;
-$membersResult = mysqli_query($conn, "SELECT m.id, m.member_code, m.first_name, m.last_name, m.email, m.status, m.joined_date, t.title, z.name AS zone_name, sz.name AS subzone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id LEFT JOIN subzones sz ON sz.id = m.subzone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
+$membersResult = mysqli_query($conn, "SELECT m.id, m.org_id, m.member_code, m.first_name, m.last_name, m.email, m.profile_photo_path, m.status, m.joined_date, t.title, z.name AS zone_name, sz.name AS subzone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id LEFT JOIN subzones sz ON sz.id = m.subzone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
 $members = [];
 if ($membersResult) {
   while ($member = mysqli_fetch_assoc($membersResult)) {
+    $member['annual_dues'] = member_load_annual_dues($conn, (int) $member['id'], (int) $member['org_id']);
+    $photoFilename = basename(str_replace('\\', '/', (string) ($member['profile_photo_path'] ?? '')));
+    $photoDiskPath = __DIR__ . '/member/uploads/profile-photos/' . $photoFilename;
+    $member['profile_photo_url'] = $photoFilename !== '' && is_file($photoDiskPath)
+      ? 'member/uploads/profile-photos/' . rawurlencode($photoFilename)
+      : '';
     $members[] = $member;
   }
 }
@@ -71,7 +78,7 @@ if ($membersResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261019-member-directory-photos-1" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -163,7 +170,7 @@ if ($membersResult) {
                   <th>Title</th>
                   <th>Zone</th>
                   <th>Status</th>
-                  <th>Dues</th>
+                  <th>Annual dues</th>
                   <th>Joined</th>
                   <th></th>
                 </tr>
@@ -173,13 +180,17 @@ if ($membersResult) {
                   <?php foreach ($members as $member): ?>
                     <?php
                       $fullName = $member['first_name'] . ' ' . $member['last_name'];
+                      $displayName = $fullName;
+                      if (preg_match('/^(.{16})./us', $fullName, $nameMatch) === 1) {
+                        $displayName = $nameMatch[1] . '...';
+                      }
                       $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
                       $statusClass = $member['status'] === 'active' ? 'status-active' : ($member['status'] === 'suspended' ? 'status-suspension' : 'status-inactive');
                       $zoneLabel = $member['zone_name'] ?: 'Unassigned';
                       $subzoneLabel = $member['subzone_name'] ?: '';
                     ?>
                     <tr>
-                      <td><div class="member-cell"><div class="member-avatar"><?php echo htmlspecialchars($initials); ?></div><div class="member-info"><span class="member-name"><?php echo htmlspecialchars($fullName); ?></span><span class="member-email"><?php echo htmlspecialchars($member['email']); ?></span></div></div></td>
+                      <td><div class="member-cell"><div class="member-avatar"><?php if ($member['profile_photo_url'] !== ''): ?><img src="<?php echo htmlspecialchars($member['profile_photo_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="" /><?php else: ?><?php echo htmlspecialchars($initials, ENT_QUOTES, 'UTF-8'); ?><?php endif; ?></div><div class="member-info"><span class="member-name" title="<?php echo htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></span><span class="member-email"><?php echo htmlspecialchars($member['email']); ?></span></div></div></td>
                       <td><?php echo htmlspecialchars($member['member_code']); ?></td>
                       <td><span class="cell-with-icon"><i class="fa-solid fa-shield-halved"></i> <?php echo htmlspecialchars($member['title'] ?: 'Unassigned'); ?></span></td>
                       <td>
@@ -191,7 +202,18 @@ if ($membersResult) {
                         </div>
                       </td>
                       <td><span class="badge-pill <?php echo $statusClass; ?>"><?php echo ucfirst($member['status']); ?></span></td>
-                      <td><span class="badge-pill dues-current">Not available</span></td>
+                      <td>
+                        <?php if ($member['annual_dues'] === null): ?>
+                          <span class="badge-pill dues-arrears">Unavailable</span>
+                        <?php elseif ($member['annual_dues']['total_due'] > 0): ?>
+                          <span title="Paid: &#8358;<?php echo number_format($member['annual_dues']['paid'], 2); ?>; outstanding: &#8358;<?php echo number_format($member['annual_dues']['outstanding'], 2); ?>">
+                            &#8358;<?php echo number_format($member['annual_dues']['total_due'], 2); ?>
+                          </span>
+                          <small class="cell-subtext member-directory-dues-subtext">Outstanding: &#8358;<?php echo number_format($member['annual_dues']['outstanding'], 2); ?></small>
+                        <?php else: ?>
+                          <span class="cell-subtext">No dues set</span>
+                        <?php endif; ?>
+                      </td>
                       <td><?php echo htmlspecialchars($member['joined_date'] ?: 'Not provided'); ?></td>
                       <?php if (admin_has_permission('members_manage')): ?>
                         <td>
@@ -489,6 +511,17 @@ if ($membersResult) {
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+        window.addEventListener("DOMContentLoaded", () => {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("notice") !== "member_updated" || !window.AppModal) return;
+          window.AppModal.open({
+            type: "success",
+            heading: "Member updated",
+          });
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    </script>
     <script>
       // 1. Sidebar Dropdown Dynamic Accordion Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");

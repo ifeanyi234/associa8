@@ -155,7 +155,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
           </section>
 
           <!-- Attendance History -->
-          <section class="table-responsive-card">
+          <section class="table-responsive-card member-history-table-card">
             <div class="list-card-dark-header">
               <div class="list-card-dark-header-left">
                 <span class="list-card-dark-header-icon">

@@ -77,7 +77,7 @@ if ($attendanceStmt) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link rel="shortcut icon" href="../images/fav-logo.png" type="image/x-icon" />
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <?php include('inc/preloader.php'); ?>
@@ -130,7 +130,7 @@ if ($attendanceStmt) {
             </div>
           </div>
 
-          <?php if (is_array($notice)): ?>
+          <?php if (is_array($notice) && ($notice['type'] ?? '') !== 'success'): ?>
             <div class="dashboard-card" role="status" style="margin-bottom: 1rem; color: <?php echo ($notice['type'] ?? '') === 'success' ? '#166534' : '#b91c1c'; ?>;">
               <?php echo htmlspecialchars($notice['text'], ENT_QUOTES, 'UTF-8'); ?>
             </div>
@@ -202,6 +202,17 @@ if ($attendanceStmt) {
         <?php include('inc/footer.php'); ?>
       </main>
     </div>
+    <?php if (is_array($notice) && ($notice['type'] ?? '') === 'success'): ?>
+      <script>
+        window.addEventListener("DOMContentLoaded", () => {
+          window.AppModal?.open({
+            type: "success",
+            heading: "Attendance recorded",
+            body: <?php echo json_encode((string) ($notice['text'] ?? 'Attendance recorded.'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+          });
+        });
+      </script>
+    <?php endif; ?>
     <script src="../js/admin-sidebar.js"></script>
     <script>
       const attendanceFilterToggle = document.getElementById('attendanceFilterToggle');

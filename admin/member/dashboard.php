@@ -1,6 +1,7 @@
 <?php
 require_once 'inc/auth.php';
 require_once '../../inc/db.php';
+require_once __DIR__ . '/inc/annual-dues.php';
 
 $memberId = (int) $_SESSION['member_id'];
 $memberOrgId = (int) $_SESSION['member_org_id'];
@@ -45,12 +46,12 @@ if ($documentsCountResult) {
   $documentsCount = (int) ($documentsCountRow['total'] ?? 0);
 }
 
-$outstandingDues = 0;
-$duesResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'pending'");
-if ($duesResult) {
-  $duesRow = mysqli_fetch_assoc($duesResult);
-  $outstandingDues = (float) ($duesRow['total'] ?? 0);
+$annualDues = member_load_annual_dues($conn, $memberId, $memberOrgId);
+if ($annualDues === null) {
+  http_response_code(500);
+  exit('Your annual dues could not be loaded right now.');
 }
+$outstandingDues = $annualDues['outstanding'];
 
 $nextEventQuery = mysqli_query($conn, "SELECT MIN(event_date) AS next_date, COUNT(*) AS total FROM events WHERE event_date >= CURDATE()");
 $nextEventDate = null;
@@ -91,7 +92,7 @@ if ($notificationsResult) {
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261016-annual-zone-dues-1" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -185,8 +186,8 @@ if ($notificationsResult) {
                   <i class="fa-solid fa-circle-info"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;<?php echo number_format($outstandingDues, 0); ?></div>
-              <div class="summary-sublabel"><?php echo $outstandingDues > 0 ? 'Payment still due' : 'No pending dues'; ?></div>
+              <div class="summary-value">&#8358;<?php echo number_format($outstandingDues, 2); ?></div>
+              <div class="summary-sublabel"><?php echo $annualDues['total_due'] > 0 ? '&#8358;' . number_format($annualDues['paid'], 2) . ' paid of &#8358;' . number_format($annualDues['total_due'], 2) . ' annual dues in ' . htmlspecialchars($annualDues['year'], ENT_QUOTES, 'UTF-8') : 'No annual dues set for your zone or sub-zone'; ?></div>
               <button class="btn-summary-action" onclick="window.location.href='payment.php'">Pay up</button>
             </div>
 

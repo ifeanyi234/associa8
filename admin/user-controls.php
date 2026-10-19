@@ -126,7 +126,7 @@ mysqli_stmt_close($invitationStmt);
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -179,23 +179,17 @@ mysqli_stmt_close($invitationStmt);
       <h2 class="page-title-main">User Control</h2>
       <p class="page-subtitle">Invite people to this organization's workspace. They choose their own password, and their role controls what they can access.</p>
     </div>
-    <button class="btn-primary-filled" id="openUserInviteDialog" type="button"><i class="fa-solid fa-user-plus" aria-hidden="true"></i> Invite staff</button>
   </div>
 
-  <?php if (is_array($notice)): ?>
+  <?php if (is_array($notice) && ($notice['type'] ?? '') !== 'success'): ?>
     <div class="dashboard-card" style="margin-bottom: 1.25rem;">
-      <div class="alert-box <?php echo ($notice['type'] ?? '') === 'success' ? 'success' : 'error'; ?>" role="status">
+      <div class="alert-box error" role="status">
         <?php echo htmlspecialchars((string) ($notice['message'] ?? 'Please review the form and try again.'), ENT_QUOTES, 'UTF-8'); ?>
       </div>
     </div>
   <?php endif; ?>
 
-  <dialog class="admin-form-dialog" id="userInviteDialog" aria-labelledby="userInviteDialogTitle">
-    <div class="admin-form-dialog-header">
-      <h2 id="userInviteDialogTitle">Invite someone to your organization</h2>
-      <button class="admin-form-dialog-close" type="button" data-close-user-invite aria-label="Close invitation form"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-    </div>
-    <div class="admin-form-dialog-content">
+  <div class="dashboard-card" style="margin-top: 1.5rem;">
     <form action="process-user.php" method="POST" id="userControlForm">
       <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
       <div class="form-row-2col mb-3">
@@ -243,8 +237,7 @@ mysqli_stmt_close($invitationStmt);
         <button type="submit" class="btn-primary-filled">Send Invitation</button>
       </div>
     </form>
-    </div>
-  </dialog>
+  </div>
 
   <div class="dashboard-card" style="margin-top: 1.5rem;">
     <div class="page-action-header mb-3">
@@ -272,7 +265,7 @@ mysqli_stmt_close($invitationStmt);
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                     <input type="hidden" name="invitation_id" value="<?php echo (int) $invitation['id']; ?>" />
                     <button class="btn-navy-outline" type="submit" name="action" value="resend">Resend</button>
-                    <button class="btn-navy-outline" type="submit" name="action" value="revoke">Cancel invitation</button>
+                    <button class="btn-navy-outline" type="submit" name="action" value="revoke" data-app-modal-confirm="Cancel this staff invitation?" data-confirm-title="Cancel invitation" data-confirm-detail="The invitation link will no longer work.">Cancel invitation</button>
                   </form>
                 </td>
               </tr>
@@ -330,7 +323,7 @@ mysqli_stmt_close($invitationStmt);
                       </select>
                       <button class="btn-navy-outline" type="submit" name="action" value="change_role">Update role</button>
                       <?php if ($user['status'] === 'active'): ?>
-                        <button class="btn-navy-outline" type="submit" name="action" value="disable">Disable</button>
+                        <button class="btn-navy-outline" type="submit" name="action" value="disable" data-app-modal-confirm="Disable this staff account?" data-confirm-title="Disable staff account" data-confirm-detail="This person will lose access to the organization's workspace.">Disable</button>
                       <?php else: ?>
                         <button class="btn-navy-outline" type="submit" name="action" value="enable">Enable</button>
                       <?php endif; ?>
@@ -354,6 +347,17 @@ mysqli_stmt_close($invitationStmt);
 
         <!-- Footer -->
         <?php include('inc/footer.php')?>
+        <?php if (is_array($notice) && ($notice['type'] ?? '') === 'success'): ?>
+          <script>
+            document.addEventListener("DOMContentLoaded", () => {
+              window.AppModal?.open({
+                type: "success",
+                heading: "Invitation sent",
+                body: <?php echo json_encode((string) ($notice['message'] ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>,
+              });
+            });
+          </script>
+        <?php endif; ?>
       </main>
     </div>
 
@@ -364,30 +368,12 @@ mysqli_stmt_close($invitationStmt);
         border-radius: 10px;
         font-weight: 600;
       }
-      .alert-box.success {
-        background: rgba(34, 197, 94, 0.12);
-        color: #166534;
-        border: 1px solid rgba(34, 197, 94, 0.25);
-      }
       .alert-box.error {
         background: rgba(239, 68, 68, 0.12);
         color: #991b1b;
         border: 1px solid rgba(239, 68, 68, 0.2);
       }
     </style>
-    <script>
-      const userInviteDialog = document.getElementById("userInviteDialog");
-      document.getElementById("openUserInviteDialog")?.addEventListener("click", () => userInviteDialog?.showModal());
-      document.querySelectorAll("[data-close-user-invite]").forEach((button) => {
-        button.addEventListener("click", () => userInviteDialog?.close());
-      });
-      userInviteDialog?.addEventListener("click", (event) => {
-        if (event.target === userInviteDialog) userInviteDialog.close();
-      });
-      if (<?php echo json_encode(is_array($notice) && ($notice['type'] ?? '') !== 'success'); ?>) {
-        userInviteDialog?.showModal();
-      }
-    </script>
     <script>
       // 1. Sidebar Dropdown Accordion Toggle Logic
       const dropdownItems = document.querySelectorAll(".sidebar-item.dropdown");

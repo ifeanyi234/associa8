@@ -4,6 +4,9 @@ require_once "../inc/db.php";
 
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+if (empty($_SESSION['title_delete_csrf'])) {
+  $_SESSION['title_delete_csrf'] = bin2hex(random_bytes(32));
+}
 
 $titleCountSql = "SELECT COUNT(*) AS total FROM titles";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
@@ -56,7 +59,7 @@ if ($titlesResult) {
 
     <!-- Admin Dashboard CSS -->
     <link rel="stylesheet" href="../css/preloader.css" />
-    <link rel="stylesheet" href="../css/dashboard.css?v=20261008-infotips-3" />
+    <link rel="stylesheet" href="../css/dashboard.css?v=20261016-responsive-tables-1" />
   </head>
   <body class="admin-body">
     <!-- Preloader -->
@@ -165,7 +168,11 @@ if ($titlesResult) {
                     </div>
                     <div class="hierarchy-actions">
                       <a href="edit-title.php?id=<?php echo (int) $title['id']; ?>" class="hierarchy-action edit" aria-label="Edit <?php echo htmlspecialchars($title['title']); ?>"><i class="fa-solid fa-pen"></i></a>
-                      <button type="button" class="hierarchy-action delete" aria-label="Delete <?php echo htmlspecialchars($title['title']); ?>"><i class="fa-solid fa-trash"></i></button>
+                      <form action="proc-delete-title.php" method="POST" style="display: inline;" data-app-modal-confirm="" data-confirm-title="Delete title" data-confirm-detail="Members assigned to this title will become unassigned.">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['title_delete_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                        <input type="hidden" name="title_id" value="<?php echo (int) $title['id']; ?>" />
+                        <button type="submit" class="hierarchy-action delete" aria-label="Delete <?php echo htmlspecialchars($title['title'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa-solid fa-trash"></i></button>
+                      </form>
                     </div>
                   </div>
                 </div>
@@ -423,9 +430,10 @@ if ($titlesResult) {
         if (titleStatus.get("status") && window.AppModal) {
           window.AppModal.open({
             type: titleStatus.get("status"),
-            heading: titleStatus.get("status") === "success" ? "Title saved" : "Title not saved",
-            body: titleStatus.get("msg") || "Please try again.",
+            heading: titleStatus.get("action") === "deleted" ? "Title deleted" : (titleStatus.get("status") === "success" ? "Title saved" : "Title not saved"),
+            body: titleStatus.get("action") === "deleted" ? "" : (titleStatus.get("msg") || "Please try again."),
           });
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       });
     </script>

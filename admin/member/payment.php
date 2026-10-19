@@ -1,8 +1,15 @@
 <?php
 require_once 'inc/auth.php';
 require_once '../../inc/db.php';
+require_once __DIR__ . '/inc/annual-dues.php';
 
 $memberId = (int) $_SESSION['member_id'];
+$memberOrgId = (int) $_SESSION['member_org_id'];
+$annualDues = member_load_annual_dues($conn, $memberId, $memberOrgId);
+if ($annualDues === null) {
+  http_response_code(500);
+  exit('Your annual dues could not be loaded right now.');
+}
 
 $transactions = [];
 $transactionsResult = mysqli_query($conn, "SELECT id, reference, amount, type, status, paid_at, created_at FROM finance_transactions WHERE member_id = $memberId ORDER BY paid_at DESC, created_at DESC");
@@ -12,19 +19,9 @@ if ($transactionsResult) {
   }
 }
 
-$paidThisYear = 0;
-$paidThisYearResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'successful' AND YEAR(paid_at) = YEAR(CURDATE())");
-if ($paidThisYearResult) {
-  $paidRow = mysqli_fetch_assoc($paidThisYearResult);
-  $paidThisYear = (float) ($paidRow['total'] ?? 0);
-}
-
-$outstanding = 0;
-$outstandingResult = mysqli_query($conn, "SELECT COALESCE(SUM(amount), 0) AS total FROM finance_transactions WHERE member_id = $memberId AND status = 'pending'");
-if ($outstandingResult) {
-  $outstandingRow = mysqli_fetch_assoc($outstandingResult);
-  $outstanding = (float) ($outstandingRow['total'] ?? 0);
-}
+$paidThisYear = $annualDues['paid'];
+$outstanding = $annualDues['outstanding'];
+$annualTotal = $annualDues['total_due'];
 ?>
 <!doctype html>
 <html lang="en">
@@ -48,7 +45,7 @@ if ($outstandingResult) {
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261016-annual-zone-dues-1" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -101,23 +98,23 @@ if ($outstandingResult) {
             <div class="summary-card">
               <div class="summary-card-header">
                 <span class="summary-card-title">Outstanding Dues</span>
-                <?php admin_info_tip('This total includes payment records still marked pending. Check with your organization if you think a payment is missing.', 'Outstanding dues help'); ?>
+                <?php admin_info_tip('Outstanding is the annual zone dues plus any annual sub-zone dues, minus successful membership-dues payments received this year.', 'Outstanding dues help'); ?>
               </div>
-              <div class="summary-value">&#8358;<?php echo number_format($outstanding, 0); ?></div>
-              <div class="summary-sublabel"><?php echo $outstanding > 0 ? 'Payment still due' : 'No pending dues'; ?></div>
+              <div class="summary-value">&#8358;<?php echo number_format($outstanding, 2); ?></div>
+              <div class="summary-sublabel"><?php echo $annualTotal > 0 ? '&#8358;' . number_format($paidThisYear, 2) . ' paid of &#8358;' . number_format($annualTotal, 2) . ' annual dues in ' . htmlspecialchars($annualDues['year'], ENT_QUOTES, 'UTF-8') : 'No annual dues set for your zone or sub-zone'; ?></div>
               <button class="btn-summary-action">Pay up</button>
             </div>
 
             <div class="summary-card">
               <div class="summary-card-header">
-                <span class="summary-card-title">Paid This Year</span>
-                <?php admin_info_tip('This total includes successful payments recorded during the current calendar year.', 'Payments this year help'); ?>
+                <span class="summary-card-title">Annual Dues Paid</span>
+                <?php admin_info_tip('Only successful membership-dues payments received in the current Africa/Lagos calendar year count toward this amount.', 'Payments this year help'); ?>
                 <div class="summary-icon-circle">
                   <i class="fa-solid fa-check"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;<?php echo number_format($paidThisYear, 0); ?></div>
-              <div class="summary-sublabel"><?php echo count($transactions) > 0 ? count($transactions) . ' transactions recorded' : 'No recorded payments'; ?></div>
+              <div class="summary-value">&#8358;<?php echo number_format($paidThisYear, 2); ?></div>
+              <div class="summary-sublabel"><?php echo $annualTotal > 0 ? 'of &#8358;' . number_format($annualTotal, 2) . ' due in ' . htmlspecialchars($annualDues['year'], ENT_QUOTES, 'UTF-8') : 'No annual dues set for your zone or sub-zone'; ?></div>
             </div>
 
             <div class="summary-card">
@@ -133,7 +130,7 @@ if ($outstandingResult) {
           </section>
 
           <!-- Payment History -->
-          <section class="table-responsive-card">
+          <section class="table-responsive-card member-history-table-card">
             <div class="list-card-dark-header">
               <div class="list-card-dark-header-left">
                 <span class="list-card-dark-header-icon">
