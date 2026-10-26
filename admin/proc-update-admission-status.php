@@ -2,9 +2,22 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 require_once "../inc/admission-notifications.php";
+require_once "../inc/admin-notifications.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: admission-management.php');
+    exit;
+}
+
+$csrfToken = $_POST['csrf_token'] ?? '';
+$sessionToken = $_SESSION['admission_status_csrf'] ?? '';
+if (
+    !is_string($csrfToken)
+    || !is_string($sessionToken)
+    || $sessionToken === ''
+    || !hash_equals($sessionToken, $csrfToken)
+) {
+    header('Location: admission-management.php?status=error&msg=' . urlencode('Your form expired. Reload the page and try again.'));
     exit;
 }
 
@@ -56,6 +69,7 @@ if ($admissionOrgId < 1) {
 
 $currentStatus = $admission['status'];
 $validTransition = ($currentStatus === 'pending' && $newStatus === 'under_review')
+    || ($currentStatus === 'pending' && $newStatus === 'approved')
     || (in_array($currentStatus, ['under_review', 'cbt_completed'], true) && in_array($newStatus, ['approved', 'rejected'], true));
 
 if (!$validTransition) {
@@ -65,16 +79,38 @@ if (!$validTransition) {
 
 if ($newStatus === 'approved') {
     $memberOrgId = $admissionOrgId;
+    $zoneId = 0;
+    $subzoneId = 0;
+    $titleId = 0;
 
+    if (!mysqli_begin_transaction($conn)) {
+        error_log('Admission approval transaction could not start: ' . mysqli_error($conn));
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+        exit;
+    }
     $memberCheck = mysqli_prepare($conn, 'SELECT id FROM members WHERE email = ? AND org_id = ? LIMIT 1');
     if (!$memberCheck) {
+        mysqli_rollback($conn);
+        error_log('Admission member duplicate check prepare failed: ' . mysqli_error($conn));
         header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
         exit;
     }
     mysqli_stmt_bind_param($memberCheck, 'si', $admission['email'], $memberOrgId);
-    mysqli_stmt_execute($memberCheck);
+    if (!mysqli_stmt_execute($memberCheck)) {
+        mysqli_rollback($conn);
+        error_log('Admission member duplicate check failed: ' . mysqli_stmt_error($memberCheck));
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+        exit;
+    }
     $memberCheckResult = mysqli_stmt_get_result($memberCheck);
-    if ($memberCheckResult && mysqli_num_rows($memberCheckResult) > 0) {
+    if (!$memberCheckResult) {
+        mysqli_rollback($conn);
+        error_log('Admission member duplicate check result failed: ' . mysqli_stmt_error($memberCheck));
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+        exit;
+    }
+    if (mysqli_num_rows($memberCheckResult) > 0) {
+        mysqli_rollback($conn);
         header('Location: admission-management.php?status=error&msg=' . urlencode('A member already exists for this applicant email.'));
         exit;
     }
@@ -83,14 +119,37 @@ if ($newStatus === 'approved') {
     $firstName = $nameParts[0] ?? $admission['applicant_name'];
     $lastName = $nameParts[1] ?? '';
     $codeResult = mysqli_query($conn, "SELECT MAX(CAST(SUBSTRING(member_code, 5) AS UNSIGNED)) AS last_number FROM members WHERE member_code REGEXP '^ASC-[0-9]+$'");
-    $lastNumber = $codeResult ? (int) (mysqli_fetch_assoc($codeResult)['last_number'] ?? 0) : 0;
+    if (!$codeResult) {
+        error_log('Admission member code lookup failed: ' . mysqli_error($conn));
+        mysqli_rollback($conn);
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+        exit;
+    }
+    $lastNumber = (int) (mysqli_fetch_assoc($codeResult)['last_number'] ?? 0);
     $memberCode = 'ASC-' . str_pad((string) ($lastNumber + 1), 3, '0', STR_PAD_LEFT);
     while (true) {
         $codeCheck = mysqli_prepare($conn, 'SELECT id FROM members WHERE member_code = ? LIMIT 1');
+        if (!$codeCheck) {
+            error_log('Admission member code check prepare failed: ' . mysqli_error($conn));
+            mysqli_rollback($conn);
+            header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+            exit;
+        }
         mysqli_stmt_bind_param($codeCheck, 's', $memberCode);
-        mysqli_stmt_execute($codeCheck);
+        if (!mysqli_stmt_execute($codeCheck)) {
+            error_log('Admission member code check failed: ' . mysqli_stmt_error($codeCheck));
+            mysqli_rollback($conn);
+            header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+            exit;
+        }
         $codeResult = mysqli_stmt_get_result($codeCheck);
-        if (!$codeResult || mysqli_num_rows($codeResult) === 0) {
+        if (!$codeResult) {
+            error_log('Admission member code check result failed: ' . mysqli_stmt_error($codeCheck));
+            mysqli_rollback($conn);
+            header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
+            exit;
+        }
+        if (mysqli_num_rows($codeResult) === 0) {
             break;
         }
         $lastNumber++;
@@ -101,27 +160,34 @@ if ($newStatus === 'approved') {
     $joinedDate = date('Y-m-d');
     $memberStatus = 'active';
 
-    mysqli_begin_transaction($conn);
-    $memberStatement = mysqli_prepare($conn, 'INSERT INTO members (org_id, member_code, first_name, last_name, email, password, phone, code, zone_id, title_id, status, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)');
+    $memberStatement = mysqli_prepare($conn, 'INSERT INTO members (org_id, member_code, first_name, last_name, email, password, phone, code, status, joined_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     $updateSql = 'UPDATE admissions SET status = ? WHERE id = ? AND status = ? AND org_id = ?';
     $updateStatement = mysqli_prepare($conn, $updateSql);
     if (!$memberStatement || !$updateStatement) {
+        error_log('Admission approval statement prepare failed: ' . mysqli_error($conn));
         mysqli_rollback($conn);
         header('Location: admission-management.php?status=error&msg=' . urlencode('The member conversion service is unavailable.'));
         exit;
     }
-    mysqli_stmt_bind_param($memberStatement, 'isssssssss', $memberOrgId, $memberCode, $firstName, $lastName, $admission['email'], $passwordHash, $admission['phone'], $memberCode, $memberStatus, $joinedDate);
+    mysqli_stmt_bind_param($memberStatement, 'issssssss', $memberOrgId, $memberCode, $firstName, $lastName, $admission['email'], $passwordHash, $admission['phone'], $memberCode, $memberStatus, $joinedDate);
     mysqli_stmt_bind_param($updateStatement, 'sisi', $newStatus, $admissionId, $currentStatus, $admissionOrgId);
     $memberCreated = mysqli_stmt_execute($memberStatement);
     $statusUpdated = mysqli_stmt_execute($updateStatement);
     if (!$memberCreated || !$statusUpdated || mysqli_stmt_affected_rows($updateStatement) !== 1) {
+        error_log('Admission approval write failed: ' . mysqli_stmt_error($memberStatement) . ' ' . mysqli_stmt_error($updateStatement));
         mysqli_rollback($conn);
         header('Location: admission-management.php?status=error&msg=' . urlencode('The applicant could not be converted into a member.'));
         exit;
     }
-    mysqli_commit($conn);
+    if (!mysqli_commit($conn)) {
+        error_log('Admission approval transaction commit failed: ' . mysqli_error($conn));
+        mysqli_rollback($conn);
+        header('Location: admission-management.php?status=error&msg=' . urlencode('The applicant could not be converted into a member.'));
+        exit;
+    }
 
     notify_admission_status($conn, $admissionId, $newStatus, $admission['applicant_name'], $admission['email']);
+    admin_notify_organization($conn, $admissionOrgId, 'admission', 'Admission status updated', $admission['applicant_name'] . '\'s application is now ' . str_replace('_', ' ', $newStatus) . '.', 'admission-management.php');
     $approvalBody = '<p>Hello ' . htmlspecialchars($admission['applicant_name'], ENT_QUOTES, 'UTF-8') . ',</p>'
         . '<p>Your Associa8 application has been approved and your member account is ready.</p>'
         . '<p><strong>Email:</strong> ' . htmlspecialchars($admission['email'], ENT_QUOTES, 'UTF-8') . '<br><strong>Temporary password:</strong> ' . htmlspecialchars($temporaryPassword, ENT_QUOTES, 'UTF-8') . '</p>'
@@ -144,6 +210,7 @@ if ($newStatus === 'approved') {
     $success = mysqli_stmt_execute($updateStatement) && mysqli_stmt_affected_rows($updateStatement) === 1;
     if ($success) {
         notify_admission_status($conn, $admissionId, $newStatus, $admission['applicant_name'], $admission['email']);
+        admin_notify_organization($conn, $admissionOrgId, 'admission', 'Admission status updated', $admission['applicant_name'] . '\'s application is now ' . str_replace('_', ' ', $newStatus) . '.', 'admission-management.php');
     }
     $message = $success ? 'Admission moved to ' . ucwords(str_replace('_', ' ', $newStatus)) . '.' : 'The admission status could not be updated.';
 }

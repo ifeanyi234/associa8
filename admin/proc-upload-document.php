@@ -8,21 +8,26 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $visibility = $_POST['visibility'] ?? 'org';
-$organizationWide = !empty($_POST['organization_wide']);
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : 0;
 $zoneId = isset($_POST['zone_id']) ? (int) $_POST['zone_id'] : 0;
 $subzoneId = isset($_POST['subzone_id']) ? (int) $_POST['subzone_id'] : 0;
 $title = trim($_POST['document_title'] ?? '');
 $ownerName = trim($_POST['document_owner'] ?? '');
-$fileType = trim($_POST['file_type'] ?? '');
 
 if ($orgId < 1) {
-    header('Location: upload-document.php?status=error&msg=' . urlencode('Your account is not linked to an organization.'));
+    header('Location: upload-document.php?status=error&msg=' . urlencode('Your account is not linked to an association.'));
     exit;
 }
 
-if ($organizationWide || $visibility === 'org') {
+if (!in_array($visibility, ['org', 'zone', 'subzone'], true)) {
+    header('Location: upload-document.php?status=error&msg=' . urlencode('Please choose a valid document visibility.'));
+    exit;
+}
+
+if ($visibility === 'org') {
     $zoneId = 0;
+    $subzoneId = 0;
+} elseif ($visibility === 'zone') {
     $subzoneId = 0;
 }
 
@@ -47,13 +52,13 @@ if ($visibility === 'subzone') {
 if ($zoneId > 0) {
     $zoneCheck = mysqli_query($conn, "SELECT id FROM zones WHERE id = $zoneId AND org_id = $orgId LIMIT 1");
     if (!$zoneCheck || mysqli_num_rows($zoneCheck) === 0) {
-        header('Location: upload-document.php?status=error&msg=' . urlencode('The selected zone does not belong to your organization.'));
+        header('Location: upload-document.php?status=error&msg=' . urlencode('The selected zone does not belong to your association.'));
         exit;
     }
 }
 
-if ($title === '' || $ownerName === '' || !in_array($fileType, ['JPEG', 'PNG', 'PDF'], true)) {
-    header('Location: upload-document.php?status=error&msg=' . urlencode('Complete all fields and choose a valid file type.'));
+if ($title === '' || $ownerName === '') {
+    header('Location: upload-document.php?status=error&msg=' . urlencode('Enter a document title and owner.'));
     exit;
 }
 
@@ -68,6 +73,23 @@ $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
 
 if (!in_array($extension, $allowedExtensions, true)) {
     header('Location: upload-document.php?status=error&msg=' . urlencode('Only JPEG, PNG, or PDF files are allowed.'));
+    exit;
+}
+
+$mimeType = (new finfo(FILEINFO_MIME_TYPE))->file($_FILES['document_file']['tmp_name']);
+$fileTypeByMime = [
+    'image/jpeg' => 'JPEG',
+    'image/png' => 'PNG',
+    'application/pdf' => 'PDF',
+];
+$fileType = $fileTypeByMime[$mimeType] ?? '';
+$extensionsByType = [
+    'JPEG' => ['jpg', 'jpeg'],
+    'PNG' => ['png'],
+    'PDF' => ['pdf'],
+];
+if ($fileType === '' || !in_array($extension, $extensionsByType[$fileType], true)) {
+    header('Location: upload-document.php?status=error&msg=' . urlencode('The selected file must be a valid JPEG, PNG, or PDF.'));
     exit;
 }
 

@@ -2,6 +2,7 @@
 require_once 'inc/auth.php';
 require_once '../inc/db.php';
 require_once '../inc/mailer.php';
+require_once 'inc/scope.php';
 
 function invitationActionRedirect(string $type, string $message): void
 {
@@ -10,8 +11,12 @@ function invitationActionRedirect(string $type, string $message): void
     exit;
 }
 
-if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-    admin_render_access_denied('Only organization administrators can manage staff invitations.');
+if (!admin_is_super_admin()) {
+    admin_render_access_denied('Only the Super Admin can manage admin invitations.');
+}
+$scopeContext = admin_scope_context($conn);
+if (empty($scopeContext['valid'])) {
+    admin_render_access_denied('Your account does not have a valid zone or sub-zone assignment.');
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: user-controls.php');
@@ -32,7 +37,7 @@ if (!$invitationId || $orgId < 1 || !in_array($action, ['revoke', 'resend'], tru
 
 $lookup = mysqli_prepare(
     $conn,
-    'SELECT i.id, i.org_id, i.first_name, i.last_name, i.email, i.role, i.token_hash, o.name AS organization_name
+    'SELECT i.id, i.org_id, i.first_name, i.last_name, i.email, i.role, i.zone_id, i.subzone_id, i.token_hash, o.name AS organization_name
      FROM staff_invitations i
      INNER JOIN `org-info` o ON o.id = i.org_id
      WHERE i.id = ? AND i.org_id = ? AND i.accepted_at IS NULL
@@ -58,6 +63,17 @@ mysqli_stmt_close($lookup);
 if (!$invitation) {
     mysqli_rollback($conn);
     invitationActionRedirect('error', 'That invitation is no longer pending.');
+}
+if (
+    $scopeContext['role'] === 'zonal_admin'
+    && (
+        $invitation['role'] !== 'subzonal_admin'
+        || (int) $invitation['zone_id'] !== (int) $scopeContext['zone_id']
+        || !in_array((int) $invitation['subzone_id'], $scopeContext['subzone_ids'], true)
+    )
+) {
+    mysqli_rollback($conn);
+    admin_render_access_denied('You can only manage invitations for sub-zones in your assigned zone.');
 }
 
 if ($action === 'revoke') {
@@ -111,7 +127,7 @@ $basePath = rtrim(dirname(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/admin/p
 $inviteUrl = $scheme . '://' . $host . $basePath . '/admin/accept-staff-invitation.php?token=' . rawurlencode($plainToken);
 $body = '<p>Hello ' . htmlspecialchars((string) $invitation['first_name'], ENT_QUOTES, 'UTF-8') . ',</p>'
     . '<p>You have been invited to access the <strong>' . htmlspecialchars((string) $invitation['organization_name'], ENT_QUOTES, 'UTF-8') . '</strong> organization workspace on Associa8.</p>'
-    . '<p>Your assigned access role is <strong>' . htmlspecialchars(ucfirst((string) $invitation['role']), ENT_QUOTES, 'UTF-8') . '</strong>. The organization administrator set this role;</p>'
+    . '<p>Your assigned access role is <strong>' . htmlspecialchars(ucfirst(str_replace('_', ' ', (string) $invitation['role'])), ENT_QUOTES, 'UTF-8') . '</strong>. The Super Admin assigned this role.</p>'
     . '<p>Accept the invitation and choose your own password. This link expires in 48 hours.</p>'
     . '<p><a href="' . htmlspecialchars($inviteUrl, ENT_QUOTES, 'UTF-8') . '">Accept invitation and set password</a></p>'
     . '<p>If you were not expecting this invitation, you can ignore this email.</p>';

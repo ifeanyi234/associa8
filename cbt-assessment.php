@@ -29,7 +29,7 @@ if (!$assessment || empty($assessment['exam_expires_at']) || $assessmentExpiresA
     exit;
 }
 
-$questionStatement = mysqli_prepare($conn, 'SELECT id, question_text, option_a, option_b, option_c, option_d, option_e FROM cbt_questions WHERE exam_id = ? ORDER BY id');
+$questionStatement = mysqli_prepare($conn, 'SELECT id, question_text, option_a, option_b, option_c, option_d, option_e, image_path FROM cbt_questions WHERE exam_id = ? ORDER BY id');
 if (!$questionStatement) {
     error_log('CBT assessment question prepare failed: ' . mysqli_error($conn));
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment questions are unavailable.'));
@@ -51,6 +51,76 @@ if ($questionResult) {
 if (!$questions) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('This exam has no questions yet. Contact the administrator.'));
     exit;
+}
+
+$questionsById = [];
+$expectedQuestionIds = [];
+foreach ($questions as $question) {
+    $questionId = (int) $question['id'];
+    $questionsById[$questionId] = $question;
+    $expectedQuestionIds[] = $questionId;
+}
+$orderKey = $admissionId . ':' . $examId;
+$savedOrder = $_SESSION['applicant_question_orders'][$orderKey] ?? [];
+$savedOrder = is_array($savedOrder) ? $savedOrder : [];
+$savedQuestionIds = is_array($savedOrder['question_ids'] ?? null)
+    ? array_map('intval', $savedOrder['question_ids'])
+    : [];
+$sortedSavedQuestionIds = $savedQuestionIds;
+$sortedExpectedQuestionIds = $expectedQuestionIds;
+sort($sortedSavedQuestionIds);
+sort($sortedExpectedQuestionIds);
+$orderIsValid = count($savedQuestionIds) === count($expectedQuestionIds)
+    && $sortedSavedQuestionIds === $sortedExpectedQuestionIds
+    && is_array($savedOrder['option_orders'] ?? null);
+
+if ($orderIsValid) {
+    foreach ($expectedQuestionIds as $questionId) {
+        $availableOptions = [];
+        foreach (['A' => 'option_a', 'B' => 'option_b', 'C' => 'option_c', 'D' => 'option_d', 'E' => 'option_e'] as $option => $column) {
+            if ($questionsById[$questionId][$column] !== null && $questionsById[$questionId][$column] !== '') {
+                $availableOptions[] = $option;
+            }
+        }
+        $savedOptions = $savedOrder['option_orders'][$questionId] ?? null;
+        if (!is_array($savedOptions)
+            || count($savedOptions) !== count($availableOptions)
+            || count(array_filter($savedOptions, 'is_string')) !== count($savedOptions)
+            || count(array_unique($savedOptions)) !== count($availableOptions)
+            || array_diff($savedOptions, $availableOptions)
+            || array_diff($availableOptions, $savedOptions)) {
+            $orderIsValid = false;
+            break;
+        }
+    }
+}
+
+if (!$orderIsValid) {
+    $questionIds = $expectedQuestionIds;
+    shuffle($questionIds);
+    $optionOrders = [];
+    foreach ($expectedQuestionIds as $questionId) {
+        $options = [];
+        foreach (['A' => 'option_a', 'B' => 'option_b', 'C' => 'option_c', 'D' => 'option_d', 'E' => 'option_e'] as $option => $column) {
+            if ($questionsById[$questionId][$column] !== null && $questionsById[$questionId][$column] !== '') {
+                $options[] = $option;
+            }
+        }
+        shuffle($options);
+        $optionOrders[$questionId] = $options;
+    }
+    $_SESSION['applicant_question_orders'][$orderKey] = [
+        'question_ids' => $questionIds,
+        'option_orders' => $optionOrders,
+    ];
+    $savedOrder = $_SESSION['applicant_question_orders'][$orderKey];
+}
+
+$questions = [];
+foreach ($savedOrder['question_ids'] as $questionId) {
+    $question = $questionsById[(int) $questionId];
+    $question['option_order'] = $savedOrder['option_orders'][(int) $questionId];
+    $questions[] = $question;
 }
 ?>
 <!doctype html>
@@ -99,11 +169,15 @@ if (!$questions) {
           <?php foreach ($questions as $index => $question): ?>
             <section class="question-card<?php echo $index === 0 ? ' is-active' : ''; ?>" data-question-index="<?php echo $index; ?>">
               <h2><?php echo ($index + 1) . '. ' . htmlspecialchars($question['question_text']); ?></h2>
-              <?php foreach (['A' => 'option_a', 'B' => 'option_b', 'C' => 'option_c', 'D' => 'option_d', 'E' => 'option_e'] as $option => $column): ?>
+              <?php if (!empty($question['image_path'])): ?>
+                <img src="<?php echo 'admin/' . htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Question image" style="display:block;max-width:100%;height:auto;margin:0 0 1rem;border-radius:var(--radius-sm);" />
+              <?php endif; ?>
+              <?php foreach ($question['option_order'] as $option): ?>
+                <?php $column = 'option_' . strtolower($option); ?>
                 <?php if ($question[$column] !== null && $question[$column] !== ''): ?>
                   <label class="answer-option">
                     <input type="radio" name="answers[<?php echo (int) $question['id']; ?>]" value="<?php echo $option; ?>" />
-                    <span><strong><?php echo $option; ?>.</strong> <?php echo htmlspecialchars($question[$column]); ?></span>
+                    <span><?php echo htmlspecialchars($question[$column]); ?></span>
                   </label>
                 <?php endif; ?>
               <?php endforeach; ?>

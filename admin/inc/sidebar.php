@@ -1,3 +1,6 @@
+<?php if (!isset($_SESSION['member_id'])): ?>
+<script defer src="/associa8/js/admin-notifications.js?v=20261024-1"></script>
+<?php endif; ?>
 <?php $currentAdminPage = basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')); ?>
 <aside class="admin-sidebar" id="adminSidebar">
         <div class="sidebar-brand">
@@ -9,6 +12,7 @@
         </div>
 
         <ul class="sidebar-menu">
+          <?php if (admin_has_permission('dashboard')): ?>
           <!-- Dashboard (Single Link) -->
           <li class="sidebar-item">
             <a href="dashboard.php" class="sidebar-link">
@@ -18,6 +22,7 @@
               </div>
             </a>
           </li>
+          <?php endif; ?>
 
           <?php if (admin_has_permission('members_view')): ?>
           <!-- Membership (Dropdown) -->
@@ -38,7 +43,7 @@
                   </div>
                 </a>
               </li>
-              <?php if (admin_has_permission('members_manage')): ?>
+              <?php if (admin_has_permission('membership_structure')): ?>
               <li>
                 <a href="titles-hierarchy.php" class="sidebar-link">
                   <div class="sidebar-link-content">

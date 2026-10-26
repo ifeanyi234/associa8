@@ -15,11 +15,11 @@ if ($adminRole !== 'super_admin' && $orgId !== null) {
 $titleCountResult = mysqli_query($conn, $titleCountSql);
 $titleCount = $titleCountResult ? (int) mysqli_fetch_assoc($titleCountResult)['total'] : 0;
 
-$titlesSql = "SELECT t.id, t.title, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id";
+$titlesSql = "SELECT t.id, t.title, t.scope, t.level, t.description, COUNT(m.id) AS member_count FROM titles t LEFT JOIN members m ON m.title_id = t.id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $titlesSql .= " WHERE t.org_id = " . (int) $orgId;
 }
-$titlesSql .= " GROUP BY t.id, t.title, t.level, t.description ORDER BY t.level ASC";
+$titlesSql .= " GROUP BY t.id, t.title, t.scope, t.level, t.description ORDER BY FIELD(t.scope, 'hq', 'zone', 'subzone'), t.level ASC";
 $titlesResult = mysqli_query($conn, $titlesSql);
 $titles = [];
 
@@ -129,12 +129,20 @@ if ($titlesResult) {
             <div class="hierarchy-info-bar">
               <i class="fa-solid fa-shield-halved"></i>
               <span
-                >Hierarchy flow from level 1 (highest) to level 7(entry)</span
+                >Hierarchy levels are ordered from 1 (highest) within each level.</span
               >
             </div>
 
             <?php if ($titles): ?>
+              <?php $displayedScope = null; ?>
+              <?php $scopeLabels = ['hq' => 'HQ', 'zone' => 'Zone', 'subzone' => 'Sub-zone']; ?>
               <?php foreach ($titles as $title): ?>
+                <?php
+                  if ($displayedScope !== $title['scope']):
+                    $displayedScope = $title['scope'];
+                ?>
+                  <h2 class="page-title-main" style="font-size:1.1rem;margin:20px 0 12px;"><?php echo htmlspecialchars($scopeLabels[$title['scope']] ?? 'HQ', ENT_QUOTES, 'UTF-8'); ?> titles</h2>
+                <?php endif; ?>
                 <?php
                   $tierClass = match ((int) $title['level']) {
                       1 => 'tag-patron',
@@ -178,242 +186,7 @@ if ($titlesResult) {
                 </div>
               <?php endforeach; ?>
             <?php else: ?>
-
-            <!-- L1 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L1</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Patron</span>
-                    <span class="tag-outline tag-patron">Patron</span>
-                  </div>
-                  <p class="title-description">
-                    Honorary position , highest distinction
-                  </p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">3</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Patron"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Patron"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L2 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L2</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">President</span>
-                    <span class="tag-outline tag-president">President</span>
-                  </div>
-                  <p class="title-description">
-                    Honorary position , highest distinction
-                  </p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">1</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit President"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete President"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L3 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L3</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Vice President</span>
-                    <span class="tag-outline tag-vice-president"
-                      >Vice President</span
-                    >
-                  </div>
-                  <p class="title-description">
-                    Elected head of the organization
-                  </p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">2</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Vice President"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Vice President"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L4 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L4</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Senior Fellow</span>
-                    <span class="tag-outline tag-president">President</span>
-                  </div>
-                  <p class="title-description">
-                    Long standing professionals with distinction
-                  </p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">48</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Senior Fellow"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Senior Fellow"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L5 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L5</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Fellow</span>
-                    <span class="tag-outline tag-fellow">Fellow</span>
-                  </div>
-                  <p class="title-description">Full professional in training</p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">212</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Fellow"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Fellow"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L6 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L6</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Associate</span>
-                    <span class="tag-outline tag-associate">Associate</span>
-                  </div>
-                  <p class="title-description">
-                    Professional members in training
-                  </p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">186</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Associate"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Associate"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <!-- L7 Card -->
-            <div class="hierarchy-item-card">
-              <div class="hierarchy-left-col">
-                <div class="level-reorder-group">
-                  <button class="reorder-btn" aria-label="Move Up">
-                    <i class="fa-solid fa-chevron-up"></i>
-                  </button>
-                  <div class="level-badge">L7</div>
-                  <button class="reorder-btn" aria-label="Move Down">
-                    <i class="fa-solid fa-chevron-down"></i>
-                  </button>
-                </div>
-                <div class="hierarchy-details">
-                  <div class="title-header-group">
-                    <span class="title-name">Member</span>
-                    <span class="tag-outline tag-member">Member</span>
-                  </div>
-                  <p class="title-description">General membership upgrade</p>
-                </div>
-              </div>
-              <div class="hierarchy-member-count">
-                <div class="hierarchy-member-total">
-                  <span class="count-number">195</span>
-                  <span class="count-label">members</span>
-                </div>
-                <div class="hierarchy-actions">
-                  <button type="button" class="hierarchy-action edit" aria-label="Edit Member"><i class="fa-solid fa-pen"></i></button>
-                  <button type="button" class="hierarchy-action delete" aria-label="Delete Member"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </div>
-            </div>
+              <p class="page-subtitle" style="padding: 20px 0;">No membership titles have been added yet.</p>
             <?php endif; ?>
           </div>
         </div>

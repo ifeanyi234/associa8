@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/info-tip.php';
 require_once __DIR__ . '/access-denied.php';
+require_once __DIR__ . '/permissions.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -52,8 +53,8 @@ if (!$account) {
     exit;
 }
 
-$validRoles = ['super_admin', 'admin', 'manager', 'staff'];
-if (!in_array($account['role'], $validRoles, true) || ($account['role'] !== 'super_admin' && (int) $account['org_id'] < 1)) {
+$validRoles = ['super_admin', 'admin', 'zonal_admin', 'subzonal_admin'];
+if (!in_array($account['role'], $validRoles, true) || (int) $account['org_id'] < 1) {
     session_unset();
     session_destroy();
     header('Location: index.php?error=invalid-role');
@@ -61,24 +62,45 @@ if (!in_array($account['role'], $validRoles, true) || ($account['role'] !== 'sup
 }
 $_SESSION['username'] = (string) $account['username'];
 $_SESSION['org_id'] = (int) $account['org_id'];
-$_SESSION['admin_role'] = (string) $account['role'];
+$_SESSION['admin_is_super_admin'] = $account['role'] === 'super_admin';
+$_SESSION['admin_display_role'] = (string) $account['role'];
+$_SESSION['admin_role'] = $account['role'] === 'super_admin' ? 'admin' : (string) $account['role'];
 $_SESSION['admin_name'] = trim((string) $account['first_name'] . ' ' . (string) $account['last_name']);
 $_SESSION['admin_organization_name'] = trim((string) ($account['organization_name'] ?? ''));
 $_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
 $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
+if (in_array($account['role'], ['zonal_admin', 'subzonal_admin'], true)) {
+    require_once __DIR__ . '/scope.php';
+    $scopeContext = admin_scope_context($conn);
+    if (empty($scopeContext['valid'])) {
+        session_unset();
+        session_destroy();
+        header('Location: index.php?error=invalid-role');
+        exit;
+    }
+}
 
 function admin_role_permissions(string $role): array
 {
-    if (in_array($role, ['super_admin', 'admin'], true)) {
-        return ['admin_only', 'dashboard', 'members_view', 'members_manage', 'admission', 'cbt_management', 'document', 'attendance', 'finance', 'events', 'user_control', 'messages'];
+    if (in_array($role, ['zonal_admin', 'subzonal_admin'], true)) {
+        return ['dashboard', 'members_view', 'members_manage'];
     }
-    if ($role === 'manager') {
-        return ['dashboard', 'members_view', 'members_manage', 'admission', 'document', 'attendance', 'events', 'messages'];
+    if ($role === 'super_admin') {
+        return ['admin_only', 'dashboard', 'members_view', 'members_manage', 'membership_structure', 'admission', 'cbt_management', 'document', 'attendance', 'finance', 'events', 'user_control', 'messages'];
     }
-    if ($role === 'staff') {
-        return ['dashboard', 'members_view', 'document', 'attendance', 'events', 'messages'];
+    if ($role === 'admin') {
+        $permissions = ['admin_only', 'dashboard', 'members_view', 'members_manage', 'membership_structure', 'admission', 'cbt_management', 'document', 'attendance', 'finance', 'events', 'messages'];
+        if (!empty($_SESSION['admin_is_super_admin'])) {
+            $permissions[] = 'user_control';
+        }
+        return $permissions;
     }
     return [];
+}
+
+function admin_is_super_admin(): bool
+{
+    return !empty($_SESSION['admin_is_super_admin']);
 }
 
 function admin_has_permission(string $permission): bool
@@ -88,6 +110,7 @@ function admin_has_permission(string $permission): bool
 
 $adminRoutePermissions = [
     'dashboard.php' => 'dashboard',
+    'notification-feed.php' => 'dashboard',
     'user-controls.php' => 'user_control',
     'process-user.php' => 'user_control',
     'proc-user-action.php' => 'user_control',
@@ -95,6 +118,7 @@ $adminRoutePermissions = [
     'financial.php' => 'finance',
     'add-payment.php' => 'finance',
     'proc-record-payment.php' => 'finance',
+    'proc-create-levy.php' => 'finance',
     'admission-management.php' => 'admission',
     'add-admission.php' => 'admission',
     'proc-add-admission.php' => 'admission',
@@ -106,6 +130,9 @@ $adminRoutePermissions = [
     'portal-settings.php' => 'admin_only',
     'proc-portal-settings.php' => 'admin_only',
     'cbt-applicants.php' => 'cbt_management',
+    'admission-applicants-bulk-upload.php' => 'admission',
+    'cbt-applicants-bulk-upload.php' => 'admission',
+    'cbt-bulk-upload.php' => 'cbt_management',
     'cbt-exam-preview.php' => 'cbt_management',
     'cbt-questions.php' => 'cbt_management',
     'cbt-result-detail.php' => 'cbt_management',
@@ -116,6 +143,10 @@ $adminRoutePermissions = [
     'proc-activate-cbt-exam.php' => 'cbt_management',
     'proc-add-cbt-exam.php' => 'cbt_management',
     'proc-add-cbt-question.php' => 'cbt_management',
+    'proc-bulk-upload-cbt.php' => 'cbt_management',
+    'proc-bulk-upload-applicants.php' => 'admission',
+    'proc-download-cbt-template.php' => 'cbt_management',
+    'proc-download-cbt-applicant-template.php' => 'admission',
     'proc-delete-cbt-question.php' => 'cbt_management',
     'proc-schedule-cbt.php' => 'cbt_management',
     'documents.php' => 'document',
@@ -129,28 +160,30 @@ $adminRoutePermissions = [
     'add-event.php' => 'events',
     'proc-save-event.php' => 'events',
     'proc-event-action.php' => 'events',
+    'event-attendance.php' => 'events',
+    'proc-record-event-attendance.php' => 'events',
     'member-directory.php' => 'members_view',
     'add-member.php' => 'members_manage',
     'edit-member.php' => 'members_manage',
     'proc-add-member.php' => 'members_manage',
     'proc-edit-member.php' => 'members_manage',
     'proc-delete-member.php' => 'members_manage',
-    'titles-hierarchy.php' => 'members_manage',
-    'add-title.php' => 'members_manage',
-    'edit-title.php' => 'members_manage',
-    'proc-add-title.php' => 'members_manage',
-    'proc-edit-title.php' => 'members_manage',
-    'proc-delete-title.php' => 'members_manage',
-    'zones.php' => 'members_manage',
-    'add-zone.php' => 'members_manage',
-    'edit-zone.php' => 'members_manage',
-    'edit-subzone.php' => 'members_manage',
-    'proc-add-zone.php' => 'members_manage',
-    'proc-edit-zone.php' => 'members_manage',
-    'proc-edit-subzone.php' => 'members_manage',
-    'suspension.php' => 'members_manage',
-    'add-suspension.php' => 'members_manage',
-    'proc-suspension.php' => 'members_manage',
+    'titles-hierarchy.php' => 'membership_structure',
+    'add-title.php' => 'membership_structure',
+    'edit-title.php' => 'membership_structure',
+    'proc-add-title.php' => 'membership_structure',
+    'proc-edit-title.php' => 'membership_structure',
+    'proc-delete-title.php' => 'membership_structure',
+    'zones.php' => 'membership_structure',
+    'add-zone.php' => 'membership_structure',
+    'edit-zone.php' => 'membership_structure',
+    'edit-subzone.php' => 'membership_structure',
+    'proc-add-zone.php' => 'membership_structure',
+    'proc-edit-zone.php' => 'membership_structure',
+    'proc-edit-subzone.php' => 'membership_structure',
+    'suspension.php' => 'membership_structure',
+    'add-suspension.php' => 'membership_structure',
+    'proc-suspension.php' => 'membership_structure',
 ];
 $routeName = basename((string) ($_SERVER['SCRIPT_FILENAME'] ?? ''));
 $requiredPermission = $adminRoutePermissions[$routeName] ?? 'admin_only';

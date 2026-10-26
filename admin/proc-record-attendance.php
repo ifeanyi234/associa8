@@ -73,14 +73,9 @@ $localDayEnd = $localDayStart->modify('+1 day');
 $localDayStartUtc = $localDayStart->setTimezone($utcTimezone)->format('Y-m-d H:i:s');
 $localDayEndUtc = $localDayEnd->setTimezone($utcTimezone)->format('Y-m-d H:i:s');
 $orgId = isset($_SESSION['org_id']) ? (int) $_SESSION['org_id'] : 0;
-$isPlatformAdmin = ($_SESSION['admin_role'] ?? '') === 'super_admin';
-$canViewAllOrganizations = $isPlatformAdmin && $orgId < 1;
 $memberIds = array_keys($statuses);
 $memberPlaceholders = implode(',', array_fill(0, count($memberIds), '?'));
-$memberSql = 'SELECT id FROM members WHERE id IN (' . $memberPlaceholders . ')';
-if (!$canViewAllOrganizations) {
-    $memberSql .= ' AND org_id = ?';
-}
+$memberSql = 'SELECT id FROM members WHERE id IN (' . $memberPlaceholders . ') AND org_id = ?';
 $memberSql .= ' FOR UPDATE';
 $memberStmt = mysqli_prepare($conn, $memberSql);
 if (!$memberStmt) {
@@ -89,10 +84,8 @@ if (!$memberStmt) {
 }
 $memberParams = $memberIds;
 $memberParamTypes = str_repeat('i', count($memberIds));
-if (!$canViewAllOrganizations) {
-    $memberParams[] = $orgId;
-    $memberParamTypes .= 'i';
-}
+$memberParams[] = $orgId;
+$memberParamTypes .= 'i';
 if (!mysqli_stmt_bind_param($memberStmt, $memberParamTypes, ...$memberParams)) {
     error_log('Attendance member validation parameters could not be bound: ' . mysqli_stmt_error($memberStmt));
     mysqli_stmt_close($memberStmt);

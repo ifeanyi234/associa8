@@ -2676,6 +2676,10 @@ textarea::placeholder {
   border-radius: 8px;
 }
 
+.subzone-grid > .zone-empty-state {
+  grid-column: 1 / -1;
+}
+
 .admission-status-form {
   display: inline-flex;
   align-items: center;
@@ -3338,6 +3342,38 @@ body.app-modal-open {
   color: var(--text-muted);
 }
 
+input[type="file"] {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background-color: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: var(--radius-md);
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 1rem;
+  padding: 0.6rem 1.5rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--banner-bg, #0a2244);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+input[type="file"]::file-selector-button:hover {
+  opacity: 0.88;
+}
+
+input[type="file"]:focus-visible {
+  outline: 2px solid var(--primary-blue);
+  outline-offset: 2px;
+}
+
 textarea.form-control {
   min-height: 100px;
   resize: vertical;
@@ -3607,6 +3643,20 @@ textarea.form-control {
 .admission-actions .dropdown-item.danger-item,
 .admission-actions .dropdown-item.danger-item i {
   color: #dc2626;
+}
+
+.admission-actions .admission-assignment-fields {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 250px;
+  padding: 0.4rem;
+}
+
+.admission-actions .admission-assignment-fields .form-select {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.78rem;
 }
 
 .dropdown.show .dropdown-menu {
@@ -4634,29 +4684,6 @@ textarea.form-control {
   margin-bottom: 1rem;
 }
 
-.member-profile-edit input[type="file"]::file-selector-button {
-  margin-right: 0.75rem;
-  padding: 0.55rem 0.9rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--admin-bg);
-  color: var(--text-primary);
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
-}
-
-.member-profile-edit input[type="file"]::file-selector-button:hover {
-  background: #e2e8f0;
-  border-color: var(--primary-blue);
-}
-
-.member-profile-edit input[type="file"]:focus-visible {
-  outline: 2px solid var(--primary-blue);
-  outline-offset: 2px;
-}
-
 .member-profile-edit .info-card-header {
   justify-content: flex-start;
 }
@@ -4796,6 +4823,15 @@ textarea.form-control {
 
 .status-text-missed {
   color: var(--color-danger);
+}
+
+.status-text-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-warning);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .progress-labeled-row {

@@ -1,10 +1,18 @@
 <?php
 require_once 'inc/auth.php';
 require_once '../../inc/db.php';
+require_once __DIR__ . '/../inc/finance-levies.php';
 require_once __DIR__ . '/inc/annual-dues.php';
+require_once '../../inc/paystack.php';
 
 $memberId = (int) $_SESSION['member_id'];
 $memberOrgId = (int) $_SESSION['member_org_id'];
+$paymentNotice = $_SESSION['member_payment_notice'] ?? null;
+unset($_SESSION['member_payment_notice']);
+if (empty($_SESSION['member_payment_csrf'])) {
+  $_SESSION['member_payment_csrf'] = bin2hex(random_bytes(32));
+}
+$onlinePaymentsEnabled = associa8_paystack_enabled();
 $annualDues = member_load_annual_dues($conn, $memberId, $memberOrgId);
 if ($annualDues === null) {
   http_response_code(500);
@@ -12,11 +20,60 @@ if ($annualDues === null) {
 }
 
 $transactions = [];
-$transactionsResult = mysqli_query($conn, "SELECT id, reference, amount, type, status, paid_at, created_at FROM finance_transactions WHERE member_id = $memberId ORDER BY paid_at DESC, created_at DESC");
+$levySchemaAvailable = admin_finance_levies_available($conn);
+$transactionSql = $levySchemaAvailable
+  ? "SELECT ft.id, ft.reference, ft.amount, ft.type, l.title AS levy_title, ft.status, ft.paid_at, ft.created_at FROM finance_transactions ft LEFT JOIN levies l ON l.id = ft.levy_id WHERE ft.member_id = $memberId ORDER BY ft.paid_at DESC, ft.created_at DESC"
+  : "SELECT id, reference, amount, type, status, paid_at, created_at FROM finance_transactions WHERE member_id = $memberId ORDER BY paid_at DESC, created_at DESC";
+$transactionsResult = mysqli_query($conn, $transactionSql);
 if ($transactionsResult) {
   while ($row = mysqli_fetch_assoc($transactionsResult)) {
     $transactions[] = $row;
   }
+} else {
+  error_log('Member payment history could not be loaded: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Your payment history could not be loaded right now.');
+}
+
+$memberLevies = [];
+$memberLevyTotal = 0.0;
+$memberLevyPaid = 0.0;
+$memberLevyOutstanding = 0.0;
+$memberLevySql = "SELECT l.id, l.title, l.due_date, ml.amount,
+                         COALESCE(SUM(ft.amount), 0) AS paid_amount
+                  FROM member_levies ml
+                  INNER JOIN levies l ON l.id = ml.levy_id AND l.org_id = ?
+                  LEFT JOIN finance_transactions ft
+                    ON ft.levy_id = ml.levy_id AND ft.member_id = ml.member_id
+                    AND ft.type = 'levy' AND ft.status = 'successful'
+                  WHERE ml.member_id = ?
+                  GROUP BY l.id, l.title, l.due_date, ml.amount
+                  ORDER BY l.due_date DESC, l.id DESC";
+$memberLevyStmt = $levySchemaAvailable ? mysqli_prepare($conn, $memberLevySql) : false;
+if ($levySchemaAvailable && !$memberLevyStmt) {
+  error_log('Member levy obligations could not be prepared: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Your levy balances could not be loaded right now.');
+} elseif ($levySchemaAvailable) {
+mysqli_stmt_bind_param($memberLevyStmt, 'ii', $memberOrgId, $memberId);
+if (!mysqli_stmt_execute($memberLevyStmt)) {
+  error_log('Member levy obligations could not be loaded: ' . mysqli_stmt_error($memberLevyStmt));
+  mysqli_stmt_close($memberLevyStmt);
+  http_response_code(500);
+  exit('Your levy balances could not be loaded right now.');
+}
+$memberLevyResult = mysqli_stmt_get_result($memberLevyStmt);
+while ($memberLevyResult && ($levy = mysqli_fetch_assoc($memberLevyResult))) {
+  $levy['amount'] = (float) $levy['amount'];
+  $levy['paid_amount'] = min($levy['amount'], (float) $levy['paid_amount']);
+  $levy['outstanding'] = max(0.0, $levy['amount'] - $levy['paid_amount']);
+  $levy['due_date_label'] = date('M j, Y', strtotime($levy['due_date']));
+  $memberLevyTotal += $levy['amount'];
+  $memberLevyPaid += $levy['paid_amount'];
+  $memberLevyOutstanding += $levy['outstanding'];
+  $memberLevies[] = $levy;
+}
+mysqli_stmt_close($memberLevyStmt);
 }
 
 $paidThisYear = $annualDues['paid'];
@@ -45,7 +102,7 @@ $annualTotal = $annualDues['total_due'];
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261016-annual-zone-dues-1" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261019-member-history-square-1" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -93,6 +150,11 @@ $annualTotal = $annualDues['total_due'];
         </header>
 
         <div class="dashboard-content">
+          <?php if (is_array($paymentNotice)): ?>
+            <div class="dashboard-card" role="<?php echo ($paymentNotice['type'] ?? '') === 'success' ? 'status' : 'alert'; ?>" style="margin-bottom: 1rem; color: <?php echo ($paymentNotice['type'] ?? '') === 'success' ? '#166534' : '#b91c1c'; ?>;">
+              <?php echo htmlspecialchars((string) ($paymentNotice['text'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+          <?php endif; ?>
           <!-- Stat Cards -->
           <section class="summary-cards-grid">
             <div class="summary-card">
@@ -102,7 +164,15 @@ $annualTotal = $annualDues['total_due'];
               </div>
               <div class="summary-value">&#8358;<?php echo number_format($outstanding, 2); ?></div>
               <div class="summary-sublabel"><?php echo $annualTotal > 0 ? '&#8358;' . number_format($paidThisYear, 2) . ' paid of &#8358;' . number_format($annualTotal, 2) . ' annual dues in ' . htmlspecialchars($annualDues['year'], ENT_QUOTES, 'UTF-8') : 'No annual dues set for your zone or sub-zone'; ?></div>
-              <button class="btn-summary-action">Pay up</button>
+              <?php if ($onlinePaymentsEnabled && $outstanding > 0): ?>
+                <form action="proc-initiate-payment.php" method="post">
+                  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_payment_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                  <input type="hidden" name="type" value="membership_dues" />
+                  <button class="btn-summary-action" type="submit">Pay annual dues</button>
+                </form>
+              <?php elseif ($outstanding > 0): ?>
+                <span class="summary-sublabel">Online payments are unavailable. Contact your organization to pay offline.</span>
+              <?php endif; ?>
             </div>
 
             <div class="summary-card">
@@ -124,10 +194,61 @@ $annualTotal = $annualDues['total_due'];
                   <i class="fa-regular fa-credit-card"></i>
                 </div>
               </div>
-              <div class="summary-value">&#8358;<?php echo number_format(array_reduce($transactions, fn($carry, $item) => $carry + (float) ($item['amount'] ?? 0), 0), 0); ?></div>
+              <div class="summary-value">&#8358;<?php echo number_format(array_reduce($transactions, fn($carry, $item) => $carry + (($item['status'] ?? '') === 'successful' ? (float) ($item['amount'] ?? 0) : 0), 0), 0); ?></div>
               <div class="summary-sublabel">Since first transaction</div>
             </div>
           </section>
+
+          <?php if ($levySchemaAvailable): ?>
+          <section class="dashboard-card" style="margin-bottom: 1.5rem;">
+            <div class="dashboard-card-header">
+              <div>
+                <h3 class="dashboard-card-title">One-time levies</h3>
+                <p class="dashboard-card-subtitle">Levies assigned to you by your organization.</p>
+                <?php if (!$onlinePaymentsEnabled && $memberLevyOutstanding > 0): ?>
+                  <p class="dashboard-card-subtitle">Online payments are unavailable. Contact your organization to pay offline.</p>
+                <?php endif; ?>
+              </div>
+              <strong>Outstanding: &#8358;<?php echo number_format($memberLevyOutstanding, 2); ?></strong>
+            </div>
+            <div class="table-responsive-card">
+              <table class="custom-admin-table">
+                <thead><tr><th>Levy</th><th>Due date</th><th>Assessed</th><th>Paid</th><th>Outstanding</th></tr></thead>
+                <tbody>
+                  <?php if ($memberLevies): ?>
+                    <?php foreach ($memberLevies as $levy): ?>
+                      <tr>
+                        <td class="fw-semibold"><?php echo htmlspecialchars($levy['title'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars($levy['due_date_label'], ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td class="amount-cell amount-neutral">&#8358;<?php echo number_format($levy['amount'], 2); ?></td>
+                        <td class="amount-cell amount-neutral">&#8358;<?php echo number_format($levy['paid_amount'], 2); ?></td>
+                        <td class="amount-cell amount-neutral">
+                          &#8358;<?php echo number_format($levy['outstanding'], 2); ?>
+                          <?php if ($onlinePaymentsEnabled && $levy['outstanding'] > 0): ?>
+                            <form action="proc-initiate-payment.php" method="post" style="margin-top: .4rem;">
+                              <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_payment_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                              <input type="hidden" name="type" value="levy" />
+                              <input type="hidden" name="levy_id" value="<?php echo (int) $levy['id']; ?>" />
+                              <button type="submit" class="btn-navy-outline">Pay levy</button>
+                            </form>
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                    <tr>
+                      <td colspan="2" class="fw-semibold">Total</td>
+                      <td class="amount-cell amount-neutral fw-semibold">&#8358;<?php echo number_format($memberLevyTotal, 2); ?></td>
+                      <td class="amount-cell amount-neutral fw-semibold">&#8358;<?php echo number_format($memberLevyPaid, 2); ?></td>
+                      <td class="amount-cell amount-neutral fw-semibold">&#8358;<?php echo number_format($memberLevyOutstanding, 2); ?></td>
+                    </tr>
+                  <?php else: ?>
+                    <tr><td colspan="5" class="zone-empty-state">No one-time levies have been assigned to you.</td></tr>
+                  <?php endif; ?>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <?php endif; ?>
 
           <!-- Payment History -->
           <section class="table-responsive-card member-history-table-card">
@@ -164,7 +285,7 @@ $annualTotal = $annualDues['total_due'];
                     ?>
                     <tr>
                       <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars(date('M j, Y', strtotime($date))); ?></td>
-                      <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $transaction['type'] ?? 'other'))); ?></td>
+                      <td><?php echo htmlspecialchars(($transaction['type'] ?? '') === 'levy' && !empty($transaction['levy_title']) ? 'Levy: ' . $transaction['levy_title'] : ucfirst(str_replace('_', ' ', $transaction['type'] ?? 'other')), ENT_QUOTES, 'UTF-8'); ?></td>
                       <td><span class="tx-ref-code"><?php echo htmlspecialchars($transaction['reference'] ?? 'N/A'); ?></span></td>
                       <td style="font-weight: 600; color: var(--text-primary);">&#8358;<?php echo number_format((float) ($transaction['amount'] ?? 0), 0); ?></td>
                       <td><span class="<?php echo $statusClass; ?>"><?php echo htmlspecialchars($status); ?></span></td>

@@ -8,7 +8,7 @@ This is the implementation tracker for taking the current prototype to a secure,
 
 **Honest delivery status:** the admissions/CBT security work is substantially improved, but the app is still not complete enough to present as a finished product. The most visible unfinished areas are finance, attendance, and event workflows. These are still blockers for a boss-facing demo and must be treated as unfinished until they are tested and functional. Security hardening is important, but it does not replace basic feature completion.
 
-**Work in progress (2026-10-08):** the fake finance cards/table have been replaced by organization-scoped transaction data, and organization admins can now record offline payments with an activity-log entry. Admin attendance uses the restored list-page design at `admin/attendance.php` and a separate entry form at `admin/add-attendance.php`, with duplicate checks, status filters, and organization-scoped records. Synthetic finance/attendance records have been seeded in the local database for UI testing. Finance dues setup/online payments and event-linked attendance remain incomplete, and the browser flows still need end-to-end verification.
+**Work in progress (2026-10-19):** the finance page uses organization-scoped transaction data, supports audited offline payments, reports annual zone/sub-zone dues, and now supports one-time levies with an active-member eligibility snapshot, due date, and organization/zone/sub-zone targeting. Levy payments are linked to assigned member obligations and checked against the remaining balance; the member payment page shows levy balances. Existing databases need `migrations/20261019_one_time_levies.sql`. Paystack, refunds, receipts, exports, reconciliation, and finance browser/end-to-end verification remain outstanding. Admin attendance uses the restored list-page design at `admin/attendance.php` and a separate entry form at `admin/add-attendance.php`, with duplicate checks, status filters, and organization-scoped records. Event attendance can be recorded for booked and waitlisted members after a scheduled event ends, using `event_attendance`. Finance and attendance browser flows still need end-to-end verification.
 
 ## Project Status Snapshot (truth check)
 
@@ -44,8 +44,8 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ### Immediate execution list
 1. [ ] Audit all visible admin modules and remove or disable any feature that is still static/mock before showing the app to management.
-2. [ ] Finish the Finance module: dues creation, Paystack verification, receipts, exports, and full workflow tests are still missing; offline payment entry is now implemented but still needs a browser walkthrough and isolation verification.
-3. [ ] Finish the Attendance module: event-linked check-in, corrections/audit history, export/pagination, and end-to-end organization-isolation tests are still missing.
+2. [ ] Finish the Finance module: annual zone/sub-zone dues and one-time levy obligations are implemented; Paystack verification, refunds, receipts, exports, reconciliation, and full workflow tests remain. Offline payment and levy entry still need a browser walkthrough and isolation verification.
+3. [ ] Finish the Attendance module: RSVP-based event attendance recording is implemented; corrections/audit history, export/pagination, and end-to-end organization-isolation tests remain.
 4. [ ] Fix the Events/RSVP module completely: event ownership, capacity logic, booking/cancellation flow, and member access rules.
 5. [ ] Re-check the preset role descriptions in [admin/user-controls.php](admin/user-controls.php) against the enforced access on each page and handler.
 6. [ ] Test module-level authorization across all admin handlers and page loads, including denied direct URL and POST requests.
@@ -54,11 +54,11 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ## Phase 0: Agree On The Product
 
-- [x] Write and approve the MVP user roles: platform operator, organization owner/admin, manager/staff with assigned permissions, member, and applicant.
-- [x] Agree on the high-level access boundary: platform operator is cross-organization; organization admin is limited to its organization; staff are limited to assigned modules; members and applicants have limited self-service access.
-- [x] Set preset role defaults: organization admins have all organization modules and staff-account controls; managers have members, admissions, documents, events, and attendance; staff have day-to-day member viewing, documents, events, and attendance, without finance, admissions, CBT, or staff-account controls.
-- [x] Map preset roles to server-side module and handler checks; keep staff member-directory actions read-only.
-- [x] Decide whether `super_admin` means platform-wide access or organization-level superuser; it means platform-wide operator access. Organization owners/admins are scoped to their own organization.
+- [x] Define the admin roles as Association Super Admin, Admin, Zonal Admin, and Sub-zonal Admin; remove Manager and Staff as admin roles.
+- [x] Scope every admin role to its own Association; Super Admin does not access other Associations.
+- [x] Give only the Association Super Admin admin-role assignment controls; Admin has Association modules, while zonal roles have member-only actions for their assigned area.
+- [x] Enforce role permissions and assigned-area member checks in protected pages and handlers.
+- [x] Promote existing Manager/Staff accounts to Admin through `migrations/20261022_admin_role_reduction.sql`.
 - [x] Decide whether applicants self-apply publicly, are entered by staff, or both: both paths feed one admission workflow.
 - [x] Decide whether members can be created manually, only by approved admissions, or by both paths: both direct creation and admission approval are supported.
 - [x] Define a secure first-login and password-reset experience for admins and members: one-time email activation/reset links; users choose their passwords.
@@ -171,16 +171,16 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 - [ ] Complete or remove the nonfunctional `admin/signup.php` shell to avoid a misleading alternate signup route.
 - [ ] Test signup duplicate cases, transaction failure, email failure, and two concurrent signups.
 
-## Phase 6: Complete The Admin Shell And Staff Controls
+## Phase 6: Complete The Admin Shell And Admin Controls
 
-- [ ] Replace the hardcoded dashboard member, finance, attendance, application, chart, and activity figures with tenant-scoped queries.
+- [x] Replace the hardcoded dashboard member, finance, attendance, application, chart, and activity figures with tenant-scoped queries.
 - [ ] Add explicit empty, loading, query-error, and permission-denied states to dashboard widgets.
 - [ ] Confirm each dashboard total uses a documented period, status definition, and timezone.
 - [x] Implement the agreed preset role permission matrix in server-side code.
-- [x] Restrict staff invitations, role changes, and disablement to authorized organization/platform admins.
-- [x] Scope organization-admin staff controls to their organization; allow platform admins to choose the target organization.
-- [ ] Test invitation, role update, disable, and reactivate actions for staff.
-- [ ] Log security-sensitive staff and permission changes with actor, organization, target, timestamp, and outcome.
+- [x] Restrict admin invitations, role changes, and disablement to the Super Admin of the same Association.
+- [x] Scope user controls to the Super Admin's Association; there is no cross-Association admin selector.
+- [ ] Test invitation, role update, disable, and reactivate actions for admins.
+- [ ] Log security-sensitive admin and permission changes with actor, organization, target, timestamp, and outcome.
 - [ ] Replace placeholder profile names/roles in the shared admin header with authenticated session data.
 - [ ] Fix logout navigation and every dead admin navigation route or remove the link.
 - [ ] Make search, filter, pagination, export, and row-action controls work or remove them from the production interface.
@@ -207,6 +207,7 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 
 ## Phase 8: Complete Admissions From Intake To Member
 
+- [x] Let an admin approve a pending applicant directly into membership without requiring CBT.
 - [ ] Decide and implement public applicant intake, staff-only intake, or both.
 - [ ] If public intake is enabled, create the applicant form, validation, duplicate handling, consent/privacy notice, and rate limiting.
 - [ ] Generate application numbers safely and enforce the selected organization-scoped uniqueness rule.
@@ -296,11 +297,11 @@ This project is not in a "mostly finished" state. It is a mixed-status product w
 ## Phase 13: Implement Finance And Payments
 
 - [x] Confirm a Paystack test account is active and available for sandbox development.
-- [ ] Define the exact dues/levy/charge model, amount and currency rules, fees, receipt requirements, and authorized recorders.
+- [x] Define one-time NGN levy obligations with a due date, organization/zone/sub-zone target, and a snapshot of active members at creation.
 - [x] Decide MVP payment collection: Paystack for online member dues plus audited staff-recorded offline payments; Associa8 subscription billing is not in MVP.
 - [ ] Add reliable organization ownership to transactions and payment obligations, directly or through constrained member ownership.
 - [ ] Replace hardcoded financial cards/charts/table rows with tenant-scoped database queries.
-- [ ] Build authorized admin workflows to create a charge/dues obligation and record an offline payment if that is MVP.
+- [ ] Browser-test the authorized workflow to create a one-time levy and record an audited offline payment against an assigned obligation, including scope and overpayment rejection.
 - [ ] Verify the supported Paystack linked-merchant/subaccount settlement model for Nigeria/NGN, then build checkout server-side and verify signed provider webhooks.
 - [ ] Make provider callbacks idempotent and prevent duplicate transaction/receipt creation.
 - [ ] Define pending/successful/failed/refunded transitions; do not accept status changes directly from the browser.

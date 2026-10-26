@@ -1,11 +1,11 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once __DIR__ . '/inc/finance-levies.php';
 
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 $canRecordOfflinePayments = in_array((string) ($_SESSION['admin_role'] ?? ''), ['admin', 'super_admin'], true);
-$canViewAllOrganizations = ($_SESSION['admin_role'] ?? '') === 'super_admin' && $orgId < 1;
-$memberScope = $canViewAllOrganizations ? '1 = 1' : 'm.org_id = ' . $orgId;
+$memberScope = 'm.org_id = ' . $orgId;
 $transactions = [];
 $totalCollected = 0.0;
 $pendingAmount = 0.0;
@@ -14,11 +14,20 @@ $pendingCount = 0;
 $transactionQueryFailed = false;
 $financeNotice = $_SESSION['finance_notice'] ?? null;
 unset($_SESSION['finance_notice']);
+$levyNotice = $_SESSION['levy_notice'] ?? null;
+unset($_SESSION['levy_notice']);
+if (empty($_SESSION['finance_csrf'])) {
+    $_SESSION['finance_csrf'] = bin2hex(random_bytes(32));
+}
+$levySchemaAvailable = admin_finance_levies_available($conn);
 
+$levyTransactionFields = $levySchemaAvailable ? ', l.title AS levy_title' : '';
+$levyTransactionJoin = $levySchemaAvailable ? ' LEFT JOIN levies l ON l.id = ft.levy_id' : '';
 $sql = "SELECT ft.reference, CONCAT(COALESCE(m.first_name, ''), ' ', COALESCE(m.last_name, '')) AS member_name,
-               ft.type, ft.amount, ft.status, ft.paid_at, ft.created_at
+               ft.type $levyTransactionFields, ft.amount, ft.status, ft.paid_at, ft.created_at
         FROM finance_transactions ft
         LEFT JOIN members m ON m.id = ft.member_id
+        $levyTransactionJoin
         WHERE $memberScope
         ORDER BY COALESCE(ft.paid_at, ft.created_at) DESC, ft.reference DESC";
 $result = mysqli_query($conn, $sql);
@@ -39,6 +48,146 @@ if ($result) {
     error_log('Finance transaction query failed: ' . mysqli_error($conn));
     $transactionQueryFailed = true;
 }
+
+$financeTimezone = new DateTimeZone('Africa/Lagos');
+$financeNow = new DateTimeImmutable('now', $financeTimezone);
+$financeYearStart = $financeNow
+    ->setDate((int) $financeNow->format('Y'), 1, 1)
+    ->setTime(0, 0);
+$financeYearEnd = $financeYearStart->modify('+1 year');
+$financeUtc = new DateTimeZone('UTC');
+$financeYearStartUtc = $financeYearStart->setTimezone($financeUtc)->format('Y-m-d H:i:s');
+$financeYearEndUtc = $financeYearEnd->setTimezone($financeUtc)->format('Y-m-d H:i:s');
+$duesMembers = [];
+$duesTotalDue = 0.0;
+$duesTotalPaid = 0.0;
+$duesTotalOutstanding = 0.0;
+$duesMembersAssessed = 0;
+$duesQueryFailed = false;
+$duesSql = "SELECT m.id, m.first_name, m.last_name, m.member_code,
+                   COALESCE(z.annual_dues, 0) + COALESCE(sz.annual_dues, 0) AS total_due,
+                   COALESCE((
+                       SELECT SUM(ft.amount)
+                       FROM finance_transactions ft
+                       WHERE ft.member_id = m.id
+                         AND ft.type = 'membership_dues'
+                         AND ft.status = 'successful'
+                         AND ft.paid_at >= ?
+                         AND ft.paid_at < ?
+                   ), 0) AS paid_this_year
+            FROM members m
+            LEFT JOIN zones z ON z.id = m.zone_id AND z.org_id = m.org_id
+            LEFT JOIN subzones sz ON sz.id = m.subzone_id AND sz.zone_id = m.zone_id
+            WHERE $memberScope
+            ORDER BY m.first_name, m.last_name, m.id";
+$duesStmt = mysqli_prepare($conn, $duesSql);
+if (!$duesStmt) {
+    error_log('Finance annual dues query could not be prepared: ' . mysqli_error($conn));
+    $duesQueryFailed = true;
+} else {
+    mysqli_stmt_bind_param($duesStmt, 'ss', $financeYearStartUtc, $financeYearEndUtc);
+    if (!mysqli_stmt_execute($duesStmt)) {
+        error_log('Finance annual dues query failed: ' . mysqli_stmt_error($duesStmt));
+        $duesQueryFailed = true;
+    } else {
+        $duesResult = mysqli_stmt_get_result($duesStmt);
+        while ($duesResult && ($row = mysqli_fetch_assoc($duesResult))) {
+            $row['total_due'] = (float) $row['total_due'];
+            $row['paid_this_year'] = (float) $row['paid_this_year'];
+            $row['applied_paid'] = min($row['total_due'], $row['paid_this_year']);
+            $row['outstanding'] = max(0.0, $row['total_due'] - $row['applied_paid']);
+            $row['paid_percent'] = $row['total_due'] > 0
+                ? (int) round(($row['applied_paid'] / $row['total_due']) * 100)
+                : 0;
+            $duesTotalDue += $row['total_due'];
+            $duesTotalPaid += $row['applied_paid'];
+            $duesTotalOutstanding += $row['outstanding'];
+            if ($row['total_due'] > 0) {
+                $duesMembersAssessed++;
+            }
+            $duesMembers[] = $row;
+        }
+    }
+    mysqli_stmt_close($duesStmt);
+}
+$duesPaidPercent = $duesTotalDue > 0 ? (int) round(($duesTotalPaid / $duesTotalDue) * 100) : 0;
+$duesScopeLabel = 'Association-wide total';
+
+$levyScope = 'l.org_id = ' . $orgId;
+$levies = [];
+$levyTotals = ['assessed' => 0.0, 'paid' => 0.0, 'outstanding' => 0.0];
+$leviesQueryFailed = false;
+$leviesSql = "SELECT l.id, l.title, l.amount, l.due_date, l.scope_type, l.scope_id,
+                     COALESCE(z.name, CONCAT(subz.name, ' / ', sz.name), 'Entire organization') AS target_name,
+                     COUNT(ml.member_id) AS member_count,
+                     COALESCE(SUM(ml.amount), 0) AS assessed_total,
+                     COALESCE(SUM(LEAST(ml.amount, COALESCE(lp.paid_amount, 0))), 0) AS paid_total
+              FROM levies l
+              LEFT JOIN zones z ON l.scope_type = 'zone' AND z.id = l.scope_id AND z.org_id = l.org_id
+              LEFT JOIN subzones sz ON l.scope_type = 'subzone' AND sz.id = l.scope_id
+              LEFT JOIN zones subz ON l.scope_type = 'subzone' AND subz.id = sz.zone_id AND subz.org_id = l.org_id
+              LEFT JOIN member_levies ml ON ml.levy_id = l.id
+              LEFT JOIN (
+                  SELECT levy_id, member_id, SUM(amount) AS paid_amount
+                  FROM finance_transactions
+                  WHERE type = 'levy' AND status = 'successful'
+                  GROUP BY levy_id, member_id
+              ) lp ON lp.levy_id = ml.levy_id AND lp.member_id = ml.member_id
+              WHERE $levyScope
+              GROUP BY l.id, l.title, l.amount, l.due_date, l.scope_type, l.scope_id, z.name, subz.name, sz.name
+              ORDER BY l.due_date DESC, l.id DESC";
+if ($levySchemaAvailable) {
+    $leviesResult = mysqli_query($conn, $leviesSql);
+    if (!$leviesResult) {
+        error_log('Finance levy query failed: ' . mysqli_error($conn));
+        $leviesQueryFailed = true;
+    } else {
+        while ($levy = mysqli_fetch_assoc($leviesResult)) {
+            $levy['amount'] = (float) $levy['amount'];
+            $levy['assessed_total'] = (float) $levy['assessed_total'];
+            $levy['paid_total'] = (float) $levy['paid_total'];
+            $levy['outstanding_total'] = max(0.0, $levy['assessed_total'] - $levy['paid_total']);
+            $levy['due_date_label'] = (new DateTimeImmutable($levy['due_date'], $financeTimezone))->format('M j, Y');
+            $levies[] = $levy;
+            $levyTotals['assessed'] += $levy['assessed_total'];
+            $levyTotals['paid'] += min($levy['assessed_total'], $levy['paid_total']);
+            $levyTotals['outstanding'] += $levy['outstanding_total'];
+        }
+    }
+}
+
+$levyTargets = [];
+$levyTargetQueryFailed = false;
+if ($levySchemaAvailable && $orgId > 0) {
+    $zoneTargetsResult = mysqli_query($conn, "SELECT id, name FROM zones WHERE org_id = $orgId ORDER BY name");
+    $subzoneTargetsResult = mysqli_query(
+        $conn,
+        "SELECT sz.id, sz.name, z.name AS zone_name
+         FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id
+         WHERE z.org_id = $orgId
+         ORDER BY z.name, sz.name"
+    );
+    if (!$zoneTargetsResult || !$subzoneTargetsResult) {
+        error_log('Levy target list query failed: ' . mysqli_error($conn));
+        $levyTargetQueryFailed = true;
+    } else {
+        while ($zone = mysqli_fetch_assoc($zoneTargetsResult)) {
+            $levyTargets[] = [
+                'value' => 'zone:' . (int) $zone['id'],
+                'label' => 'Zone: ' . $zone['name'],
+            ];
+        }
+        while ($subzone = mysqli_fetch_assoc($subzoneTargetsResult)) {
+            $levyTargets[] = [
+                'value' => 'subzone:' . (int) $subzone['id'],
+                'label' => 'Sub-zone: ' . $subzone['zone_name'] . ' / ' . $subzone['name'],
+            ];
+        }
+    }
+}
+$canCreateLevy = $levySchemaAvailable
+    && in_array((string) ($_SESSION['admin_role'] ?? ''), ['admin', 'super_admin'], true)
+    && $orgId > 0;
 
 $monthLabels = [];
 $monthKeys = [];
@@ -203,8 +352,8 @@ foreach ($transactions as $transaction) {
 
                     <!-- Module Navigation Tabs -->
           <div class="filter-pill-group" style="margin-bottom: 0.5rem;">
-            <button class="filter-pill active" data-tab="overview">Overview</button>
-            <button class="filter-pill" data-tab="dues-levies">Dues & Levies</button>
+            <button class="filter-pill <?php echo ($_GET['tab'] ?? '') === 'dues-levies' ? '' : 'active'; ?>" data-tab="overview">Overview</button>
+            <button class="filter-pill <?php echo ($_GET['tab'] ?? '') === 'dues-levies' ? 'active' : ''; ?>" data-tab="dues-levies">Dues & Levies</button>
             <button class="filter-pill" data-tab="payment">Payment</button>
             <button class="filter-pill" data-tab="budget-tracking">Budget Tracking</button>
           </div>
@@ -212,7 +361,7 @@ foreach ($transactions as $transaction) {
           <div class="tab-content">
 
             <!-- ============ OVERVIEW TAB ============ -->
-            <div class="tab-pane active" id="tab-overview">
+            <div class="tab-pane <?php echo ($_GET['tab'] ?? '') === 'dues-levies' ? '' : 'active'; ?>" id="tab-overview">
               <section class="dashboard-split-grid">
                 <!-- Left Card: Monthly Collection -->
                 <div class="dashboard-card">
@@ -244,13 +393,208 @@ foreach ($transactions as $transaction) {
             </div>
 
             <!-- ============ DUES & LEVIES TAB ============ -->
-            <div class="tab-pane" id="tab-dues-levies">
-              <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                  <h3 class="dashboard-card-title">Dues & Levies</h3>
+            <div class="tab-pane <?php echo ($_GET['tab'] ?? '') === 'dues-levies' ? 'active' : ''; ?>" id="tab-dues-levies">
+              <?php if (is_array($levyNotice)): ?>
+                <div class="dashboard-card" role="<?php echo ($levyNotice['type'] ?? '') === 'success' ? 'status' : 'alert'; ?>" style="margin-bottom: 1rem;">
+                  <?php echo htmlspecialchars((string) ($levyNotice['text'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
-                <div class="zone-empty-state">Dues and levy obligations are not configured yet. The current transaction table records payments only, so member balances and paid percentages cannot be calculated accurately.</div>
+              <?php endif; ?>
+              <?php if ($duesQueryFailed): ?>
+                <div class="dashboard-card" role="alert">
+                  Annual dues could not be loaded. Please refresh or contact support if the problem continues.
+                </div>
+              <?php else: ?>
+                <section class="stats-grid-4">
+                  <div class="stat-card-simple">
+                    <div class="stat-card-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="stat-card-number">&#8358;<?php echo number_format($duesTotalDue, 2); ?></div>
+                    <div class="stat-card-label">Annual dues assessed</div>
+                    <div class="stat-subtext"><?php echo (int) $financeYearStart->format('Y'); ?> <?php echo $duesScopeLabel; ?></div>
+                  </div>
+                  <div class="stat-card-simple">
+                    <div class="stat-card-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-card-number">&#8358;<?php echo number_format($duesTotalPaid, 2); ?></div>
+                    <div class="stat-card-label">Applied payments</div>
+                    <div class="stat-subtext"><?php echo $duesPaidPercent; ?>% of assessed dues</div>
+                  </div>
+                  <div class="stat-card-simple">
+                    <div class="stat-card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <div class="stat-card-number">&#8358;<?php echo number_format($duesTotalOutstanding, 2); ?></div>
+                    <div class="stat-card-label">Outstanding dues</div>
+                    <div class="stat-subtext">Remaining for <?php echo (int) $financeYearStart->format('Y'); ?></div>
+                  </div>
+                  <div class="stat-card-simple">
+                    <div class="stat-card-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-card-number"><?php echo $duesMembersAssessed; ?></div>
+                    <div class="stat-card-label">Members assessed</div>
+                    <div class="stat-subtext">Based on assigned zone and sub-zone amounts</div>
+                  </div>
+                </section>
+
+                <div class="dashboard-card">
+                  <div class="dashboard-card-header">
+                    <div>
+                      <h3 class="dashboard-card-title">Annual membership dues</h3>
+                      <p class="dashboard-card-subtitle">Successful membership-dues payments in the current Africa/Lagos calendar year are applied to each member’s assessed amount.</p>
+                    </div>
+                    <?php if (admin_has_permission('members_manage')): ?>
+                      <a class="btn-navy-outline" href="zones.php">Configure zone dues</a>
+                    <?php endif; ?>
+                  </div>
+                  <div class="table-responsive-card">
+                    <table class="custom-admin-table">
+                      <thead>
+                        <tr>
+                          <th>Member</th>
+                          <th>Member code</th>
+                          <th>Annual dues</th>
+                          <th>Paid this year</th>
+                          <th>Outstanding</th>
+                          <th>Progress</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php if ($duesMembers): ?>
+                          <?php foreach ($duesMembers as $duesMember): ?>
+                            <?php $duesMemberName = trim($duesMember['first_name'] . ' ' . $duesMember['last_name']); ?>
+                            <tr>
+                              <td class="fw-semibold"><?php echo htmlspecialchars($duesMemberName, ENT_QUOTES, 'UTF-8'); ?></td>
+                              <td><?php echo htmlspecialchars($duesMember['member_code'], ENT_QUOTES, 'UTF-8'); ?></td>
+                              <td class="amount-cell amount-neutral"><?php echo $duesMember['total_due'] > 0 ? '&#8358;' . number_format($duesMember['total_due'], 2) : 'Not set'; ?></td>
+                              <td class="amount-cell amount-neutral"><?php echo $duesMember['total_due'] > 0 ? '&#8358;' . number_format($duesMember['applied_paid'], 2) : '—'; ?></td>
+                              <td class="amount-cell amount-neutral"><?php echo $duesMember['total_due'] > 0 ? '&#8358;' . number_format($duesMember['outstanding'], 2) : '—'; ?></td>
+                              <td>
+                                <?php if ($duesMember['total_due'] > 0): ?>
+                                  <?php echo $duesMember['paid_percent']; ?>%
+                                <?php else: ?>
+                                  <span class="text-muted">No dues set</span>
+                                <?php endif; ?>
+                              </td>
+                            </tr>
+                          <?php endforeach; ?>
+                        <?php else: ?>
+                          <tr><td colspan="6" class="zone-empty-state">No members are available in this organization.</td></tr>
+                        <?php endif; ?>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!$levySchemaAvailable): ?>
+                <div class="dashboard-card" style="margin-top: 1.25rem;">
+                  <h3 class="dashboard-card-title">Levies</h3>
+                  <div class="zone-empty-state">No levies have been set up yet.</div>
+                </div>
+              <?php elseif ($leviesQueryFailed): ?>
+                <div class="dashboard-card" role="alert" style="margin-top: 1.25rem;">Levy records could not be loaded. Please refresh or contact support if the problem continues.</div>
+              <?php else: ?>
+              <section class="stats-grid-4" style="margin-top: 1.25rem;">
+                <div class="stat-card-simple">
+                  <div class="stat-card-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                  <div class="stat-card-number">&#8358;<?php echo number_format($levyTotals['assessed'], 2); ?></div>
+                  <div class="stat-card-label">Levies assessed</div>
+                  <div class="stat-subtext">Assigned member obligations</div>
+                </div>
+                <div class="stat-card-simple">
+                  <div class="stat-card-icon"><i class="fa-solid fa-circle-check"></i></div>
+                  <div class="stat-card-number">&#8358;<?php echo number_format($levyTotals['paid'], 2); ?></div>
+                  <div class="stat-card-label">Levies paid</div>
+                  <div class="stat-subtext">Successful levy payments</div>
+                </div>
+                <div class="stat-card-simple">
+                  <div class="stat-card-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                  <div class="stat-card-number">&#8358;<?php echo number_format($levyTotals['outstanding'], 2); ?></div>
+                  <div class="stat-card-label">Levies outstanding</div>
+                  <div class="stat-subtext">Remaining amount due</div>
+                </div>
+                <div class="stat-card-simple">
+                  <div class="stat-card-icon"><i class="fa-solid fa-list-check"></i></div>
+                  <div class="stat-card-number"><?php echo count($levies); ?></div>
+                  <div class="stat-card-label">One-time levies</div>
+                  <div class="stat-subtext">Current organization scope</div>
+                </div>
+              </section>
+
+              <?php if ($canCreateLevy): ?>
+                <div class="dashboard-card" style="margin-top: 1.25rem;">
+                  <div class="dashboard-card-header">
+                    <div>
+                      <h3 class="dashboard-card-title">Create a one-time levy</h3>
+                      <p class="dashboard-card-subtitle">Eligible active members are assigned this amount when the levy is created.</p>
+                    </div>
+                  </div>
+                  <?php if ($levyTargetQueryFailed): ?>
+                    <div class="zone-empty-state" role="alert">Levy targets could not be loaded, so a levy cannot be created right now.</div>
+                  <?php else: ?>
+                    <form action="proc-create-levy.php" method="post" class="structure-form">
+                      <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['finance_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                      <div class="form-row-2col">
+                        <div class="form-group">
+                          <label for="levy_title" class="form-label">Levy name</label>
+                          <input class="form-control" type="text" id="levy_title" name="title" maxlength="150" required />
+                        </div>
+                        <div class="form-group">
+                          <label for="levy_amount" class="form-label">Amount per member (NGN)</label>
+                          <input class="form-control" type="number" id="levy_amount" name="amount" min="0.01" max="9999999999.99" step="0.01" required />
+                        </div>
+                      </div>
+                      <div class="form-row-2col">
+                        <div class="form-group">
+                          <label for="levy_due_date" class="form-label">Due date</label>
+                          <input class="form-control" type="date" id="levy_due_date" name="due_date" required />
+                        </div>
+                        <div class="form-group">
+                          <label for="levy_scope_target" class="form-label">Applies to</label>
+                          <select class="form-select" id="levy_scope_target" name="scope_target" required>
+                            <option value="organization">Entire organization</option>
+                            <?php foreach ($levyTargets as $levyTarget): ?>
+                              <option value="<?php echo htmlspecialchars($levyTarget['value'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($levyTarget['label'], ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="structure-form-actions">
+                        <button type="submit" class="btn-navy-filled"><i class="fa-solid fa-plus"></i> Create levy</button>
+                      </div>
+                    </form>
+                  <?php endif; ?>
+                </div>
+              <?php endif; ?>
+
+              <div class="dashboard-card" style="margin-top: 1.25rem;">
+                <div class="dashboard-card-header">
+                  <div>
+                    <h3 class="dashboard-card-title">One-time levies</h3>
+                    <p class="dashboard-card-subtitle">Member assignments are a snapshot taken when each levy is created.</p>
+                  </div>
+                </div>
+                <div class="table-responsive-card">
+                  <table class="custom-admin-table">
+                    <thead>
+                      <tr><th>Levy</th><th>Target</th><th>Due date</th><th>Members</th><th>Assessed</th><th>Paid</th><th>Outstanding</th></tr>
+                    </thead>
+                    <tbody>
+                      <?php if ($levies): ?>
+                        <?php foreach ($levies as $levy): ?>
+                          <tr>
+                            <td class="fw-semibold"><?php echo htmlspecialchars($levy['title'], ENT_QUOTES, 'UTF-8'); ?><br /><span class="text-muted">&#8358;<?php echo number_format($levy['amount'], 2); ?> per member</span></td>
+                            <td><?php echo htmlspecialchars($levy['target_name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($levy['due_date_label'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo (int) $levy['member_count']; ?></td>
+                            <td class="amount-cell amount-neutral">&#8358;<?php echo number_format($levy['assessed_total'], 2); ?></td>
+                            <td class="amount-cell amount-neutral">&#8358;<?php echo number_format(min($levy['assessed_total'], $levy['paid_total']), 2); ?></td>
+                            <td class="amount-cell amount-neutral">&#8358;<?php echo number_format($levy['outstanding_total'], 2); ?></td>
+                          </tr>
+                        <?php endforeach; ?>
+                      <?php else: ?>
+                        <tr><td colspan="7" class="zone-empty-state">No one-time levies have been created.</td></tr>
+                      <?php endif; ?>
+                    </tbody>
+                  </table>
+                </div>
               </div>
+              <?php endif; ?>
             </div>
 
             <!-- ============ PAYMENT TAB ============ -->
@@ -282,7 +626,7 @@ foreach ($transactions as $transaction) {
                         <tr>
                           <td><span class="tx-ref-code"><?php echo htmlspecialchars($transaction['reference'], ENT_QUOTES, 'UTF-8'); ?></span></td>
                           <td class="fw-semibold"><?php echo htmlspecialchars(trim((string) $transaction['member_name']) ?: 'Unknown member', ENT_QUOTES, 'UTF-8'); ?></td>
-                          <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', (string) $transaction['type'])), ENT_QUOTES, 'UTF-8'); ?></td>
+                          <td><?php echo htmlspecialchars($transaction['type'] === 'levy' && !empty($transaction['levy_title']) ? 'Levy: ' . $transaction['levy_title'] : ucfirst(str_replace('_', ' ', (string) $transaction['type'])), ENT_QUOTES, 'UTF-8'); ?></td>
                           <td class="amount-cell amount-neutral">&#8358;<?php echo number_format((float) $transaction['amount'], 0); ?></td>
                           <td><?php echo htmlspecialchars(date('Y - m - d', strtotime($paymentDate)), ENT_QUOTES, 'UTF-8'); ?></td>
                           <td><span class="badge-finance <?php echo htmlspecialchars($statusClass, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8'); ?></span></td>

@@ -142,34 +142,17 @@ if ($admission['cbt_response_deadline'] === null) {
 }
 
 if ($admission['cbt_exam_id'] === null) {
-    $examStatement = mysqli_prepare($conn, "SELECT e.id, e.title, e.duration_minutes FROM cbt_exams e WHERE e.org_id = ? AND e.status = 'active' AND EXISTS (SELECT 1 FROM cbt_questions q WHERE q.exam_id = e.id) AND NOT EXISTS (SELECT 1 FROM cbt_questions q WHERE q.exam_id = e.id AND (q.question_text = '' OR q.option_a = '' OR q.option_b = '' OR q.option_c = '' OR q.option_d = '' OR q.correct_option NOT IN ('A','B','C','D','E') OR (q.correct_option = 'E' AND q.option_e = ''))) ORDER BY e.id LIMIT 1");
-    if (!$examStatement) {
-        mysqli_rollback($conn);
-        error_log('CBT exam lookup prepare failed: ' . mysqli_error($conn));
-        header('Location: cbt-code.php?status=error&msg=' . urlencode('The CBT exam service is unavailable.'));
-        exit;
-    }
-    mysqli_stmt_bind_param($examStatement, 'i', $admission['org_id']);
-    if (!mysqli_stmt_execute($examStatement)) {
-        mysqli_rollback($conn);
-        error_log('CBT exam lookup failed: ' . mysqli_stmt_error($examStatement));
-        header('Location: cbt-code.php?status=error&msg=' . urlencode('The CBT exam service is unavailable.'));
-        exit;
-    }
-    $examResult = mysqli_stmt_get_result($examStatement);
-    $exam = $examResult ? mysqli_fetch_assoc($examResult) : null;
-    if (!$exam) {
-        mysqli_rollback($conn);
-        $storeCodeRequestSession($email, (int) $admission['id']);
-        $redirectToCodeEntry();
-    }
-    $admission['cbt_exam_id'] = $exam['id'];
-    $admission['exam_title'] = $exam['title'];
-    $admission['duration_minutes'] = $exam['duration_minutes'];
-} elseif ($admission['exam_title'] === null) {
     mysqli_rollback($conn);
     $storeCodeRequestSession($email, (int) $admission['id']);
-    $redirectToCodeEntry();
+    header('Location: cbt-code-entry.php?status=error&msg=' . urlencode('This applicant has no exam assigned yet. Please schedule an exam before sending a code.'));
+    exit;
+}
+
+if ($admission['exam_title'] === null || $admission['duration_minutes'] === null) {
+    mysqli_rollback($conn);
+    $storeCodeRequestSession($email, (int) $admission['id']);
+    header('Location: cbt-code-entry.php?status=error&msg=' . urlencode('The assigned exam details are unavailable. Please review the scheduled CBT entry.'));
+    exit;
 }
 
 $alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';

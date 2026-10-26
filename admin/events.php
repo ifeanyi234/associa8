@@ -37,6 +37,8 @@ if ($stmt && mysqli_stmt_bind_param($stmt, 'i', $orgId) && mysqli_stmt_execute($
 if (empty($_SESSION['event_csrf'])) {
     $_SESSION['event_csrf'] = bin2hex(random_bytes(32));
 }
+$eventTimezone = new DateTimeZone('Africa/Lagos');
+$nowInEventTimezone = new DateTimeImmutable('now', $eventTimezone);
 ?>
 <!doctype html>
 <html lang="en">
@@ -80,7 +82,7 @@ if (empty($_SESSION['event_csrf'])) {
           <div class="page-action-header mb-4">
             <div>
               <h2 class="page-title-main">Events</h2>
-              <p class="page-subtitle">Create events for your members and track seat bookings.</p>
+              <p class="page-subtitle">Create events, track seat bookings, and record attendance for completed events.</p>
             </div>
             <a class="btn-navy-filled" href="add-event.php"><i class="fa-solid fa-calendar-plus"></i> Create Event</a>
           </div>
@@ -110,6 +112,13 @@ if (empty($_SESSION['event_csrf'])) {
                   </thead>
                   <tbody>
                     <?php foreach ($events as $event): ?>
+                      <?php
+                        $eventEndsAt = new DateTimeImmutable(
+                            $event['event_date'] . ' ' . ($event['event_time'] ?: '23:59:59'),
+                            $eventTimezone
+                        );
+                        $canRecordAttendance = $event['status'] === 'scheduled' && $eventEndsAt <= $nowInEventTimezone;
+                      ?>
                       <tr style="border-bottom: 1px solid #e2e8f0;">
                         <td style="padding: 1rem;">
                           <strong><?php echo htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8'); ?></strong>

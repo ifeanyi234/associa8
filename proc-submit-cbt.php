@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/inc/db.php';
 require_once __DIR__ . '/inc/admission-notifications.php';
+require_once __DIR__ . '/inc/admin-notifications.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: cbt-code.php');
@@ -144,11 +145,29 @@ if (!mysqli_stmt_execute($update) || mysqli_stmt_affected_rows($update) !== 1) {
     header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment result could not be completed.'));
     exit;
 }
-mysqli_commit($conn);
+if (!mysqli_commit($conn)) {
+    mysqli_rollback($conn);
+    error_log('CBT submission transaction commit failed: ' . mysqli_error($conn));
+    header('Location: cbt-code.php?status=error&msg=' . urlencode('The assessment result could not be saved.'));
+    exit;
+}
 
 notify_admission_status($conn, $admissionId, 'cbt_completed', $assessment['applicant_name'], $assessment['email'], $score, $resultStatus);
+admin_notify_organization(
+    $conn,
+    $orgId,
+    'admission',
+    'CBT assessment completed',
+    $assessment['applicant_name'] . ' completed the CBT assessment with a score of ' . $score . '%.',
+    'admission-management.php'
+);
 $_SESSION['applicant_result_id'] = $resultId;
 unset($_SESSION['applicant_admission_id'], $_SESSION['applicant_org_id'], $_SESSION['applicant_exam_id'], $_SESSION['applicant_exam_title'], $_SESSION['applicant_exam_expires_at'], $_SESSION['applicant_assessment_expires_at']);
+$orderKey = $admissionId . ':' . $examId;
+unset($_SESSION['applicant_question_orders'][$orderKey]);
+if (empty($_SESSION['applicant_question_orders'])) {
+    unset($_SESSION['applicant_question_orders']);
+}
 
 header('Location: cbt-result.php');
 exit;

@@ -1,6 +1,14 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once "inc/admission-number.php";
+
+try {
+    $generatedApplicationNumber = admin_generate_application_number($conn);
+} catch (RuntimeException $exception) {
+    http_response_code(500);
+    exit('An application number could not be generated. Please try again later.');
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -72,7 +80,7 @@ require_once "../inc/db.php";
 </div>
 <div class="form-group">
 <label class="form-label" for="applicationNumber">Application number</label>
-<input class="form-control" id="applicationNumber" name="application_number" placeholder="e.g. APP-2026-001" required />
+<input class="form-control" id="applicationNumber" name="application_number" value="<?php echo htmlspecialchars($generatedApplicationNumber, ENT_QUOTES, 'UTF-8'); ?>" readonly aria-readonly="true" />
 </div>
 </div>
 <div class="form-row-2col">

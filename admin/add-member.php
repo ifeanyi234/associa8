@@ -1,16 +1,42 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once __DIR__ . '/inc/scope.php';
+$scopeContext = admin_scope_context($conn);
+if (empty($scopeContext['valid'])) {
+  admin_render_access_denied('Your account does not have a valid zone or sub-zone assignment.');
+}
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
 if ($orgId === null || $orgId < 1) {
   header('Location: member-directory.php?status=error&msg=' . urlencode('Your admin account is not linked to an organization.'));
   exit;
 }
 
-$titlesResult = mysqli_query($conn, "SELECT id, title, level FROM titles WHERE org_id = $orgId ORDER BY level");
-$zonesResult = mysqli_query($conn, "SELECT id, name FROM zones WHERE org_id = $orgId ORDER BY name");
+$titlesResult = mysqli_query($conn, "SELECT id, title, scope, level FROM titles WHERE org_id = $orgId ORDER BY scope, level, title");
+$zoneFilter = $scopeContext['zone_id'] !== null ? ' AND id = ' . (int) $scopeContext['zone_id'] : '';
+$zonesResult = mysqli_query($conn, "SELECT id, name FROM zones WHERE org_id = $orgId$zoneFilter ORDER BY name");
+$zones = [];
+if ($zonesResult) {
+  while ($zone = mysqli_fetch_assoc($zonesResult)) {
+    $zones[] = $zone;
+  }
+}
+$assignedZoneName = 'Assigned zone';
+foreach ($zones as $zone) {
+  if ((int) $zone['id'] === (int) ($scopeContext['zone_id'] ?? 0)) {
+    $assignedZoneName = (string) $zone['name'];
+    break;
+  }
+}
 $subzonesByZone = [];
-$subzonesResult = mysqli_query($conn, "SELECT sz.id, sz.zone_id, sz.name FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE z.org_id = $orgId ORDER BY sz.name");
+$subzoneFilter = $scopeContext['subzone_id'] !== null ? ' AND sz.id = ' . (int) $scopeContext['subzone_id'] : '';
+$subzoneZoneFilter = $scopeContext['zone_id'] !== null ? ' AND z.id = ' . (int) $scopeContext['zone_id'] : '';
+$subzonesResult = mysqli_query($conn, "SELECT sz.id, sz.zone_id, sz.name FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE z.org_id = $orgId$subzoneZoneFilter$subzoneFilter ORDER BY sz.name");
+if (!$titlesResult || !$zonesResult || !$subzonesResult) {
+  error_log('Member assignment options query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Member assignment options are temporarily unavailable.');
+}
 if ($subzonesResult) {
   while ($subzone = mysqli_fetch_assoc($subzonesResult)) {
     $zoneId = (int) $subzone['zone_id'];
@@ -132,7 +158,7 @@ if ($subzonesResult) {
 <option value="" selected disabled>Select title</option>
 <?php if ($titlesResult): ?>
 <?php while ($title = mysqli_fetch_assoc($titlesResult)): ?>
-<option value="<?php echo (int) $title['id']; ?>">L<?php echo (int) $title['level']; ?> - <?php echo htmlspecialchars($title['title']); ?>
+<option value="<?php echo (int) $title['id']; ?>" data-scope="<?php echo htmlspecialchars($title['scope'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo strtoupper($title['scope']); ?> · L<?php echo (int) $title['level']; ?> - <?php echo htmlspecialchars($title['title']); ?>
 </option>
 <?php endwhile; ?>
 <?php endif; ?>
@@ -140,15 +166,19 @@ if ($subzonesResult) {
 </div>
 <div class="form-group">
 <label for="zoneId" class="form-label">Zone</label>
-<select class="form-select" id="zoneId" name="zone_id" required>
-<option value="" selected disabled>Select zone</option>
-<?php if ($zonesResult): ?>
-<?php while ($zone = mysqli_fetch_assoc($zonesResult)): ?>
+<select class="form-select" id="zoneId" name="zone_id">
+<?php if (in_array($scopeContext['role'], ['zonal_admin', 'subzonal_admin'], true)): ?>
+<option value="<?php echo (int) $scopeContext['zone_id']; ?>" selected><?php echo htmlspecialchars($assignedZoneName, ENT_QUOTES, 'UTF-8'); ?></option>
+<?php else: ?>
+<option value="0" selected>Unassigned</option>
+<?php endif; ?>
+<?php foreach ($zones as $zone): ?>
+<?php if ((int) $zone['id'] !== (int) ($scopeContext['zone_id'] ?? 0) || !in_array($scopeContext['role'], ['zonal_admin', 'subzonal_admin'], true)): ?>
 <option value="<?php echo (int) $zone['id']; ?>">
 <?php echo htmlspecialchars($zone['name']); ?>
 </option>
-<?php endwhile; ?>
 <?php endif; ?>
+<?php endforeach; ?>
 </select>
 </div>
 </div>
@@ -157,6 +187,11 @@ if ($subzonesResult) {
 <label for="subzoneId" class="form-label">Sub-zone</label>
 <select class="form-select" id="subzoneId" name="subzone_id" disabled>
 <option value="" selected disabled>Select sub-zone</option>
+<?php if ($scopeContext['subzone_id'] !== null && isset($subzonesByZone[(int) $scopeContext['zone_id']])): ?>
+<?php foreach ($subzonesByZone[(int) $scopeContext['zone_id']] as $subzone): ?>
+<option value="<?php echo (int) $subzone['id']; ?>" selected><?php echo htmlspecialchars($subzone['name'], ENT_QUOTES, 'UTF-8'); ?></option>
+<?php endforeach; ?>
+<?php endif; ?>
 </select>
 </div>
 <div class="form-group">
@@ -180,14 +215,15 @@ if ($subzonesResult) {
 </script>
     <script>
       const memberSubzones = <?php echo json_encode($subzonesByZone, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+      const fixedSubzoneId = <?php echo (int) ($scopeContext['subzone_id'] ?? 0); ?>;
 
       function populateSubzones(zoneId) {
         const subzoneSelect = document.getElementById("subzoneId");
         const hint = document.getElementById("subzoneHint");
         const options = memberSubzones[Number(zoneId)] || [];
 
-        subzoneSelect.innerHTML = '<option value="" selected disabled>' + (options.length ? 'Select sub-zone' : 'No sub-zone available') + '</option>';
-        subzoneSelect.disabled = options.length === 0;
+        subzoneSelect.innerHTML = '<option value="0">' + (options.length ? 'Unassigned sub-zone' : 'No sub-zone available') + '</option>';
+        subzoneSelect.disabled = options.length === 0 && fixedSubzoneId === 0;
 
         if (options.length === 0) {
           hint.textContent = 'This zone does not have any sub-zones yet. You can still save the member under the zone.';
@@ -199,8 +235,25 @@ if ($subzonesResult) {
           const option = document.createElement("option");
           option.value = subzone.id;
           option.textContent = subzone.name;
+          if (fixedSubzoneId > 0 && Number(subzone.id) === fixedSubzoneId) option.selected = true;
           subzoneSelect.appendChild(option);
         });
+      }
+
+      function filterTitles() {
+        const zoneSelected = Number(document.getElementById("zoneId").value) > 0;
+        const subzoneSelected = Number(document.getElementById("subzoneId").value) > 0;
+        const titleSelect = document.getElementById("titleId");
+        const selectedOption = titleSelect.options[titleSelect.selectedIndex];
+        Array.from(titleSelect.options).forEach((option) => {
+          if (!option.dataset.scope) return;
+          const available = option.dataset.scope === "hq"
+            || (option.dataset.scope === "zone" && zoneSelected)
+            || (option.dataset.scope === "subzone" && subzoneSelected);
+          option.hidden = !available;
+          option.disabled = !available;
+        });
+        if (selectedOption && selectedOption.disabled) titleSelect.value = "";
       }
 
       window.addEventListener("DOMContentLoaded", () => {
@@ -211,15 +264,18 @@ if ($subzonesResult) {
 
         zoneSelect.addEventListener("change", (event) => {
           populateSubzones(event.target.value);
+          filterTitles();
         });
+        subzoneSelect.addEventListener("change", filterTitles);
 
-        if (zoneSelect.value) {
+        if (zoneSelect.value && Number(zoneSelect.value) > 0) {
           populateSubzones(zoneSelect.value);
         } else {
           subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
           subzoneSelect.disabled = true;
           document.getElementById("subzoneHint").textContent = 'Choose a zone first to load available sub-zones.';
         }
+        filterTitles();
 
         if (!status || !window.AppModal) return;
         const success = status === "success";

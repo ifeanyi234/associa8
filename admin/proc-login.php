@@ -40,13 +40,13 @@ if (!mysqli_stmt_execute($statement)) {
 $result = mysqli_stmt_get_result($statement);
 $account = $result ? mysqli_fetch_assoc($result) : null;
 mysqli_stmt_close($statement);
-$validRoles = ['super_admin', 'admin', 'manager', 'staff'];
+$validRoles = ['super_admin', 'admin', 'zonal_admin', 'subzonal_admin'];
 
 if (!$account || !password_verify($password, (string) $account['password']) || !in_array($account['role'], $validRoles, true)) {
     header('Location: index.php?error=1');
     exit;
 }
-if ($account['role'] !== 'super_admin' && (int) $account['org_id'] < 1) {
+if ((int) $account['org_id'] < 1) {
     header('Location: index.php?error=1');
     exit;
 }
@@ -59,7 +59,9 @@ if (!session_regenerate_id(true)) {
 $_SESSION['user_id'] = (int) $account['id'];
 $_SESSION['username'] = (string) $account['username'];
 $_SESSION['org_id'] = (int) $account['org_id'];
-$_SESSION['admin_role'] = (string) $account['role'];
+$_SESSION['admin_is_super_admin'] = $account['role'] === 'super_admin';
+$_SESSION['admin_display_role'] = (string) $account['role'];
+$_SESSION['admin_role'] = $account['role'] === 'super_admin' ? 'admin' : (string) $account['role'];
 $_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
 $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
 if (isset($_POST['remember'])) {

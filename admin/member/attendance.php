@@ -22,12 +22,65 @@ if ($attendanceSummaryResult) {
 }
 
 $attendanceHistory = [];
-$attendanceHistoryResult = mysqli_query($conn, "SELECT id, check_in, check_out, status, created_at FROM attendance_logs WHERE member_id = $memberId ORDER BY check_in DESC LIMIT 10");
-if ($attendanceHistoryResult) {
-  while ($row = mysqli_fetch_assoc($attendanceHistoryResult)) {
-    $attendanceHistory[] = $row;
+$historyQueryFailed = false;
+$generalHistoryStmt = mysqli_prepare(
+  $conn,
+  'SELECT id, check_in, status FROM attendance_logs WHERE member_id = ? ORDER BY check_in DESC LIMIT 10'
+);
+if (!$generalHistoryStmt) {
+  error_log('Member general attendance history could not be prepared: ' . mysqli_error($conn));
+  $historyQueryFailed = true;
+} else {
+  mysqli_stmt_bind_param($generalHistoryStmt, 'i', $memberId);
+  if (!mysqli_stmt_execute($generalHistoryStmt)) {
+    error_log('Member general attendance history query failed: ' . mysqli_stmt_error($generalHistoryStmt));
+    $historyQueryFailed = true;
+  } else {
+    $generalHistoryResult = mysqli_stmt_get_result($generalHistoryStmt);
+    while ($generalHistoryResult && ($row = mysqli_fetch_assoc($generalHistoryResult))) {
+      $row['attendance_type'] = 'general';
+      $row['sort_timestamp'] = (new DateTimeImmutable($row['check_in'], new DateTimeZone('UTC')))->getTimestamp();
+      $attendanceHistory[] = $row;
+    }
   }
+  mysqli_stmt_close($generalHistoryStmt);
 }
+
+$eventHistoryStmt = mysqli_prepare(
+  $conn,
+  "SELECT ea.id, ea.status, e.title, e.event_date, e.event_time
+   FROM event_attendance ea
+   INNER JOIN events e ON e.id = ea.event_id
+   INNER JOIN members m ON m.id = ea.member_id AND m.org_id = e.org_id
+   WHERE ea.member_id = ? AND m.org_id = ?
+   ORDER BY e.event_date DESC, COALESCE(e.event_time, '23:59:59') DESC, ea.id DESC
+   LIMIT 10"
+);
+if (!$eventHistoryStmt) {
+  error_log('Member event attendance history could not be prepared: ' . mysqli_error($conn));
+  $historyQueryFailed = true;
+} else {
+  $memberOrgId = (int) $_SESSION['member_org_id'];
+  mysqli_stmt_bind_param($eventHistoryStmt, 'ii', $memberId, $memberOrgId);
+  if (!mysqli_stmt_execute($eventHistoryStmt)) {
+    error_log('Member event attendance history query failed: ' . mysqli_stmt_error($eventHistoryStmt));
+    $historyQueryFailed = true;
+  } else {
+    $eventHistoryResult = mysqli_stmt_get_result($eventHistoryStmt);
+    while ($eventHistoryResult && ($row = mysqli_fetch_assoc($eventHistoryResult))) {
+      $eventDateTime = new DateTimeImmutable(
+        $row['event_date'] . ' ' . ($row['event_time'] ?: '23:59:59'),
+        new DateTimeZone('Africa/Lagos')
+      );
+      $row['attendance_type'] = 'event';
+      $row['sort_timestamp'] = $eventDateTime->getTimestamp();
+      $attendanceHistory[] = $row;
+    }
+  }
+  mysqli_stmt_close($eventHistoryStmt);
+}
+usort($attendanceHistory, static fn($left, $right) => $right['sort_timestamp'] <=> $left['sort_timestamp']);
+$attendanceHistory = array_slice($attendanceHistory, 0, 10);
 
 $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['present'] / $attendanceSummary['total']) * 100) : 0;
 ?>
@@ -53,7 +106,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
       type="image/x-icon"
     />
     <link rel="stylesheet" href="../../css/preloader.css" />
-    <link rel="stylesheet" href="../../css/dashboard.css?v=20261009-member-settings-2" />
+    <link rel="stylesheet" href="../../css/dashboard.css?v=20261019-member-history-square-1" />
   </head>
   <body class="admin-body">
     <?php include('../inc/preloader.php') ?>
@@ -151,7 +204,7 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
             <div class="progress-bar-wrapper" style="height: 8px; margin-top: 0;">
               <div class="progress-bar-fill" style="width: <?php echo $attendanceRate; ?>%; background-color: var(--banner-bg);"></div>
             </div>
-            <div class="progress-note"><?php echo $attendanceRate >= 75 ? 'Excellent attendance - you are eligible to member benefits.' : 'Your attendance is being tracked. Keep up the momentum.'; ?></div>
+            <div class="progress-note">Summary counts general attendance only. Event attendance is listed separately below.</div>
           </section>
 
           <!-- Attendance History -->
@@ -176,23 +229,31 @@ $attendanceRate = $attendanceSummary['total'] > 0 ? round(($attendanceSummary['p
                 </tr>
               </thead>
               <tbody>
-                <?php if ($attendanceHistory): ?>
+                <?php if ($historyQueryFailed): ?>
+                  <tr>
+                    <td colspan="5" class="zone-empty-state">Attendance history could not be loaded. Please try again later.</td>
+                  </tr>
+                <?php elseif ($attendanceHistory): ?>
                   <?php foreach ($attendanceHistory as $record): ?>
                     <?php
+                      $isEventAttendance = $record['attendance_type'] === 'event';
                       $statusText = ucfirst($record['status'] ?? 'present');
-                      $badgeClass = $record['status'] === 'present' ? 'status-text-attended' : ($record['status'] === 'late' ? 'status-text-pending' : 'status-text-missed');
-                      $localCheckIn = (new DateTimeImmutable($record['check_in'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Africa/Lagos'));
+                      $badgeClass = in_array($record['status'], ['present', 'attended'], true)
+                        ? 'status-text-attended'
+                        : (in_array($record['status'], ['late', 'excused'], true) ? 'status-text-pending' : 'status-text-missed');
+                      $statusIcon = in_array($record['status'], ['present', 'attended'], true)
+                        ? 'fa-check'
+                        : (in_array($record['status'], ['late', 'excused'], true) ? 'fa-clock' : 'fa-xmark');
+                      $recordDate = $isEventAttendance
+                        ? new DateTimeImmutable($record['event_date'], new DateTimeZone('Africa/Lagos'))
+                        : (new DateTimeImmutable($record['check_in'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Africa/Lagos'));
                     ?>
                     <tr>
-                      <td style="font-weight: 600; color: var(--text-primary);">General attendance</td>
-                      <td><?php echo htmlspecialchars($localCheckIn->format('F j, Y'), ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><span class="event-type-pill">General</span></td>
-                      <td><span class="<?php echo $badgeClass; ?>"><?php echo $record['status'] === 'present' ? '<i class="fa-solid fa-check"></i>' : ($record['status'] === 'late' ? '<i class="fa-solid fa-clock"></i>' : '<i class="fa-solid fa-xmark"></i>'); ?> <?php echo htmlspecialchars($statusText); ?></span></td>
-                      <td style="text-align: right;">
-                        <button class="btn-action-trigger" aria-label="Options">
-                          <i class="fa-solid fa-ellipsis"></i>
-                        </button>
-                      </td>
+                      <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($isEventAttendance ? $record['title'] : 'General attendance', ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><?php echo htmlspecialchars($recordDate->format('F j, Y'), ENT_QUOTES, 'UTF-8'); ?></td>
+                      <td><span class="event-type-pill"><?php echo $isEventAttendance ? 'Event' : 'General'; ?></span></td>
+                      <td><span class="<?php echo $badgeClass; ?>"><i class="fa-solid <?php echo $statusIcon; ?>"></i> <?php echo htmlspecialchars($statusText, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                      <td></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>

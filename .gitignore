@@ -9,6 +9,11 @@ inc/db.local.php
 # Uploaded user content — grows constantly, shouldn't be in git
 admin/uploads/
 uploads/
+!admin/uploads/
+admin/uploads/*
+!admin/uploads/cbt-questions/
+admin/uploads/cbt-questions/*
+!admin/uploads/cbt-questions/.htaccess
 
 # OS/editor junk
 .DS_Store

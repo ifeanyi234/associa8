@@ -7,14 +7,14 @@ const applyAdminIdentity = () => {
   const roleLabels = {
     super_admin: "Current access: Super Admin",
     admin: "Current access: Admin",
-    manager: "Current access: Manager",
-    staff: "Current access: Staff",
+    zonal_admin: "Current access: Zonal Admin",
+    subzonal_admin: "Current access: Sub-zonal Admin",
   };
   const roleDetails = {
     super_admin: "Organization owner access across organization modules.",
     admin: "Administrator access across organization modules.",
-    manager: "Operational access to members, admissions, documents, events, and attendance.",
-    staff: "Limited access to members, documents, events, and attendance.",
+    zonal_admin: "Dashboard and member actions for your assigned zone and its sub-zones.",
+    subzonal_admin: "Dashboard and member actions for your assigned sub-zone.",
   };
   const nameParts = organizationName.trim().split(/\s+/).filter(Boolean);
   const initials = nameParts.length > 1

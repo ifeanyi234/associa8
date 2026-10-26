@@ -462,7 +462,7 @@
         var prevBtn = document.getElementById("testimonialPrev");
         var nextBtn = document.getElementById("testimonialNext");
 
-        if (!track || !prevBtn || !nextBtn) return;
+        if (!track || !prevBtn || !nextBtn) return;+
 
         var cards = Array.prototype.slice.call(track.children);
         var index = 0;

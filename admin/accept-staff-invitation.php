@@ -60,7 +60,7 @@ if (!$validTokenShape) {
                 } else {
                     $lookup = mysqli_prepare(
                         $conn,
-                        'SELECT id, org_id, first_name, last_name, email, phone, job_title, role
+                        'SELECT id, org_id, first_name, last_name, email, phone, job_title, role, zone_id, subzone_id
                          FROM staff_invitations
                          WHERE token_hash = ? AND accepted_at IS NULL AND expires_at > UTC_TIMESTAMP()
                          LIMIT 1 FOR UPDATE'
@@ -83,12 +83,57 @@ if (!$validTokenShape) {
                                 mysqli_rollback($conn);
                                 $error = 'This invitation has expired or has already been accepted.';
                             } else {
-                                $validRoles = ['admin', 'manager', 'staff'];
+                                $validRoles = ['admin', 'zonal_admin', 'subzonal_admin'];
                                 if (!in_array($invitation['role'], $validRoles, true)) {
                                     mysqli_rollback($conn);
                                     error_log('Staff invitation contains an invalid role.');
                                     $error = 'This invitation cannot be accepted. Contact the organization administrator.';
+                                } elseif (
+                                    ($invitation['role'] === 'zonal_admin'
+                                        && ((int) $invitation['zone_id'] < 1 || $invitation['subzone_id'] !== null))
+                                    || ($invitation['role'] === 'subzonal_admin'
+                                        && ((int) $invitation['zone_id'] < 1 || (int) $invitation['subzone_id'] < 1))
+                                    || (!in_array($invitation['role'], ['zonal_admin', 'subzonal_admin'], true)
+                                        && ($invitation['zone_id'] !== null || $invitation['subzone_id'] !== null))
+                                ) {
+                                    mysqli_rollback($conn);
+                                    error_log('Staff invitation contains an invalid admin location assignment.');
+                                    $error = 'This invitation has an invalid location assignment. Contact the organization administrator.';
                                 } else {
+                                    $locationValid = true;
+                                    if ($invitation['role'] === 'zonal_admin') {
+                                        $locationCheck = mysqli_prepare($conn, 'SELECT id FROM zones WHERE id = ? AND org_id = ? LIMIT 1');
+                                        if ($locationCheck) {
+                                            $zoneId = (int) $invitation['zone_id'];
+                                            $orgId = (int) $invitation['org_id'];
+                                            mysqli_stmt_bind_param($locationCheck, 'ii', $zoneId, $orgId);
+                                        }
+                                    } elseif ($invitation['role'] === 'subzonal_admin') {
+                                        $locationCheck = mysqli_prepare($conn, 'SELECT sz.id FROM subzones sz INNER JOIN zones z ON z.id = sz.zone_id WHERE sz.id = ? AND sz.zone_id = ? AND z.org_id = ? LIMIT 1');
+                                        if ($locationCheck) {
+                                            $subzoneId = (int) $invitation['subzone_id'];
+                                            $zoneId = (int) $invitation['zone_id'];
+                                            $orgId = (int) $invitation['org_id'];
+                                            mysqli_stmt_bind_param($locationCheck, 'iii', $subzoneId, $zoneId, $orgId);
+                                        }
+                                    }
+                                    if (isset($locationCheck)) {
+                                        if (!mysqli_stmt_execute($locationCheck)) {
+                                            error_log('Staff invitation location verification failed: ' . mysqli_stmt_error($locationCheck));
+                                            $locationValid = false;
+                                        } else {
+                                            $locationResult = mysqli_stmt_get_result($locationCheck);
+                                            $locationValid = $locationResult && mysqli_num_rows($locationResult) === 1;
+                                        }
+                                        mysqli_stmt_close($locationCheck);
+                                    } elseif (in_array($invitation['role'], ['zonal_admin', 'subzonal_admin'], true)) {
+                                        error_log('Staff invitation location verification could not be prepared: ' . mysqli_error($conn));
+                                        $locationValid = false;
+                                    }
+                                    if (!$locationValid) {
+                                        mysqli_rollback($conn);
+                                        $error = 'The assigned zone or sub-zone is no longer available. Contact the organization administrator.';
+                                    } else {
                                     $passwordHash = password_hash($password, PASSWORD_DEFAULT);
                                     if (!is_string($passwordHash)) {
                                         mysqli_rollback($conn);
@@ -118,7 +163,7 @@ if (!$validTokenShape) {
                                                     $conn,
                                                     "INSERT INTO `admin-info`
                                                         (org_id, acc_id, `first-name`, `last-name`, email, phone, `job-title`, role, zone_id, subzone_id)
-                                                     VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, NULL, NULL)"
+                                                     VALUES (?, ?, ?, ?, ?, NULLIF(?, ''), ?, ?, ?, ?)"
                                                 );
                                                 if (!$profileInsert) {
                                                     mysqli_rollback($conn);
@@ -131,9 +176,11 @@ if (!$validTokenShape) {
                                                     $phone = (string) ($invitation['phone'] ?? '');
                                                     $jobTitle = (string) $invitation['job_title'];
                                                     $role = (string) $invitation['role'];
+                                                    $zoneId = $invitation['zone_id'] !== null ? (int) $invitation['zone_id'] : null;
+                                                    $subzoneId = $invitation['subzone_id'] !== null ? (int) $invitation['subzone_id'] : null;
                                                     mysqli_stmt_bind_param(
                                                         $profileInsert,
-                                                        'iissssss',
+                                                        'iissssssii',
                                                         $orgId,
                                                         $accountId,
                                                         $firstName,
@@ -141,7 +188,9 @@ if (!$validTokenShape) {
                                                         $email,
                                                         $phone,
                                                         $jobTitle,
-                                                        $role
+                                                        $role,
+                                                        $zoneId,
+                                                        $subzoneId
                                                     );
                                                     if (!mysqli_stmt_execute($profileInsert)) {
                                                         $profileErrorCode = mysqli_stmt_errno($profileInsert);
@@ -183,6 +232,7 @@ if (!$validTokenShape) {
                                             }
                                             mysqli_stmt_close($accountInsert);
                                         }
+                                    }
                                     }
                                 }
                             }

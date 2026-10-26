@@ -129,10 +129,6 @@ $totalApplications = array_sum($admissionStats);
                 <i class="fa-solid fa-file-export"></i>
                 <span>Export Participant</span>
               </button>
-              <button class="btn-outline-primary">
-                <i class="fa-solid fa-upload"></i>
-                <span>Bulk Upload</span>
-              </button>
             </div>
           </div>
 
@@ -167,7 +163,6 @@ $totalApplications = array_sum($admissionStats);
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Applied Date</th>
-                  <th>CBT Scheduled</th>
                   <th style="text-align: right;">Action</th>
                 </tr>
               </thead>
@@ -181,12 +176,11 @@ $totalApplications = array_sum($admissionStats);
                       <td><?php echo htmlspecialchars($applicant['email']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['phone']); ?></td>
                       <td><?php echo htmlspecialchars($applicant['applied_at'], ENT_QUOTES, 'UTF-8'); ?></td>
-                      <td><?php echo $applicant['cbt_scheduled_at'] === null ? 'Not scheduled' : htmlspecialchars((new DateTimeImmutable($applicant['cbt_scheduled_at'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Africa/Lagos'))->format('Y-m-d H:i') . ' (Africa/Lagos)', ENT_QUOTES, 'UTF-8'); ?></td>
                       <td style="text-align: right;"><span class="badge-pill status-under-review"><?php echo ucwords(str_replace('_', ' ', $applicant['status'])); ?></span></td>
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
-                <tr><td colspan="8" class="zone-empty-state">There are no applicants currently under review for CBT.</td></tr>
+                <tr><td colspan="7" class="zone-empty-state">There are no applicants currently under review for CBT.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>

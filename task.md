@@ -1,15 +1,10 @@
-- delete title on titles not working
-- subzone don't show the number of member in each it just says 0
-- "Updated name, title, zone, and profile information are now reflected in the directory." not necessary
-- when you edit member it does not redirect
-- is there a way to make all tables when when the content start geting clusted to make it swipable
-- "Action completed
-  CBT exam created as a draft. Add questions, then activate it when it is ready.
-
-## Your CBT change was saved." this message when i add a new exam needs to look different and shorter
-
-- in cbt-questions something were is happening on the display, its showing all the questions in the database as one question as if they are the same exam , even though theres a label (rew)/(Premier league history) it just counts them as question 1 question 2 together on http://localhost/associa8/admin/cbt-questions
-
-- on admin financial success should be modal popup not that inline message
-- on attendance my boss said to make life easy for the admin recording attendance, he said the list of members should already be listed out with the attendace status listed out next to each member
-- Attendance success message also needs to use the js modal instead
+- [x] Fix cbt question page overlap when am on exams tab & group each exam separately like an accordion (example: Premier League History in one group, Ifeanyi in another)
+- [x] Remove CBT schedule columns from the CBT applicants table and add the same bulk-upload flow for applicants
+- [x] When an admission is approved and moved to CBT, ensure each applicant is assigned to the correct exam instead of always being mapped to the most recently active exam
+- [x] Remove zone, sub-zone, and title fields from admission management because we no longer need them
+- [x] Resolve the undefined `$isPlatformAdmin` warning in the user-control screen and remove the redundant zone/sub-zone detection fields for member-based account assignment
+- [x] Start full payment integration across the project while keeping offline recording available as a fallback
+- [x] Add event payment support where bookings are not free, using Paystack
+- [x] Add the system notification bell icon and notification state
+- [x] User control should be member based and the zone and sub zone field should be taken out and instead detect so if i enter delusumbo@gmail.com as email and i pick zonal admin we should already know he's zone and subzone.
+- [x] Bulk upload applicants should be in admission instead

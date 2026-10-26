@@ -3,9 +3,7 @@ require_once 'inc/auth.php';
 require_once '../inc/db.php';
 
 $orgId = isset($_SESSION['org_id']) ? (int) $_SESSION['org_id'] : 0;
-$isPlatformAdmin = ($_SESSION['admin_role'] ?? '') === 'super_admin';
-$canViewAllOrganizations = $isPlatformAdmin && $orgId < 1;
-$scopeSql = $canViewAllOrganizations ? '1 = 1' : 'm.org_id = ' . $orgId;
+$scopeSql = 'm.org_id = ' . $orgId;
 $members = [];
 $oldStatuses = $_SESSION['attendance_old_statuses'] ?? [];
 if (!is_array($oldStatuses)) {

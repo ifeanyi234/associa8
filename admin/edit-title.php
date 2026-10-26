@@ -8,7 +8,7 @@ if ($id < 1 || ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1))
   header('Location: titles-hierarchy.php?status=error&msg=' . urlencode('The selected title could not be found.'));
   exit;
 }
-$titleSql = "SELECT id, title, level, description FROM titles WHERE id = $id";
+$titleSql = "SELECT id, title, scope, level, description FROM titles WHERE id = $id";
 if ($adminRole !== 'super_admin') {
   $titleSql .= ' AND org_id = ' . $orgId;
 }
@@ -62,7 +62,10 @@ if (!$title) {
               <input type="hidden" name="id" value="<?php echo (int) $title['id']; ?>" />
               <div class="form-row-2col">
                 <div class="form-group"><label for="titleName" class="form-label">Title name</label><input class="form-control" type="text" id="titleName" name="name" value="<?php echo htmlspecialchars($title['title']); ?>" required /></div>
-                <div class="form-group"><label for="titleLevel" class="form-label">Hierarchy level</label><input class="form-control" type="number" id="titleLevel" name="level" min="1" max="99" value="<?php echo (int) $title['level']; ?>" required /></div>
+                <div class="form-group"><label for="titleScope" class="form-label">Level</label><select class="form-select" id="titleScope" name="scope" required><option value="hq" <?php echo $title['scope'] === 'hq' ? 'selected' : ''; ?>>HQ</option><option value="zone" <?php echo $title['scope'] === 'zone' ? 'selected' : ''; ?>>Zone</option><option value="subzone" <?php echo $title['scope'] === 'subzone' ? 'selected' : ''; ?>>Sub-zone</option></select></div>
+              </div>
+              <div class="form-row-2col">
+                <div class="form-group"><label for="titleLevel" class="form-label">Hierarchy level</label><input class="form-control" type="number" id="titleLevel" name="level" min="1" max="99" value="<?php echo (int) $title['level']; ?>" required /><small class="form-help">Use 1 for the highest level within this level.</small></div>
               </div>
               <div class="form-group"><label for="titleDescription" class="form-label">Description</label><textarea class="form-control" id="titleDescription" name="description" rows="4"><?php echo htmlspecialchars($title['description'] ?? ''); ?></textarea></div>
               <div class="structure-form-actions"><a href="titles-hierarchy.php" class="btn-action-dark-outline">Cancel</a><button type="submit" class="btn-navy-filled"><i class="fa-solid fa-check"></i> Save changes</button></div>

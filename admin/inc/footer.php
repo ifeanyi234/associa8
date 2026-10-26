@@ -28,8 +28,8 @@
   window.Associa8AdminIdentity = <?php echo json_encode([
       'organizationName' => (string) ($_SESSION['admin_organization_name'] ?? ''),
       'accountName' => (string) ($_SESSION['admin_name'] ?? ''),
-      'role' => (string) ($_SESSION['admin_role'] ?? ''),
+      'role' => (string) ($_SESSION['admin_display_role'] ?? $_SESSION['admin_role'] ?? ''),
   ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 </script>
-<script src="/associa8/js/admin-identity.js?v=20261009-4"></script>
+<script src="/associa8/js/admin-identity.js?v=20261021-scoped-admin-1"></script>
 <script src="/associa8/js/dashboard-tools.js"></script>

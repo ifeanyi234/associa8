@@ -1,11 +1,15 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once __DIR__ . '/inc/scope.php';
 
-if (!in_array($_SESSION['admin_role'] ?? '', ['super_admin', 'admin'], true)) {
-  admin_render_access_denied('Only organization administrators can manage staff access.');
+if (!admin_is_super_admin()) {
+  admin_render_access_denied('Only the Super Admin can manage admin access.');
 }
-$isPlatformAdmin = ($_SESSION['admin_role'] ?? '') === 'super_admin';
+$scopeContext = admin_scope_context($conn);
+if (empty($scopeContext['valid'])) {
+  admin_render_access_denied('Your account does not have a valid zone or sub-zone assignment.');
+}
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
 if ($orgId < 1) {
   admin_render_access_denied('Your account is not connected to an organization. Contact your administrator for help.');
@@ -32,6 +36,7 @@ if (!$organizationRow || trim((string) $organizationRow['name']) === '') {
 $organizationName = (string) $organizationRow['name'];
 $notice = $_SESSION['user_control_notice'] ?? null;
 unset($_SESSION['user_control_notice']);
+$isPlatformAdmin = admin_is_super_admin();
 if (empty($_SESSION['user_control_csrf'])) {
   $_SESSION['user_control_csrf'] = bin2hex(random_bytes(32));
 }
@@ -39,11 +44,18 @@ $users = [];
 $invitations = [];
 $userSql = 'SELECT a.id AS account_id, a.org_id, a.username, a.status, a.created_at,
                  ai.`first-name` AS first_name, ai.`last-name` AS last_name, ai.email, ai.role,
+                 ai.zone_id, ai.subzone_id, z.name AS zone_name, sz.name AS subzone_name,
                  oi.name AS organization_name
           FROM `acc-info` a
           INNER JOIN `admin-info` ai ON ai.acc_id = a.id AND ai.org_id = a.org_id
           INNER JOIN `org-info` oi ON oi.id = a.org_id
+          LEFT JOIN zones z ON z.id = ai.zone_id
+          LEFT JOIN subzones sz ON sz.id = ai.subzone_id
           WHERE a.org_id = ? AND ai.role <> \'super_admin\'';
+if ($scopeContext['role'] === 'zonal_admin') {
+  $subzoneIds = array_map('intval', $scopeContext['subzone_ids']);
+  $userSql .= ' AND ai.role = \'subzonal_admin\' AND ai.zone_id = ? AND ai.subzone_id IN (' . ($subzoneIds ? implode(',', $subzoneIds) : '0') . ')';
+}
 $userSql .= ' ORDER BY a.created_at DESC, a.id DESC';
 $userStmt = mysqli_prepare(
   $conn,
@@ -54,7 +66,12 @@ if (!$userStmt) {
   http_response_code(500);
   exit('Staff accounts are temporarily unavailable.');
 }
-mysqli_stmt_bind_param($userStmt, 'i', $orgId);
+if ($scopeContext['role'] === 'zonal_admin') {
+  $zoneId = (int) $scopeContext['zone_id'];
+  mysqli_stmt_bind_param($userStmt, 'ii', $orgId, $zoneId);
+} else {
+  mysqli_stmt_bind_param($userStmt, 'i', $orgId);
+}
 if (!mysqli_stmt_execute($userStmt)) {
   error_log('Staff account list query failed: ' . mysqli_stmt_error($userStmt));
   mysqli_stmt_close($userStmt);
@@ -69,11 +86,18 @@ if ($userResult) {
 }
 mysqli_stmt_close($userStmt);
 $invitationSql = 'SELECT i.id, i.org_id, i.first_name, i.last_name, i.email, i.role, i.expires_at,
-                         o.name AS organization_name
+                         i.zone_id, i.subzone_id,
+                         o.name AS organization_name, z.name AS zone_name, sz.name AS subzone_name
                   FROM staff_invitations i
                   INNER JOIN `org-info` o ON o.id = i.org_id
+                  LEFT JOIN zones z ON z.id = i.zone_id
+                  LEFT JOIN subzones sz ON sz.id = i.subzone_id
                   WHERE i.accepted_at IS NULL AND i.expires_at > UTC_TIMESTAMP()';
 $invitationSql .= ' AND i.org_id = ?';
+if ($scopeContext['role'] === 'zonal_admin') {
+  $subzoneIds = array_map('intval', $scopeContext['subzone_ids']);
+  $invitationSql .= ' AND i.role = \'subzonal_admin\' AND i.zone_id = ? AND i.subzone_id IN (' . ($subzoneIds ? implode(',', $subzoneIds) : '0') . ')';
+}
 $invitationSql .= ' ORDER BY i.created_at DESC, i.id DESC';
 $invitationStmt = mysqli_prepare($conn, $invitationSql);
 if (!$invitationStmt) {
@@ -81,7 +105,12 @@ if (!$invitationStmt) {
   http_response_code(500);
   exit('Pending invitations are temporarily unavailable.');
 }
-mysqli_stmt_bind_param($invitationStmt, 'i', $orgId);
+if ($scopeContext['role'] === 'zonal_admin') {
+  $zoneId = (int) $scopeContext['zone_id'];
+  mysqli_stmt_bind_param($invitationStmt, 'ii', $orgId, $zoneId);
+} else {
+  mysqli_stmt_bind_param($invitationStmt, 'i', $orgId);
+}
 if (!mysqli_stmt_execute($invitationStmt)) {
   error_log('Staff invitation list query failed: ' . mysqli_stmt_error($invitationStmt));
   mysqli_stmt_close($invitationStmt);
@@ -177,7 +206,7 @@ mysqli_stmt_close($invitationStmt);
   <div class="page-action-header mb-4">
     <div>
       <h2 class="page-title-main">User Control</h2>
-      <p class="page-subtitle">Invite people to this organization's workspace. They choose their own password, and their role controls what they can access.</p>
+      <p class="page-subtitle">Invite an existing member to an admin role. Their name and area are detected from their member email; invitees choose their own password.</p>
     </div>
   </div>
 
@@ -194,46 +223,28 @@ mysqli_stmt_close($invitationStmt);
       <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
       <div class="form-row-2col mb-3">
         <div class="form-group">
-          <label for="firstName" class="form-label">First Name</label>
-          <input type="text" id="firstName" name="first_name" class="form-control" placeholder="Enter your name" required />
-        </div>
-        <div class="form-group">
-          <label for="lastName" class="form-label">Last Name</label>
-          <input type="text" id="lastName" name="last_name" class="form-control" placeholder="Enter your name" required />
-        </div>
-      </div>
-
-      <!-- Email & Role -->
-      <div class="form-row-2col mb-3">
-        <div class="form-group">
           <label for="email" class="form-label">Email</label>
-          <input type="email" id="email" name="email" class="form-control" placeholder="Used as their login username" maxlength="100" required />
+          <input type="email" id="email" name="email" class="form-control" placeholder="Email address on their member record" maxlength="100" required />
         </div>
         <div class="form-group">
-          <label for="role" class="form-label">Access role (assigned by you)</label>
+          <label for="role" class="form-label">Access role (assigned by the Super Admin)</label>
           <select id="role" name="role" class="form-select" required>
             <option value="" selected disabled>Choose their access role</option>
-            <?php if (($_SESSION['admin_role'] ?? '') === 'super_admin'): ?>
-              <option value="admin">Admin — all organization modules and access management</option>
-            <?php endif; ?>
-            <option value="manager">Manager — members, admissions, documents, events, attendance</option>
-            <option value="staff">Staff — day-to-day members, documents, events, attendance</option>
+            <option value="admin">Admin — Association modules</option>
+            <option value="zonal_admin">Zonal Admin — members in one zone</option>
+            <option value="subzonal_admin">Sub-zonal Admin — members in one sub-zone</option>
           </select>
         </div>
       </div>
 
       <div class="form-row-2col mb-3">
         <div class="form-group">
-          <label for="phone" class="form-label">Phone (optional)</label>
-          <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. +2348012345678" maxlength="16" />
-        </div>
-        <div class="form-group">
           <label for="jobTitle" class="form-label">Job title (optional)</label>
           <input type="text" id="jobTitle" name="job_title" class="form-control" maxlength="200" />
         </div>
       </div>
       <div class="form-actions">
-        <?php admin_info_tip("You assign their access role before sending the invitation. We will email them a secure invitation to this organization's existing workspace. They choose their own password. The link expires after 48 hours.", 'Invitation help'); ?>
+        <?php admin_info_tip("The email must match one active member in this Association. Their name, zone, and sub-zone come from that member record. The invitation link expires after 48 hours.", 'Invitation help'); ?>
         <button type="submit" class="btn-primary-filled">Send Invitation</button>
       </div>
     </form>
@@ -258,14 +269,14 @@ mysqli_stmt_close($invitationStmt);
               <tr>
                 <td><?php echo htmlspecialchars($invitation['first_name'] . ' ' . $invitation['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
                 <td><?php echo htmlspecialchars($invitation['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                <td><?php echo htmlspecialchars(ucfirst((string) $invitation['role']), ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', (string) $invitation['role'])), ENT_QUOTES, 'UTF-8'); ?><?php if (!empty($invitation['subzone_name'])): ?><small class="cell-subtext"><?php echo htmlspecialchars($invitation['subzone_name'], ENT_QUOTES, 'UTF-8'); ?></small><?php elseif (!empty($invitation['zone_name'])): ?><small class="cell-subtext"><?php echo htmlspecialchars($invitation['zone_name'], ENT_QUOTES, 'UTF-8'); ?></small><?php endif; ?></td>
                 <td><?php echo htmlspecialchars((string) $invitation['expires_at'], ENT_QUOTES, 'UTF-8'); ?> UTC</td>
                 <td>
                   <form action="proc-invitation-action.php" method="post">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                     <input type="hidden" name="invitation_id" value="<?php echo (int) $invitation['id']; ?>" />
                     <button class="btn-navy-outline" type="submit" name="action" value="resend">Resend</button>
-                    <button class="btn-navy-outline" type="submit" name="action" value="revoke" data-app-modal-confirm="Cancel this staff invitation?" data-confirm-title="Cancel invitation" data-confirm-detail="The invitation link will no longer work.">Cancel invitation</button>
+                    <button class="btn-navy-outline" type="submit" name="action" value="revoke" data-app-modal-confirm="Cancel this admin invitation?" data-confirm-title="Cancel invitation" data-confirm-detail="The invitation link will no longer work.">Cancel invitation</button>
                   </form>
                 </td>
               </tr>
@@ -282,6 +293,7 @@ mysqli_stmt_close($invitationStmt);
     <div class="page-action-header mb-3">
       <div>
         <h3 class="page-title-main" style="font-size: 1.2rem; margin: 0;">People with access</h3>
+        <p class="page-subtitle">Zonal role changes use the member area matched to that account's email.</p>
       </div>
     </div>
 
@@ -301,29 +313,29 @@ mysqli_stmt_close($invitationStmt);
             <?php foreach ($users as $user): ?>
               <tr>
                 <?php
-                  $canManageAccount = (int) $user['account_id'] !== (int) ($_SESSION['user_id'] ?? 0)
-                    && $user['role'] !== 'super_admin'
-                    && ($isPlatformAdmin || $user['role'] !== 'admin');
+                  $canManageAccount = admin_can_manage_staff_account(
+                    $user,
+                    (int) ($_SESSION['user_id'] ?? 0),
+                    $isPlatformAdmin
+                  );
                 ?>
                 <td style="font-weight: 600; color: var(--text-primary);"><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8'); ?></td>
                 <td><?php echo htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'); ?></td>
-                <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $user['role'])), ENT_QUOTES, 'UTF-8'); ?></td>
+                <td><?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $user['role'])), ENT_QUOTES, 'UTF-8'); ?><?php if (!empty($user['subzone_name'])): ?><small class="cell-subtext"><?php echo htmlspecialchars($user['subzone_name'], ENT_QUOTES, 'UTF-8'); ?></small><?php elseif (!empty($user['zone_name'])): ?><small class="cell-subtext"><?php echo htmlspecialchars($user['zone_name'], ENT_QUOTES, 'UTF-8'); ?></small><?php endif; ?></td>
                 <td><span class="badge-pill <?php echo $user['status'] === 'active' ? 'status-active' : 'status-inactive'; ?>"><?php echo htmlspecialchars($user['status'], ENT_QUOTES, 'UTF-8'); ?></span></td>
                 <td>
                   <?php if ($canManageAccount): ?>
-                    <form action="proc-user-action.php" method="post" style="display: inline-flex; gap: .5rem; flex-wrap: wrap;">
+                    <form action="proc-user-action.php" method="post" class="user-role-form" style="display: inline-flex; gap: .5rem; flex-wrap: wrap;">
                       <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['user_control_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                       <input type="hidden" name="account_id" value="<?php echo (int) $user['account_id']; ?>" />
-                      <select class="form-select" name="new_role" aria-label="New role for <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8'); ?>">
-                        <?php if ($isPlatformAdmin): ?>
-                          <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                        <?php endif; ?>
-                        <option value="manager" <?php echo $user['role'] === 'manager' ? 'selected' : ''; ?>>Manager</option>
-                        <option value="staff" <?php echo $user['role'] === 'staff' ? 'selected' : ''; ?>>Staff</option>
+                      <select class="form-select user-role-select" name="new_role" aria-label="New role for <?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                        <option value="zonal_admin" <?php echo $user['role'] === 'zonal_admin' ? 'selected' : ''; ?>>Zonal Admin</option>
+                        <option value="subzonal_admin" <?php echo $user['role'] === 'subzonal_admin' ? 'selected' : ''; ?>>Sub-zonal Admin</option>
                       </select>
                       <button class="btn-navy-outline" type="submit" name="action" value="change_role">Update role</button>
                       <?php if ($user['status'] === 'active'): ?>
-                        <button class="btn-navy-outline" type="submit" name="action" value="disable" data-app-modal-confirm="Disable this staff account?" data-confirm-title="Disable staff account" data-confirm-detail="This person will lose access to the organization's workspace.">Disable</button>
+                        <button class="btn-navy-outline" type="submit" name="action" value="disable" data-app-modal-confirm="Disable this admin account?" data-confirm-title="Disable admin account" data-confirm-detail="This person will lose access to the Association workspace.">Disable</button>
                       <?php else: ?>
                         <button class="btn-navy-outline" type="submit" name="action" value="enable">Enable</button>
                       <?php endif; ?>
@@ -362,6 +374,8 @@ mysqli_stmt_close($invitationStmt);
     </div>
 
     <!-- Interactive Scripts -->
+    <script>
+    </script>
     <style>
       .alert-box {
         padding: 0.9rem 1rem;

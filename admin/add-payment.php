@@ -1,6 +1,7 @@
 <?php
 require_once 'inc/auth.php';
 require_once '../inc/db.php';
+require_once __DIR__ . '/inc/finance-levies.php';
 
 $adminRole = (string) ($_SESSION['admin_role'] ?? '');
 if (!in_array($adminRole, ['admin', 'super_admin'], true)) {
@@ -8,9 +9,10 @@ if (!in_array($adminRole, ['admin', 'super_admin'], true)) {
 }
 
 $orgId = (int) ($_SESSION['org_id'] ?? 0);
-$canViewAllOrganizations = $adminRole === 'super_admin' && $orgId < 1;
-$memberScope = $canViewAllOrganizations ? '1 = 1' : 'org_id = ' . $orgId;
+$memberScope = 'org_id = ' . $orgId;
 $members = [];
+$levyOptions = [];
+$levySchemaAvailable = admin_finance_levies_available($conn);
 $notice = $_SESSION['finance_notice'] ?? null;
 unset($_SESSION['finance_notice']);
 
@@ -32,6 +34,33 @@ if ($memberResult) {
 } else {
     error_log('Finance member list query failed: ' . mysqli_error($conn));
     $notice = ['type' => 'error', 'text' => 'Member list could not be loaded. Please try again later.'];
+}
+
+$levyScope = 'l.org_id = ' . $orgId;
+if ($levySchemaAvailable) {
+    $levyResult = mysqli_query(
+        $conn,
+        "SELECT ml.levy_id, ml.member_id, l.title, l.due_date, ml.amount,
+                GREATEST(ml.amount - COALESCE(SUM(ft.amount), 0), 0) AS outstanding
+         FROM member_levies ml
+         INNER JOIN levies l ON l.id = ml.levy_id
+         INNER JOIN members m ON m.id = ml.member_id AND m.org_id = l.org_id
+         LEFT JOIN finance_transactions ft
+           ON ft.levy_id = ml.levy_id AND ft.member_id = ml.member_id
+           AND ft.type = 'levy' AND ft.status = 'successful'
+         WHERE $levyScope
+         GROUP BY ml.levy_id, ml.member_id, l.title, l.due_date, ml.amount
+         HAVING outstanding > 0
+         ORDER BY l.due_date, l.title"
+    );
+    if ($levyResult) {
+        while ($levy = mysqli_fetch_assoc($levyResult)) {
+            $levyOptions[] = $levy;
+        }
+    } else {
+        error_log('Finance levy payment options query failed: ' . mysqli_error($conn));
+        $notice = ['type' => 'error', 'text' => 'Levy payment options could not be loaded. Please try again later.'];
+    }
 }
 ?>
 <!doctype html>
@@ -115,9 +144,28 @@ if ($memberResult) {
                       <option value="membership_dues">Membership dues</option>
                       <option value="admission_fee">Admission fee</option>
                       <option value="event">Event</option>
+                      <?php if ($levySchemaAvailable): ?>
+                        <option value="levy">One-time levy</option>
+                      <?php endif; ?>
                       <option value="other">Other</option>
                     </select>
                   </div>
+                  <?php if ($levySchemaAvailable): ?>
+                  <div class="form-group" id="levy-payment-group" hidden>
+                    <label for="levy_id" class="form-label">Outstanding levy</label>
+                    <select class="form-select" id="levy_id" name="levy_id" disabled>
+                      <option value="">Select member first</option>
+                      <?php foreach ($levyOptions as $levy): ?>
+                        <option
+                          value="<?php echo (int) $levy['levy_id']; ?>"
+                          data-member-id="<?php echo (int) $levy['member_id']; ?>"
+                          data-outstanding="<?php echo htmlspecialchars((string) $levy['outstanding'], ENT_QUOTES, 'UTF-8'); ?>"
+                        ><?php echo htmlspecialchars($levy['title'] . ' — due ' . date('M j, Y', strtotime($levy['due_date'])) . ' — remaining NGN ' . number_format((float) $levy['outstanding'], 2), ENT_QUOTES, 'UTF-8'); ?></option>
+                      <?php endforeach; ?>
+                    </select>
+                    <small id="levy-payment-help" class="text-muted">Choose a member to see their unpaid assigned levies.</small>
+                  </div>
+                  <?php endif; ?>
                 </div>
                 <div class="form-row-2col">
                   <div class="form-group">
@@ -158,5 +206,36 @@ if ($memberResult) {
     </div>
     <script src="../js/admin-sidebar.js"></script>
     <script src="../js/preloader.js"></script>
+    <script>
+      const paymentType = document.getElementById("type");
+      const paymentMember = document.getElementById("member_id");
+      const levyGroup = document.getElementById("levy-payment-group");
+      const levySelect = document.getElementById("levy_id");
+      const levyHelp = document.getElementById("levy-payment-help");
+      const levyOptions = levySelect ? Array.from(levySelect.options).slice(1) : [];
+
+      function updateLevyOptions() {
+        const isLevy = paymentType.value === "levy";
+        levyGroup.hidden = !isLevy;
+        levySelect.disabled = !isLevy;
+        levySelect.required = isLevy;
+        levySelect.value = "";
+        let available = 0;
+        levyOptions.forEach((option) => {
+          const matchesMember = option.dataset.memberId === paymentMember.value;
+          option.hidden = !matchesMember;
+          option.disabled = !matchesMember;
+          if (matchesMember) available++;
+        });
+        levyHelp.textContent = available
+          ? "Select the levy that this payment is for."
+          : "This member has no outstanding assigned levy.";
+      }
+
+      if (paymentType && paymentMember && levyGroup && levySelect && levyHelp) {
+        paymentType.addEventListener("change", updateLevyOptions);
+        paymentMember.addEventListener("change", updateLevyOptions);
+      }
+    </script>
   </body>
 </html>

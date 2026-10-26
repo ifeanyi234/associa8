@@ -4,6 +4,11 @@ require_once "../inc/db.php";
 
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+$noticeStatus = (string) ($_GET['status'] ?? '');
+$noticeMessage = (string) ($_GET['msg'] ?? '');
+if (empty($_SESSION['admission_status_csrf'])) {
+  $_SESSION['admission_status_csrf'] = bin2hex(random_bytes(32));
+}
 
 $admissionStatsSql = "SELECT status, COUNT(*) AS total FROM admissions";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
@@ -19,7 +24,7 @@ if ($admissionStatsResult) {
   } 
 }
 
-$admissionsSql = "SELECT a.id, a.application_number, a.applicant_name, a.email, a.guarantor_name, a.guarantor_relationship, a.status, a.applied_at, r.score, r.status AS result_status FROM admissions a LEFT JOIN cbt_results r ON r.admission_id = a.id AND r.org_id = a.org_id";
+$admissionsSql = "SELECT a.id, a.org_id, a.application_number, a.applicant_name, a.email, a.guarantor_name, a.guarantor_relationship, a.status, a.applied_at, r.score, r.status AS result_status FROM admissions a LEFT JOIN cbt_results r ON r.admission_id = a.id AND r.org_id = a.org_id";
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $admissionsSql .= " WHERE a.org_id = " . (int) $orgId;
 }
@@ -32,6 +37,7 @@ if ($admissionsResult) {
     $admissions[] = $admission; 
   } 
 }
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -110,6 +116,11 @@ if ($admissionsResult) {
 
         <!-- Dashboard Body Content -->
         <div class="dashboard-content">
+          <?php if ($noticeMessage !== ''): ?>
+            <div class="dashboard-card" role="<?php echo $noticeStatus === 'error' ? 'alert' : 'status'; ?>" style="margin-bottom: 1rem; color: <?php echo $noticeStatus === 'error' ? '#b91c1c' : '#166534'; ?>;">
+              <?php echo htmlspecialchars($noticeMessage, ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+          <?php endif; ?>
           <!-- Page Main Action Header -->
           <div class="page-action-header mb-4">
             <div>
@@ -119,6 +130,10 @@ if ($admissionsResult) {
             <a href="add-admission.php" class="btn-outline-primary">
               <i class="fa-solid fa-user-plus"></i>
               <span>New Application</span>
+            </a>
+            <a href="admission-applicants-bulk-upload.php" class="btn-outline-primary">
+              <i class="fa-solid fa-upload"></i>
+              <span>Bulk Upload</span>
             </a>
           </div>
 
@@ -198,17 +213,26 @@ if ($admissionsResult) {
                             <div class="dropdown-menu">
                               <?php if ($admission['status'] === 'pending'): ?>
                                 <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="" data-confirm-title="Move applicant to CBT review?">
+                                  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admission_status_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="under_review" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-forward"></i> Move to CBT</button>
                                 </form>
+                                <form class="admission-approval-form" action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Approve this applicant without a CBT and create a member account?" data-confirm-title="Approve without CBT">
+                                  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admission_status_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
+                                  <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
+                                  <input type="hidden" name="status" value="approved" />
+                                  <button class="dropdown-item" type="submit"><i class="fa-solid fa-user-check"></i> Approve without CBT</button>
+                                </form>
                               <?php else: ?>
-                                <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Approve this applicant and create a member account?" data-confirm-title="Approve applicant">
+                                <form class="admission-approval-form" action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="Approve this applicant and create a member account?" data-confirm-title="Approve applicant">
+                                  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admission_status_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="approved" />
                                   <button class="dropdown-item" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
                                 </form>
                                 <form action="proc-update-admission-status.php" method="POST" data-app-modal-confirm="" data-confirm-title="Reject applicant?">
+                                  <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['admission_status_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                                   <input type="hidden" name="admission_id" value="<?php echo (int) $admission['id']; ?>" />
                                   <input type="hidden" name="status" value="rejected" />
                                   <button class="dropdown-item danger-item" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
@@ -387,6 +411,9 @@ if ($admissionsResult) {
       // 1. Sidebar Dropdown Accordion Toggle Logic
       document.querySelectorAll(".admission-actions").forEach((dropdown) => {
         const trigger = dropdown.querySelector(".btn-action-trigger");
+        const menu = dropdown.querySelector(".dropdown-menu");
+
+        menu.addEventListener("click", (event) => event.stopPropagation());
 
         trigger.addEventListener("click", (event) => {
           event.stopPropagation();

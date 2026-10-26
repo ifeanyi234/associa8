@@ -16,7 +16,7 @@ if ($questionId < 1) {
 $adminRole = $_SESSION['admin_role'];
 $orgId = isset($_SESSION['org_id']) ? (int) $_SESSION['org_id'] : null;
 $scopeSql = $adminRole === 'super_admin' ? '' : ' AND e.org_id = ?';
-$lookup = mysqli_prepare($conn, 'SELECT q.exam_id, e.status FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id WHERE q.id = ?' . $scopeSql . ' FOR UPDATE');
+$lookup = mysqli_prepare($conn, 'SELECT q.exam_id, q.image_path, e.status FROM cbt_questions q INNER JOIN cbt_exams e ON e.id = q.exam_id WHERE q.id = ?' . $scopeSql . ' FOR UPDATE');
 if (!$lookup) {
     error_log('CBT question delete lookup prepare failed: ' . mysqli_error($conn));
     header('Location: cbt-questions.php?status=error&msg=' . urlencode('The CBT question could not be checked.'));
@@ -90,5 +90,11 @@ if (!mysqli_stmt_execute($delete) || mysqli_stmt_affected_rows($delete) !== 1) {
     exit;
 }
 mysqli_commit($conn);
+if (preg_match('#^uploads/cbt-questions/([a-f0-9]{32}\.(?:jpg|png|webp))$#', (string) ($question['image_path'] ?? ''), $imageMatch)) {
+    $imageAbsolutePath = __DIR__ . '/uploads/cbt-questions/' . $imageMatch[1];
+    if (is_file($imageAbsolutePath) && !unlink($imageAbsolutePath)) {
+        error_log('Failed to remove deleted CBT question image: ' . $imageAbsolutePath);
+    }
+}
 header('Location: cbt-questions.php?status=success&msg=' . urlencode('Question deleted successfully.'));
 exit;

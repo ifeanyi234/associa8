@@ -65,7 +65,7 @@ $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
             </div>
           <?php endif; ?>
           <section class="dashboard-card structure-form-card">
-            <form action="proc-add-cbt-question.php" method="POST" class="structure-form">
+            <form action="proc-add-cbt-question.php" method="POST" enctype="multipart/form-data" class="structure-form">
               <div class="form-group">
                 <label class="form-label" for="examId">Exam</label>
                 <?php if (!$hasDraftExams): ?>
@@ -84,6 +84,11 @@ $selectedExamId = (int) ($_GET['exam_id'] ?? 0);
                 <label class="form-label" for="question">Question</label>
                 <textarea class="form-control" id="question" name="question_text" rows="4" required>
 </textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="questionImage">Question image (optional)</label>
+                <input class="form-control" id="questionImage" name="question_image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+                <small>JPG, PNG, or WebP. Maximum file size: 5 MB.</small>
               </div>
               <div class="form-row-2col">
                 <?php foreach (['a','b','c','d','e'] as $option): ?>

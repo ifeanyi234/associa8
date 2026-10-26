@@ -1,6 +1,8 @@
 <?php
 require_once "inc/auth.php";
 require_once "../inc/db.php";
+require_once "inc/title-assignment.php";
+require_once "inc/scope.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: member-directory.php');
@@ -25,6 +27,10 @@ $subzoneId = (int) ($_POST['subzone_id'] ?? 0);
 $joinedDate = $_POST['joined_date'] ?? '';
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
+$scopeContext = admin_scope_context($conn);
+if (empty($scopeContext['valid'])) {
+    admin_render_access_denied('Your account does not have a valid zone or sub-zone assignment.');
+}
 
 if ($memberId < 1 || $firstName === '' || strlen($firstName) > 50 || $lastName === '' || strlen($lastName) > 50 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 100 || strlen($phone) > 20 || $titleId < 0 || $zoneId < 0 || $subzoneId < 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $joinedDate) || !checkdate((int) substr($joinedDate, 5, 2), (int) substr($joinedDate, 8, 2), (int) substr($joinedDate, 0, 4))) {
     header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('Enter valid member details.'));
@@ -35,14 +41,17 @@ if ($adminRole !== 'super_admin' && ($orgId === null || $orgId < 1)) {
     exit;
 }
 
-$scope = $adminRole === 'super_admin' ? '' : ' AND org_id = ' . $orgId;
-$memberCheck = mysqli_query($conn, 'SELECT org_id FROM members WHERE id = ' . $memberId . $scope . ' LIMIT 1');
+$memberScope = admin_scope_sql('m', $scopeContext);
+$memberCheck = mysqli_query($conn, 'SELECT m.org_id, m.zone_id, m.subzone_id FROM members m WHERE m.id = ' . $memberId . ($adminRole === 'super_admin' ? '' : ' AND m.org_id = ' . (int) $orgId) . $memberScope . ' LIMIT 1');
 $member = $memberCheck ? mysqli_fetch_assoc($memberCheck) : null;
 if (!$member) {
     header('Location: member-directory.php?status=error&msg=' . urlencode('The member could not be found.'));
     exit;
 }
 $memberOrgId = (int) $member['org_id'];
+if (!admin_scope_allows_member($scopeContext, $member)) {
+    admin_render_access_denied('You can only edit members inside your assigned area.');
+}
 
 $duplicateEmail = mysqli_prepare($conn, 'SELECT id FROM members WHERE email = ? AND id <> ? LIMIT 1');
 if (!$duplicateEmail) {
@@ -75,19 +84,42 @@ if ($subzoneId > 0) {
         exit;
     }
 }
-if ($titleId > 0) {
-    $titleCheck = mysqli_query($conn, 'SELECT id FROM titles WHERE id = ' . $titleId . ' AND org_id = ' . $memberOrgId . ' LIMIT 1');
-    if (!$titleCheck || mysqli_num_rows($titleCheck) === 0) {
-        header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('The selected title is invalid.'));
-        exit;
-    }
+if (
+    ($scopeContext['role'] === 'zonal_admin'
+        && ($zoneId !== (int) $scopeContext['zone_id']
+            || ($subzoneId > 0 && !in_array($subzoneId, $scopeContext['subzone_ids'], true))))
+    || ($scopeContext['role'] === 'subzonal_admin'
+        && ($zoneId !== (int) $scopeContext['zone_id'] || $subzoneId !== (int) $scopeContext['subzone_id']))
+) {
+    admin_render_access_denied('You can only assign members inside your assigned area.');
 }
-
 $zoneValue = $zoneId > 0 ? $zoneId : null;
 $subzoneValue = $subzoneId > 0 ? $subzoneId : null;
 $titleValue = $titleId > 0 ? $titleId : null;
-$statement = mysqli_prepare($conn, 'UPDATE members SET first_name = ?, last_name = ?, email = ?, phone = ?, title_id = ?, zone_id = ?, subzone_id = ?, joined_date = ? WHERE id = ?' . $scope);
+if (!mysqli_begin_transaction($conn)) {
+    error_log('Member update transaction could not start: ' . mysqli_error($conn));
+    header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('The member could not be updated.'));
+    exit;
+}
+$assignment = validate_title_assignment(
+    $conn,
+    $memberOrgId,
+    $titleValue ?? 0,
+    $zoneValue,
+    $subzoneValue,
+    $memberId
+);
+if (!$assignment['valid']) {
+    mysqli_rollback($conn);
+    header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode($assignment['message']));
+    exit;
+}
+$updateScope = admin_scope_sql('members', $scopeContext);
+$updateOrg = $adminRole === 'super_admin' ? '' : ' AND members.org_id = ' . $memberOrgId;
+$statement = mysqli_prepare($conn, 'UPDATE members SET first_name = ?, last_name = ?, email = ?, phone = ?, title_id = ?, zone_id = ?, subzone_id = ?, joined_date = ? WHERE id = ?' . $updateOrg . $updateScope);
 if (!$statement) {
+    mysqli_rollback($conn);
+    error_log('Member update prepare failed: ' . mysqli_error($conn));
     header('Location: edit-member.php?id=' . $memberId . '&status=error&msg=' . urlencode('The member could not be updated.'));
     exit;
 }
@@ -96,7 +128,11 @@ if ($adminRole === 'super_admin') {
 } else {
     mysqli_stmt_bind_param($statement, 'ssssiiisi', $firstName, $lastName, $email, $phone, $titleValue, $zoneValue, $subzoneValue, $joinedDate, $memberId);
 }
-$success = mysqli_stmt_execute($statement);
+$success = mysqli_stmt_execute($statement) && mysqli_commit($conn);
+if (!$success) {
+    mysqli_rollback($conn);
+    error_log('Member update failed: ' . mysqli_stmt_error($statement));
+}
 $message = $success ? 'Member updated successfully.' : 'Could not update the member. The email may already exist.';
 if ($success) {
     unset($_SESSION['member_edit_csrf']);

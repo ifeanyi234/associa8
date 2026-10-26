@@ -18,29 +18,27 @@ $parameters = [$documentId];
 
 if (isset($_SESSION['user_id'], $_SESSION['admin_role']) && ctype_digit((string) $_SESSION['user_id']) && (int) $_SESSION['user_id'] > 0) {
     $role = $_SESSION['admin_role'];
-    if (!is_string($role) || !in_array($role, ['super_admin', 'admin', 'manager', 'staff'], true)) {
+    if (!is_string($role) || !in_array($role, ['super_admin', 'admin'], true)) {
         http_response_code(403);
         exit('Access denied.');
     }
 
-    if ($role !== 'super_admin') {
-        $orgId = filter_var($_SESSION['org_id'] ?? null, FILTER_VALIDATE_INT);
-        if (!$orgId || $orgId < 1) {
-            http_response_code(403);
-            exit('Access denied.');
-        }
-        $sql .= ' AND d.org_id = ?';
-        $types .= 'i';
-        $parameters[] = $orgId;
+    $orgId = filter_var($_SESSION['org_id'] ?? null, FILTER_VALIDATE_INT);
+    if (!$orgId || $orgId < 1) {
+        http_response_code(403);
+        exit('Access denied.');
+    }
+    $sql .= ' AND d.org_id = ?';
+    $types .= 'i';
+    $parameters[] = $orgId;
 
-        $zoneId = filter_var($_SESSION['admin_zone_id'] ?? null, FILTER_VALIDATE_INT);
-        if ($zoneId && $zoneId > 0) {
-            $subzoneId = filter_var($_SESSION['admin_subzone_id'] ?? null, FILTER_VALIDATE_INT);
-            $sql .= ' AND ((d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?)';
-            $types .= 'ii';
-            $parameters[] = $zoneId;
-            $parameters[] = $subzoneId && $subzoneId > 0 ? $subzoneId : 0;
-        }
+    $zoneId = filter_var($_SESSION['admin_zone_id'] ?? null, FILTER_VALIDATE_INT);
+    if ($role !== 'super_admin' && $zoneId && $zoneId > 0) {
+        $subzoneId = filter_var($_SESSION['admin_subzone_id'] ?? null, FILTER_VALIDATE_INT);
+        $sql .= ' AND ((d.zone_id IS NULL AND d.subzone_id IS NULL) OR d.zone_id = ? OR d.subzone_id = ?)';
+        $types .= 'ii';
+        $parameters[] = $zoneId;
+        $parameters[] = $subzoneId && $subzoneId > 0 ? $subzoneId : 0;
     }
 } elseif (isset($_SESSION['member_id'], $_SESSION['member_org_id'])) {
     $memberId = filter_var($_SESSION['member_id'], FILTER_VALIDATE_INT);

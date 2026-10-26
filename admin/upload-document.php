@@ -141,12 +141,12 @@ if ($subzonesResult) {
               <!-- Visibility -->
               <div style="margin-bottom: 1.75rem;">
                 <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
-                  Visibility <?php admin_info_tip('Organization-wide documents are visible throughout the organization. Zone or sub-zone visibility limits them to that group.', 'Document visibility help'); ?>
+                  Visibility <?php admin_info_tip('Association-wide documents are visible throughout the association. Zone or sub-zone visibility limits them to that group.', 'Document visibility help'); ?>
                 </label>
                 <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
                   <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
                     <input type="radio" name="visibility" value="org" checked />
-                    <span>Organization-wide</span>
+                    <span>Association-wide</span>
                   </label>
                   <label style="display: inline-flex; align-items: center; gap: 0.5rem;">
                     <input type="radio" name="visibility" value="zone" />
@@ -157,10 +157,6 @@ if ($subzonesResult) {
                     <span>Specific sub-zone</span>
                   </label>
                 </div>
-                <label style="display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
-                  <input type="checkbox" name="organization_wide" value="1" />
-                  <span>Also mark as organization-wide</span>
-                </label>
               </div>
 
               <div class="form-row-2col" style="margin-bottom: 1.75rem;">
@@ -183,46 +179,19 @@ if ($subzonesResult) {
                 </div>
               </div>
 
-              <!-- File Type -->
-              <div style="margin-bottom: 1.75rem;">
-                <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
-                  File Type
-                </label>
-                <select 
-                  name="file_type" 
-                  style="width: 100%; padding: 1rem 1.25rem; background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: var(--radius-md); outline: none; font-size: 0.9rem; color: var(--text-primary); cursor: pointer; appearance: auto;"
-                  required
-                >
-                  <option value="" disabled selected></option>
-                  <option value="JPEG">JPEG</option>
-                  <option value="PNG">PNG</option>
-                  <option value="PDF">PDF</option>
-                </select>
-              </div>
-
               <!-- Upload Document File Input Box -->
               <div style="margin-bottom: 2.25rem;">
-                <label style="display: block; font-weight: 500; margin-bottom: 0.6rem; color: var(--text-primary); font-size: 0.9rem;">
+                <label for="document_file" class="form-label">
                   Upload Document (JPEG,PNG,PDF)
                 </label>
-                <div style="width: 100%; padding: 0.85rem 1.25rem; background-color: #f8fafc; border: 1px solid #f1f5f9; border-radius: var(--radius-md); display: flex; align-items: center; gap: 1rem;">
-                  <input 
-                    type="file" 
-                    name="document_file" 
-                    id="document_file" 
-                    accept=".jpeg,.jpg,.png,.pdf" 
-                    style="display: none;" 
-                    required
-                    onchange="document.getElementById('fileNameDisplay').textContent = this.files[0] ? this.files[0].name : '';"
-                  />
-                  <label 
-                    for="document_file" 
-                    style="background-color: var(--banner-bg, #0a2244); color: #ffffff; padding: 0.6rem 1.5rem; border-radius: var(--radius-pill); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; display: inline-block;"
-                  >
-                    Choose File
-                  </label>
-                  <span id="fileNameDisplay" style="font-size: 0.85rem; color: var(--text-muted);"></span>
-                </div>
+                <input
+                  class="form-control"
+                  type="file"
+                  name="document_file"
+                  id="document_file"
+                  accept=".jpeg,.jpg,.png,.pdf"
+                  required
+                />
               </div>
 
               <!-- Submit Button -->
@@ -246,7 +215,7 @@ if ($subzonesResult) {
 
     <!-- Interactive Scripts -->
     <script>
-      const documentSubzones = <?php echo json_encode($subzonesByZone, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+      const documentSubzones = <?php echo json_encode(  $subzonesByZone, JSON_HEX_TAG | JSON_HEX_AMP); ?>;
 
       function populateDocumentSubzones(zoneId) {
         const subzoneSelect = document.getElementById("documentSubzone");
@@ -267,13 +236,11 @@ if ($subzonesResult) {
         const zoneSelect = document.getElementById("documentZone");
         const subzoneSelect = document.getElementById("documentSubzone");
         const visibilityRadios = document.querySelectorAll('input[name="visibility"]');
-        const orgWideToggle = document.querySelector('input[name="organization_wide"]');
 
         function syncVisibilityState() {
           const selectedVisibility = document.querySelector('input[name="visibility"]:checked')?.value || 'org';
-          const isOrgWide = orgWideToggle.checked;
-          const disableZone = isOrgWide || selectedVisibility === 'org';
-          const disableSubzone = isOrgWide || selectedVisibility !== 'subzone';
+          const disableZone = selectedVisibility === 'org';
+          const disableSubzone = selectedVisibility !== 'subzone';
 
           zoneSelect.disabled = disableZone;
           subzoneSelect.disabled = disableSubzone || !zoneSelect.value || !documentSubzones[Number(zoneSelect.value)] || documentSubzones[Number(zoneSelect.value)].length === 0;
@@ -282,12 +249,16 @@ if ($subzonesResult) {
             zoneSelect.value = '';
             subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
             subzoneSelect.disabled = true;
+          } else if (disableSubzone) {
+            subzoneSelect.value = '';
+            subzoneSelect.disabled = true;
           }
         }
 
         zoneSelect.addEventListener("change", (event) => {
           if (event.target.value) {
             populateDocumentSubzones(event.target.value);
+            syncVisibilityState();
           } else {
             subzoneSelect.innerHTML = '<option value="" selected disabled>Select sub-zone</option>';
             subzoneSelect.disabled = true;
@@ -297,7 +268,6 @@ if ($subzonesResult) {
         visibilityRadios.forEach((radio) => {
           radio.addEventListener("change", syncVisibilityState);
         });
-        orgWideToggle.addEventListener("change", syncVisibilityState);
 
         syncVisibilityState();
       });

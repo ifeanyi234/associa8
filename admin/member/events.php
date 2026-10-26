@@ -13,6 +13,11 @@ if (empty($_SESSION['member_event_csrf'])) {
     $_SESSION['member_event_csrf'] = bin2hex(random_bytes(32));
 }
 
+$bookingFeeColumnCheck = mysqli_query($conn, "SHOW COLUMNS FROM events LIKE 'booking_fee'");
+if ($bookingFeeColumnCheck && mysqli_num_rows($bookingFeeColumnCheck) === 0) {
+    mysqli_query($conn, "ALTER TABLE events ADD COLUMN booking_fee DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER capacity");
+}
+
 $stmt = mysqli_prepare(
     $conn,
     "SELECT e.*, COALESCE(r.status, 'not_booked') AS member_status,
@@ -121,6 +126,7 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
                           <span class="event-card-meta-item"><i class="fa-regular fa-clock"></i> <?php echo $event['event_time'] ? htmlspecialchars(date('h:i A', strtotime($event['event_time'])) . ' (local time)', ENT_QUOTES, 'UTF-8') : 'Time TBA'; ?></span>
                           <span class="event-card-meta-item"><i class="fa-solid fa-location-dot"></i> <?php echo htmlspecialchars($event['venue'] ?: 'Venue TBA', ENT_QUOTES, 'UTF-8'); ?></span>
                           <span class="event-card-meta-item"><i class="fa-solid fa-users"></i> Seats: <?php echo (int) $event['booked_count']; ?><?php echo $hasSeatLimit ? ' / ' . (int) $event['capacity'] : ' booked · unlimited'; ?></span>
+                          <?php if ((float) $event['booking_fee'] > 0): ?><span class="event-card-meta-item"><i class="fa-solid fa-wallet"></i> Booking fee: NGN <?php echo number_format((float) $event['booking_fee'], 2, '.', ','); ?></span><?php endif; ?>
                           <?php if ((int) $event['waitlist_count'] > 0): ?><span class="event-card-meta-item"><?php echo (int) $event['waitlist_count']; ?> on waitlist</span><?php endif; ?>
                         </div>
                         <?php if (!empty($event['description'])): ?><p class="event-card-description"><?php echo nl2br(htmlspecialchars($event['description'], ENT_QUOTES, 'UTF-8')); ?></p><?php endif; ?>
@@ -147,7 +153,7 @@ $pastEvents = array_filter($events, static function ($event) use ($today) {
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['member_event_csrf'], ENT_QUOTES, 'UTF-8'); ?>" />
                             <input type="hidden" name="event_id" value="<?php echo (int) $event['id']; ?>" />
                             <input type="hidden" name="action" value="book" />
-                            <button class="btn-book-seat" type="submit"><?php echo $capacityFull ? 'Join Waitlist' : 'Book a Seat'; ?></button>
+                            <button class="btn-book-seat" type="submit"><?php echo ($event['booking_fee'] ?? 0) > 0 ? 'Pay & Book' : ($capacityFull ? 'Join Waitlist' : 'Book a Seat'); ?></button>
                           </form>
                         <?php else: ?>
                           <span class="btn-book-seat">Booking closed</span>

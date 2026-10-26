@@ -153,11 +153,11 @@ function admin_restore_remembered_session(mysqli $conn): bool
     $result = mysqli_stmt_get_result($lookup);
     $account = $result ? mysqli_fetch_assoc($result) : null;
     mysqli_stmt_close($lookup);
-    $validRoles = ['super_admin', 'admin', 'manager', 'staff'];
+    $validRoles = ['super_admin', 'admin', 'zonal_admin', 'subzonal_admin'];
     if (
         !$account
         || !in_array($account['role'], $validRoles, true)
-        || ($account['role'] !== 'super_admin' && (int) $account['org_id'] < 1)
+        || (int) $account['org_id'] < 1
     ) {
         admin_clear_remember_cookie();
         return false;
@@ -185,7 +185,9 @@ function admin_restore_remembered_session(mysqli $conn): bool
     $_SESSION['user_id'] = (int) $account['id'];
     $_SESSION['username'] = (string) $account['username'];
     $_SESSION['org_id'] = (int) $account['org_id'];
-    $_SESSION['admin_role'] = (string) $account['role'];
+    $_SESSION['admin_is_super_admin'] = $account['role'] === 'super_admin';
+    $_SESSION['admin_display_role'] = (string) $account['role'];
+    $_SESSION['admin_role'] = $account['role'] === 'super_admin' ? 'admin' : (string) $account['role'];
     $_SESSION['admin_zone_id'] = isset($account['zone_id']) ? (int) $account['zone_id'] : null;
     $_SESSION['admin_subzone_id'] = isset($account['subzone_id']) ? (int) $account['subzone_id'] : null;
     $_SESSION['admin_name'] = trim((string) $account['first_name'] . ' ' . (string) $account['last_name']);

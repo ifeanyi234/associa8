@@ -39,7 +39,7 @@ if (!$exam) {
     exit('The CBT exam was not found in your organization.');
 }
 
-$questionStatement = mysqli_prepare($conn, 'SELECT question_text, option_a, option_b, option_c, option_d, option_e, correct_option FROM cbt_questions WHERE exam_id = ? ORDER BY id');
+$questionStatement = mysqli_prepare($conn, 'SELECT question_text, option_a, option_b, option_c, option_d, option_e, correct_option, image_path FROM cbt_questions WHERE exam_id = ? ORDER BY id');
 if (!$questionStatement) {
     error_log('CBT exam preview questions prepare failed: ' . mysqli_error($conn));
     http_response_code(500);
@@ -143,6 +143,9 @@ $canActivate = $exam['status'] === 'draft'
                 <article style="padding:18px 0;border-bottom:1px solid #e2e8f0;">
                   <h3>Question <?php echo $index + 1; ?></h3>
                   <p><?php echo nl2br(htmlspecialchars($question['question_text'], ENT_QUOTES, 'UTF-8')); ?></p>
+                  <?php if (!empty($question['image_path'])): ?>
+                    <img src="<?php echo htmlspecialchars($question['image_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Question image" style="display:block;max-width:100%;height:auto;margin:0 0 1rem;border-radius:8px;" />
+                  <?php endif; ?>
                   <ul>
                     <?php foreach (['a', 'b', 'c', 'd', 'e'] as $option): ?>
                       <?php $optionValue = $question['option_' . $option]; ?>

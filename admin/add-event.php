@@ -97,6 +97,16 @@ if (empty($_SESSION['event_csrf'])) {
                   <input class="form-control" id="capacity" name="capacity" type="number" min="1" max="4294967295" step="1" placeholder="Leave blank for unlimited seats" value="<?php echo htmlspecialchars($eventFormValue('capacity'), ENT_QUOTES, 'UTF-8'); ?>" />
                 </div>
               </div>
+              <div class="form-row-2col">
+                <div class="form-group">
+                  <label for="booking_fee" class="form-label">Booking fee (NGN)</label>
+                  <input class="form-control" id="booking_fee" name="booking_fee" type="number" min="0" step="0.01" placeholder="0.00" value="<?php echo htmlspecialchars($eventFormValue('booking_fee'), ENT_QUOTES, 'UTF-8'); ?>" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Payment mode</label>
+                  <div class="form-control" style="display:flex; align-items:center; min-height: 48px; color: var(--text-muted);">Free event = 0.00. Paid events use Paystack when configured.</div>
+                </div>
+              </div>
               <div class="form-group">
                 <label for="description" class="form-label">Details (optional)</label>
                 <textarea class="form-control" id="description" name="description" rows="5" maxlength="5000"><?php echo htmlspecialchars($eventFormValue('description'), ENT_QUOTES, 'UTF-8'); ?></textarea>

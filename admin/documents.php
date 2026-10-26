@@ -176,7 +176,7 @@ if ($documentsResult) {
                 <?php if ($documents): ?>
                   <?php foreach ($documents as $document): ?>
                     <?php
-                      $visibilityLabel = 'Organization-wide';
+                      $visibilityLabel = 'Association-wide';
                       if ($document['subzone_name']) {
                         $visibilityLabel = $document['zone_name'] . ' / ' . $document['subzone_name'];
                       } elseif ($document['zone_name']) {

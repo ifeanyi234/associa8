@@ -1,6 +1,7 @@
 <?php
 require_once 'inc/auth.php';
 require_once '../../inc/db.php';
+require_once '../../inc/paystack.php';
 
 function memberEventRedirect(string $type, string $text): void
 {
@@ -19,6 +20,11 @@ if (!is_string($token) || !is_string($sessionToken) || $sessionToken === '' || !
     memberEventRedirect('error', 'Your form expired. Reload the page and try again.');
 }
 
+$eventColumnCheck = mysqli_query($conn, "SHOW COLUMNS FROM events LIKE 'booking_fee'");
+if ($eventColumnCheck && mysqli_num_rows($eventColumnCheck) === 0) {
+    mysqli_query($conn, "ALTER TABLE events ADD COLUMN booking_fee DECIMAL(12,2) NOT NULL DEFAULT 0.00 AFTER capacity");
+}
+
 $eventId = filter_var($_POST['event_id'] ?? null, FILTER_VALIDATE_INT);
 $action = (string) ($_POST['action'] ?? '');
 $memberId = (int) $_SESSION['member_id'];
@@ -31,7 +37,7 @@ if (!mysqli_begin_transaction($conn)) {
     memberEventRedirect('error', 'Your event booking could not be updated. Please try again later.');
 }
 
-$eventStmt = mysqli_prepare($conn, 'SELECT event_date, event_time, capacity, status FROM events WHERE id = ? AND org_id = ? FOR UPDATE');
+$eventStmt = mysqli_prepare($conn, 'SELECT event_date, event_time, capacity, booking_fee, status FROM events WHERE id = ? AND org_id = ? FOR UPDATE');
 if (!$eventStmt) {
     mysqli_rollback($conn);
     error_log('Member RSVP event lookup could not be prepared: ' . mysqli_error($conn));
@@ -81,6 +87,78 @@ if ($action === 'book') {
         mysqli_rollback($conn);
         memberEventRedirect('success', $rsvp['status'] === 'booked' ? 'You already have a seat booked.' : 'You are already on the waitlist.');
     }
+
+    $eventFee = (float) ($event['booking_fee'] ?? 0.0);
+    if ($eventFee > 0) {
+        $memberStmt = mysqli_prepare($conn, 'SELECT email FROM members WHERE id = ? AND org_id = ? LIMIT 1');
+        if (!$memberStmt) {
+            mysqli_rollback($conn);
+            error_log('Member lookup for event payment could not be prepared: ' . mysqli_error($conn));
+            memberEventRedirect('error', 'This event requires payment and the billing profile could not be loaded.');
+        }
+        mysqli_stmt_bind_param($memberStmt, 'ii', $memberId, $orgId);
+        if (!mysqli_stmt_execute($memberStmt)) {
+            mysqli_rollback($conn);
+            error_log('Member lookup for event payment failed: ' . mysqli_stmt_error($memberStmt));
+            mysqli_stmt_close($memberStmt);
+            memberEventRedirect('error', 'This event requires payment and the billing profile could not be loaded.');
+        }
+        $memberResult = mysqli_stmt_get_result($memberStmt);
+        $memberRow = $memberResult ? mysqli_fetch_assoc($memberResult) : null;
+        mysqli_stmt_close($memberStmt);
+
+        if (!$memberRow || empty($memberRow['email'])) {
+            mysqli_rollback($conn);
+            memberEventRedirect('error', 'This event requires payment and a valid member email is missing.');
+        }
+
+        if (!associa8_paystack_enabled()) {
+            mysqli_rollback($conn);
+            memberEventRedirect('error', 'This event requires payment, and the online payment gateway is not configured. Please contact the organization to record payment manually.');
+        }
+
+        $reference = 'EVT-' . $eventId . '-' . $memberId . '-' . time() . '-' . strtoupper(bin2hex(random_bytes(4)));
+        $callbackUrl = associa8_paystack_base_url() . '/admin/member/handle-event-payment.php';
+        $checkoutUrl = associa8_paystack_initialize_checkout(
+            (int) round($eventFee * 100),
+            (string) $memberRow['email'],
+            $reference,
+            $callbackUrl,
+            ['event_id' => $eventId, 'member_id' => $memberId, 'org_id' => $orgId]
+        );
+        if ($checkoutUrl === null) {
+            mysqli_rollback($conn);
+            memberEventRedirect('error', 'This event requires payment and the online payment gateway is unavailable right now. Please try again later.');
+        }
+
+        $transactionStmt = mysqli_prepare($conn, 'INSERT INTO finance_transactions (reference, member_id, amount, type, status) VALUES (?, ?, ?, ?, ?)');
+        if (!$transactionStmt) {
+            mysqli_rollback($conn);
+            error_log('Event payment transaction could not be prepared: ' . mysqli_error($conn));
+            memberEventRedirect('error', 'The event payment could not be started. Please try again later.');
+        }
+        $transactionType = 'event';
+        $transactionStatus = 'pending';
+        $transactionAmount = $eventFee;
+        mysqli_stmt_bind_param($transactionStmt, 'sidss', $reference, $memberId, $transactionAmount, $transactionType, $transactionStatus);
+        if (!mysqli_stmt_execute($transactionStmt)) {
+            mysqli_rollback($conn);
+            error_log('Event payment transaction save failed: ' . mysqli_stmt_error($transactionStmt));
+            mysqli_stmt_close($transactionStmt);
+            memberEventRedirect('error', 'The event payment could not be started. Please try again later.');
+        }
+        mysqli_stmt_close($transactionStmt);
+
+        if (!mysqli_commit($conn)) {
+            error_log('Event payment transaction could not commit: ' . mysqli_error($conn));
+            mysqli_rollback($conn);
+            memberEventRedirect('error', 'The event payment could not be started. Please try again later.');
+        }
+
+        header('Location: ' . $checkoutUrl);
+        exit;
+    }
+
     $countStmt = mysqli_prepare($conn, "SELECT COUNT(*) AS booked_count FROM event_rsvps WHERE event_id = ? AND status = 'booked'");
     if (!$countStmt) {
         mysqli_rollback($conn);

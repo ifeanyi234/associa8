@@ -107,12 +107,12 @@ INSERT INTO `admin-info` (`id`, `org_id`, `acc_id`, `first-name`, `last-name`, `
 (2, 1, NULL, '23kj23kj2', 'k3j4jk3434', 'heekwe@rad', 232443434, 'eerrtrt', 'super_admin', NULL, NULL),
 (3, 1, NULL, 'ghhhhhh', 'hdfdkhf', 'eiojerk@keruier', 2147483647, 'eerrtrt', 'super_admin', NULL, NULL),
 (4, 1, NULL, 'Ifeanyi', 'whejwje', 'eowoiwe@djksdl', 903232434, 'title', 'super_admin', NULL, NULL),
-(5, 1, NULL, 'Ifeanyi', 'Ezeh', 'ei711283@gmail.com', 2147483647, 'doctor', 'manager', NULL, NULL),
+(5, 1, NULL, 'Ifeanyi', 'Ezeh', 'ei711283@gmail.com', 2147483647, 'doctor', 'admin', NULL, NULL),
 (9, 1, NULL, 'Ifeanyi', 'Ezeh', 'eifeanyi320@gmail.com', 2147483647, 'doctor', 'admin', NULL, NULL),
 (14, 1, NULL, 'Ifeanyi', 'eze', 'ifevnyi@yahoo.com', 777777777, 'gamer', 'admin', NULL, NULL),
 (16, 1, NULL, 'uiewiwe', 'Ezeh', 'kshdfdkf@gmail.com', 2147483647, '4304dkjdfdkf', 'admin', NULL, NULL),
 (20, 1, NULL, 'Ifeanyi', 'Ezeh', 'ggggg@yahoo.com', 2147483647, 'doctor', 'admin', NULL, NULL),
-(23, 1, NULL, 'ffffffff', 'Ezeh', 'qqqqqqqqqqq@dsds', 2147483647, 'doctor', 'manager', NULL, NULL),
+(23, 1, NULL, 'ffffffff', 'Ezeh', 'qqqqqqqqqqq@dsds', 2147483647, 'doctor', 'admin', NULL, NULL),
 (24, 1, NULL, 'Ifeanyi', 'k3j4jk3434', 'luobikay@yahoo.com', 2147483647, 'ddddddddd', 'super_admin', NULL, NULL),
 (26, 26, 3, 'Olumide', 'Abikoye', 'oabikay@yahoo.com', 2147483647, 'Developer', 'admin', NULL, NULL);
 
@@ -223,6 +223,7 @@ CREATE TABLE `cbt_questions` (
   `option_d` varchar(255) NOT NULL,
   `option_e` varchar(255) DEFAULT NULL,
   `correct_option` enum('A','B','C','D','E') NOT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -376,12 +377,27 @@ CREATE TABLE `event_rsvps` (
 -- Table structure for table `finance_transactions`
 --
 
+CREATE TABLE `levies` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `org_id` int(15) NOT NULL,
+  `title` varchar(150) NOT NULL,
+  `amount` decimal(12,2) UNSIGNED NOT NULL,
+  `due_date` date NOT NULL,
+  `scope_type` enum('organization','zone','subzone') NOT NULL,
+  `scope_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_by` int(30) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
 CREATE TABLE `finance_transactions` (
   `id` int(10) UNSIGNED NOT NULL,
   `reference` varchar(50) NOT NULL,
   `member_id` int(10) UNSIGNED DEFAULT NULL,
+  `levy_id` int(10) UNSIGNED DEFAULT NULL,
   `amount` decimal(12,2) NOT NULL,
-  `type` enum('membership_dues','admission_fee','event','other') NOT NULL,
+  `type` enum('membership_dues','admission_fee','event','levy','other') NOT NULL,
   `status` enum('pending','successful','failed') DEFAULT 'pending',
   `paid_at` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
@@ -442,6 +458,15 @@ INSERT INTO `members` (`id`, `org_id`, `member_code`, `first_name`, `last_name`,
 --
 -- Table structure for table `member_notification_preferences`
 --
+
+CREATE TABLE `member_levies` (
+  `levy_id` int(10) UNSIGNED NOT NULL,
+  `member_id` int(10) UNSIGNED NOT NULL,
+  `amount` decimal(12,2) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
 
 CREATE TABLE `member_notification_preferences` (
   `member_id` int(10) UNSIGNED NOT NULL,
@@ -521,6 +546,20 @@ CREATE TABLE `notifications` (
   `message` varchar(255) NOT NULL,
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `admin_notifications` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `org_id` int(11) NOT NULL,
+  `account_id` int(11) NOT NULL,
+  `type` varchar(50) NOT NULL,
+  `title` varchar(150) NOT NULL,
+  `message` varchar(255) NOT NULL,
+  `link` varchar(255) NOT NULL,
+  `is_read` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_admin_notifications_account_unread` (`org_id`,`account_id`,`is_read`,`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -670,6 +709,7 @@ INSERT INTO `suspensions` (`id`, `org_id`, `member_id`, `reason`, `action_type`,
 CREATE TABLE `titles` (
   `id` int(10) UNSIGNED NOT NULL,
   `org_id` int(15) NOT NULL,
+  `scope` enum('hq','zone','subzone') NOT NULL DEFAULT 'hq',
   `title` varchar(100) NOT NULL,
   `level` tinyint(3) UNSIGNED NOT NULL,
   `description` varchar(255) DEFAULT NULL,
@@ -696,7 +736,7 @@ CREATE TABLE `users` (
   `last_name` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('super_admin','admin','manager','staff') NOT NULL DEFAULT 'staff',
+  `role` enum('super_admin','admin') NOT NULL DEFAULT 'admin',
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -707,7 +747,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `role`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'Delu', 'Sumbo', 'delusumbo@gmail.com', '$2y$10$wkeIJPUV3pBVJUtEgXsRHuI.i8XdVQhFr0bbI27oM.wyyA1h6avb6', 'staff', 'active', '2026-09-21 17:58:03', '2026-09-21 17:58:03');
+(1, 'Delu', 'Sumbo', 'delusumbo@gmail.com', '$2y$10$wkeIJPUV3pBVJUtEgXsRHuI.i8XdVQhFr0bbI27oM.wyyA1h6avb6', 'admin', 'active', '2026-09-21 17:58:03', '2026-09-21 17:58:03');
 
 -- --------------------------------------------------------
 
@@ -864,12 +904,27 @@ ALTER TABLE `event_rsvps`
   ADD KEY `event_id` (`event_id`);
 
 --
+-- Indexes for table `levies`
+--
+ALTER TABLE `levies`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `levies_org_due_date` (`org_id`,`due_date`);
+
+--
+-- Indexes for table `member_levies`
+--
+ALTER TABLE `member_levies`
+  ADD PRIMARY KEY (`levy_id`,`member_id`),
+  ADD KEY `member_levies_member_fk` (`member_id`);
+
+--
 -- Indexes for table `finance_transactions`
 --
 ALTER TABLE `finance_transactions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `reference` (`reference`),
-  ADD KEY `member_id` (`member_id`);
+  ADD KEY `member_id` (`member_id`),
+  ADD KEY `finance_transactions_levy_fk` (`levy_id`);
 
 --
 -- Indexes for table `members`
@@ -960,7 +1015,8 @@ ALTER TABLE `suspensions`
 --
 ALTER TABLE `titles`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `org_level_unique` (`org_id`,`level`);
+  ADD UNIQUE KEY `titles_org_scope_level_unique` (`org_id`,`scope`,`level`),
+  ADD UNIQUE KEY `titles_org_scope_title_unique` (`org_id`,`scope`,`title`);
 
 --
 -- Indexes for table `users`
@@ -1063,6 +1119,12 @@ ALTER TABLE `event_rsvps`
 -- AUTO_INCREMENT for table `finance_transactions`
 --
 ALTER TABLE `finance_transactions`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `levies`
+--
+ALTER TABLE `levies`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -1239,7 +1301,21 @@ ALTER TABLE `event_rsvps`
 -- Constraints for table `finance_transactions`
 --
 ALTER TABLE `finance_transactions`
-  ADD CONSTRAINT `finance_transactions_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `finance_transactions_ibfk_1` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `finance_transactions_levy_fk` FOREIGN KEY (`levy_id`) REFERENCES `levies` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `levies`
+--
+ALTER TABLE `levies`
+  ADD CONSTRAINT `levies_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `member_levies`
+--
+ALTER TABLE `member_levies`
+  ADD CONSTRAINT `member_levies_levy_fk` FOREIGN KEY (`levy_id`) REFERENCES `levies` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `member_levies_member_fk` FOREIGN KEY (`member_id`) REFERENCES `members` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `members`
@@ -1333,6 +1409,8 @@ CREATE TABLE `staff_invitations` (
   `phone` varchar(16) DEFAULT NULL,
   `job_title` varchar(200) NOT NULL,
   `role` varchar(40) NOT NULL,
+  `zone_id` int(10) unsigned DEFAULT NULL,
+  `subzone_id` int(10) unsigned DEFAULT NULL,
   `token_hash` char(64) NOT NULL,
   `expires_at` datetime NOT NULL,
   `accepted_at` datetime DEFAULT NULL,
@@ -1341,8 +1419,12 @@ CREATE TABLE `staff_invitations` (
   UNIQUE KEY `staff_invitations_email` (`email`),
   UNIQUE KEY `staff_invitations_token_hash` (`token_hash`),
   KEY `staff_invitations_org_status` (`org_id`, `accepted_at`, `expires_at`),
+  KEY `staff_invitations_zone_fk` (`zone_id`),
+  KEY `staff_invitations_subzone_fk` (`subzone_id`),
   CONSTRAINT `staff_invitations_org_fk` FOREIGN KEY (`org_id`) REFERENCES `org-info` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `staff_invitations_inviter_fk` FOREIGN KEY (`invited_by`) REFERENCES `acc-info` (`id`) ON DELETE CASCADE
+  CONSTRAINT `staff_invitations_inviter_fk` FOREIGN KEY (`invited_by`) REFERENCES `acc-info` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `staff_invitations_zone_fk` FOREIGN KEY (`zone_id`) REFERENCES `zones` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `staff_invitations_subzone_fk` FOREIGN KEY (`subzone_id`) REFERENCES `subzones` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 COMMIT;
 

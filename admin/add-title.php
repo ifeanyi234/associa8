@@ -78,9 +78,19 @@ $message = $_GET['msg'] ?? '';
                   <input class="form-control" type="text" id="titleName" name="name" placeholder="e.g. Fellow" required />
                 </div>
                 <div class="form-group">
+                  <label for="titleScope" class="form-label">Level</label>
+                  <select class="form-select" id="titleScope" name="scope" required>
+                    <option value="hq">HQ</option>
+                    <option value="zone">Zone</option>
+                    <option value="subzone">Sub-zone</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-2col">
+                <div class="form-group">
                   <label for="titleLevel" class="form-label">Hierarchy level</label>
                   <input class="form-control" type="number" id="titleLevel" name="level" min="1" max="99" placeholder="e.g. 5" required />
-                  <small class="form-help">Use 1 for the highest level.</small>
+                  <small class="form-help">Use 1 for the highest level within this level.</small>
                 </div>
               </div>
               <div class="form-group">
@@ -99,5 +109,19 @@ $message = $_GET['msg'] ?? '';
     </div>
     <script src="../js/admin-sidebar.js"></script>
     <script src="../js/preloader.js"></script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        if (!status || !window.AppModal) return;
+
+        window.AppModal.open({
+          type: status === "success" ? "success" : "error",
+          heading: status === "success" ? "Title saved" : "Title not saved",
+          body: params.get("msg") || "Please try again.",
+        });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    </script>
   </body>
 </html>

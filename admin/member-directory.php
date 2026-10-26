@@ -2,15 +2,26 @@
 require_once "inc/auth.php";
 require_once "../inc/db.php";
 require_once __DIR__ . '/member/inc/annual-dues.php';
+require_once __DIR__ . '/inc/scope.php';
 
 $adminRole = $_SESSION['admin_role'] ?? 'admin';
 $orgId = isset($_SESSION['org_id']) && $_SESSION['org_id'] !== null ? (int) $_SESSION['org_id'] : null;
-
-$memberCountSql = "SELECT COUNT(*) AS total FROM members";
-if ($adminRole !== 'super_admin' && $orgId !== null) {
-  $memberCountSql .= " WHERE org_id = " . (int) $orgId;
+$scopeContext = admin_scope_context($conn);
+if (empty($scopeContext['valid'])) {
+  admin_render_access_denied('Your account does not have a valid zone or sub-zone assignment.');
 }
+
+$memberCountSql = "SELECT COUNT(*) AS total FROM members m";
+if ($adminRole !== 'super_admin' && $orgId !== null) {
+  $memberCountSql .= " WHERE m.org_id = " . (int) $orgId;
+}
+$memberCountSql .= admin_scope_sql('m', $scopeContext);
 $memberCountResult = mysqli_query($conn, $memberCountSql);
+if (!$memberCountResult) {
+  error_log('Member directory scoped count query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Member directory data is temporarily unavailable.');
+}
 $memberCount = $memberCountResult ? (int) mysqli_fetch_assoc($memberCountResult)['total'] : 0;
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $itemsPerPage = 10;
@@ -20,6 +31,7 @@ $where = '';
 if ($adminRole !== 'super_admin' && $orgId !== null) {
   $where .= " WHERE m.org_id = " . (int) $orgId;
 }
+$where .= admin_scope_sql('m', $scopeContext);
 if ($search !== '') {
   $safeSearch = mysqli_real_escape_string($conn, $search);
   $where .= $where === '' ? ' WHERE ' : ' AND ';
@@ -30,11 +42,21 @@ if (in_array($statusFilter, ['active', 'pending', 'suspended'], true)) {
   $where .= "m.status = '" . mysqli_real_escape_string($conn, $statusFilter) . "'";
 }
 $filteredCountResult = mysqli_query($conn, "SELECT COUNT(*) AS total FROM members m$where");
+if (!$filteredCountResult) {
+  error_log('Member directory filtered count query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Member directory data is temporarily unavailable.');
+}
 $filteredCount = $filteredCountResult ? (int) mysqli_fetch_assoc($filteredCountResult)['total'] : 0;
 $totalPages = max(1, (int) ceil($filteredCount / $itemsPerPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $itemsPerPage;
 $membersResult = mysqli_query($conn, "SELECT m.id, m.org_id, m.member_code, m.first_name, m.last_name, m.email, m.profile_photo_path, m.status, m.joined_date, t.title, z.name AS zone_name, sz.name AS subzone_name FROM members m LEFT JOIN titles t ON t.id = m.title_id LEFT JOIN zones z ON z.id = m.zone_id LEFT JOIN subzones sz ON sz.id = m.subzone_id$where ORDER BY m.created_at DESC, m.id DESC LIMIT $itemsPerPage OFFSET $offset");
+if (!$membersResult) {
+  error_log('Member directory scoped query failed: ' . mysqli_error($conn));
+  http_response_code(500);
+  exit('Member directory data is temporarily unavailable.');
+}
 $members = [];
 if ($membersResult) {
   while ($member = mysqli_fetch_assoc($membersResult)) {
@@ -132,7 +154,7 @@ if ($membersResult) {
           <div class="page-action-header">
             <div>
               <h2 class="page-title-main">Member Directory</h2>
-              <p class="page-subtitle"><?php echo $memberCount; ?> total members across all zones</p>
+              <p class="page-subtitle"><?php echo $memberCount; ?> <?php echo in_array($adminRole, ['zonal_admin', 'subzonal_admin'], true) ? 'members in your assigned area' : 'total members across all zones'; ?></p>
             </div>
             <?php if (admin_has_permission('members_manage')): ?>
               <a href="add-member.php" class="btn-outline-primary">
@@ -234,265 +256,7 @@ if ($membersResult) {
                     </tr>
                   <?php endforeach; ?>
                 <?php else: ?>
-                <!-- Row 1 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-info">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-email">c.obi@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-001</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Lagos
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 2 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">AP</div>
-                      <div class="member-info">
-                        <span class="member-name">Adamu Philips</span>
-                        <span class="member-email">ph_2gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-002</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Associate
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Kano
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge-pill status-suspension">Suspension</span>
-                  </td>
-                  <td><span class="badge-pill dues-arrears">Arrears</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 3 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">JK</div>
-                      <div class="member-info">
-                        <span class="member-name">James Kehinde</span>
-                        <span class="member-email">j.kn2@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-003</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Sen Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Abuja
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 4 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-info">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-email">c.obi@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-004</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Lagos
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 5 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-info">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-email">c.obi@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-005</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Lagos
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 6 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-info">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-email">c.obi@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-006</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Lagos
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 7 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">CO</div>
-                      <div class="member-info">
-                        <span class="member-name">Chukwuemeka Obi</span>
-                        <span class="member-email">c.obi@gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-007</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Fellow
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Lagos
-                    </span>
-                  </td>
-                  <td><span class="badge-pill status-active">Active</span></td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
-
-                <!-- Row 8 -->
-                <tr>
-                  <td>
-                    <div class="member-cell">
-                      <div class="member-avatar">JP</div>
-                      <div class="member-info">
-                        <span class="member-name">Joy Peters</span>
-                        <span class="member-email">pj1_2gmail.com</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td>ASC-008</td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-shield-halved"></i> Member
-                    </span>
-                  </td>
-                  <td>
-                    <span class="cell-with-icon">
-                      <i class="fa-solid fa-location-dot"></i> Port-Har..
-                    </span>
-                  </td>
-                  <td>
-                    <span class="badge-pill status-inactive">Inactive</span>
-                  </td>
-                  <td><span class="badge-pill dues-current">Current</span></td>
-                  <td>20-05-2026</td>
-                  <td>
-                    <button class="btn-action-trigger" aria-label="Options">
-                      <i class="fa-solid fa-ellipsis"></i>
-                    </button>
-                  </td>
-                </tr>
+                  <tr><td colspan="8" class="zone-empty-state">No members match the selected filters.</td></tr>
                 <?php endif; ?>
               </tbody>
             </table>

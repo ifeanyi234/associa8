@@ -120,7 +120,7 @@ if ($documentsResult) {
                 <?php if ($documents): ?>
                   <?php foreach ($documents as $document): ?>
                     <?php
-                      $visibilityText = 'Organization-wide';
+                      $visibilityText = 'Association-wide';
                       if ($document['subzone_name']) {
                         $visibilityText = ($document['zone_name'] ?: 'Zone') . ' / ' . $document['subzone_name'];
                       } elseif ($document['zone_name']) {
